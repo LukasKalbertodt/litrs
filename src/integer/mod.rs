@@ -4,7 +4,19 @@ use crate::{
 };
 
 
+/// An integer literal consisting of an optional base prefix (`0b`, `0o`, `0x`),
+/// the main part containing digits and optional `_`, and an optional type
+/// suffix (e.g. `u64` or `i8`).
+///
+/// Note that integer literals are always positive: the grammar does not contain
+/// the minus sign at all. The minus sign is just the unary negate operator, not
+/// part of the literal. Which is interesting for cases like `- 128i8`: here,
+/// the literal itself would overflow the specified type (`i8` cannot represent
+/// 128). That's why in rustc, the literal overflow check is performed as a lint
+/// after parsing, not during the lexing stage. Similarly, `Integer::parse` does
+/// not perform an overflow check.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct Integer<'a> {
     base: IntegerBase,
     main_part: &'a str,
@@ -52,6 +64,55 @@ impl<'a> Integer<'a> {
             digit @ b'0'..=b'9' => Self::parse_impl(s, digit),
             _ => Err(Error::DoesNotStartWithDigit),
         }
+    }
+
+    /// Performs the actual string to int conversion to obtain the integer
+    /// value. Respects the specified base.
+    ///
+    /// Returns `None` if the literal overflows `u128`.
+    pub fn value(&self) -> Option<u128> {
+        let base = match self.base {
+            IntegerBase::Binary => 2,
+            IntegerBase::Octal => 8,
+            IntegerBase::Decimal => 10,
+            IntegerBase::Hexadecimal => 16,
+        };
+
+        let mut acc = 0u128;
+        for digit in self.main_part.bytes() {
+            if digit == b'_' {
+                continue;
+            }
+
+            // We don't actually need the base here: we already know t
+            let digit = match digit {
+                b'0'..=b'9' => digit - b'0',
+                b'a'..=b'f' => digit - b'a',
+                b'A'..=b'F' => digit - b'A',
+                _ => unreachable!("bug: integer main part contains non-digit"),
+            };
+
+            acc = acc.checked_mul(base)?;
+            acc = acc.checked_add(digit.into())?;
+        }
+
+        Some(acc)
+    }
+
+    /// The base of this integer literal.
+    pub fn base(&self) -> IntegerBase {
+        self.base
+    }
+
+    /// The main part containing the digits and potentially `_`. Do not try to
+    /// parse this directly as that would ignore the base!
+    pub fn raw_main_part(&self) -> &str {
+        self.main_part
+    }
+
+    /// The type suffix, if specified.
+    pub fn type_suffix(&self) -> Option<IntegerType> {
+        self.type_suffix
     }
 
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.

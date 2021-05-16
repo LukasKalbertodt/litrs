@@ -46,4 +46,7 @@ pub enum Error {
 
     /// Integer literal does not contain any valid digits.
     NoValidDigits,
+
+    /// An integer literal overflows the target type.
+    IntegerOverflow,
 }
