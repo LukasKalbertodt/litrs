@@ -13,13 +13,13 @@ macro_rules! assert_bool_parse {
 
 
 #[test]
-fn ok() {
+fn parse_ok() {
     assert_bool_parse!("false", Bool::False);
     assert_bool_parse!("true", Bool::True);
 }
 
 #[test]
-fn err() {
+fn parse_err() {
     assert!(Lit::parse("fa").is_err());
     assert!(Lit::parse("fal").is_err());
     assert!(Lit::parse("fals").is_err());
@@ -32,4 +32,16 @@ fn err() {
     assert!(Lit::parse(" true").is_err());
     assert!(Lit::parse("true ").is_err());
     assert!(Lit::parse("True").is_err());
+}
+
+#[test]
+fn value() {
+    assert!(!Bool::False.value());
+    assert!(Bool::True.value());
+}
+
+#[test]
+fn as_str() {
+    assert_eq!(Bool::False.as_str(), "false");
+    assert_eq!(Bool::True.as_str(), "true");
 }

@@ -15,6 +15,20 @@ impl Bool {
             _ => Err(Error::InvalidLiteral)
         }
     }
+
+    pub fn value(self) -> bool {
+        match self {
+            Self::False => false,
+            Self::True => true,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::False => "false",
+            Self::True => "true",
+        }
+    }
 }
 
 
