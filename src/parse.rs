@@ -1,12 +1,15 @@
-use super::{Bool, Error, Lit};
+use super::{Bool, Error, Lit, Integer};
 
-impl Lit {
-    pub fn parse(s: &str) -> Result<Self, Error> {
+
+impl<'a> Lit<'a> {
+    pub fn parse(s: &'a str) -> Result<Self, Error> {
         let first = first_byte_or_empty(s)?;
 
         match first {
             b'f' if s == "false" => Ok(Self::Bool(Bool::False)),
             b't' if s == "true" => Ok(Self::Bool(Bool::True)),
+
+            digit @ b'0'..=b'9' => Integer::parse_impl(s, digit).map(Lit::Integer),
 
             _ => Err(Error::InvalidLiteral),
         }

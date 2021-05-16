@@ -1,4 +1,5 @@
 
+mod integer;
 mod bool;
 mod parse;
 
@@ -9,13 +10,14 @@ mod test_util;
 
 pub use self::{
     bool::Bool,
+    integer::{Integer, IntegerBase, IntegerType},
 };
 
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Lit {
+pub enum Lit<'a> {
     Bool(Bool),
-    Integer,
+    Integer(Integer<'a>),
     Float,
     Char,
     String,
@@ -24,7 +26,8 @@ pub enum Lit {
 }
 
 
-#[derive(Debug)]
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// The input was an empty string
     Empty,
@@ -37,4 +40,10 @@ pub enum Error {
 
     /// Literal was not recognized.
     InvalidLiteral,
+
+    /// Input does not start with decimal digit when trying to parse an integer.
+    DoesNotStartWithDigit,
+
+    /// Integer literal does not contain any valid digits.
+    NoValidDigits,
 }
