@@ -2,7 +2,7 @@ use super::{Bool, Error, Lit};
 
 impl Lit {
     pub fn parse(s: &str) -> Result<Self, Error> {
-        let first = s.as_bytes().get(0).ok_or(Error::Empty)?;
+        let first = first_byte_or_empty(s)?;
 
         match first {
             b'f' if s == "false" => Ok(Self::Bool(Bool::False)),
@@ -11,4 +11,9 @@ impl Lit {
             _ => Err(Error::InvalidLiteral),
         }
     }
+}
+
+
+pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, Error> {
+    s.as_bytes().get(0).copied().ok_or(Error::Empty)
 }

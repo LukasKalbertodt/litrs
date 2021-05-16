@@ -1,8 +1,15 @@
 
+mod bool;
 mod parse;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod test_util;
+
+pub use self::{
+    bool::Bool,
+};
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,11 +23,6 @@ pub enum Lit {
     ByteString,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Bool {
-    False,
-    True,
-}
 
 #[derive(Debug)]
 pub enum Error {
