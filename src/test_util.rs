@@ -1,5 +1,6 @@
 use crate::*;
 
+#[track_caller]
 pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
     input: &str,
     result: Result<T, Error>,
