@@ -89,8 +89,8 @@ impl<'a> Integer<'a> {
             // part only contains digits valid for the specified base.
             let digit = match digit {
                 b'0'..=b'9' => digit - b'0',
-                b'a'..=b'f' => digit - b'a',
-                b'A'..=b'F' => digit - b'A',
+                b'a'..=b'f' => digit - b'a' + 10,
+                b'A'..=b'F' => digit - b'A' + 10,
                 _ => unreachable!("bug: integer main part contains non-digit"),
             };
 
