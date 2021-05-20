@@ -67,24 +67,26 @@ impl<'a> Integer<'a> {
     }
 
     /// Performs the actual string to int conversion to obtain the integer
-    /// value. Respects the specified base.
+    /// value. The optional type suffix of the literal **is ignored by this
+    /// method**.
     ///
-    /// Returns `None` if the literal overflows `u128`.
-    pub fn value(&self) -> Option<u128> {
+    /// Returns `None` if the literal overflows `N`.
+    pub fn value<N: FromIntLiteral>(&self) -> Option<N> {
         let base = match self.base {
-            IntegerBase::Binary => 2,
-            IntegerBase::Octal => 8,
-            IntegerBase::Decimal => 10,
-            IntegerBase::Hexadecimal => 16,
+            IntegerBase::Binary => N::from_small_number(2),
+            IntegerBase::Octal => N::from_small_number(8),
+            IntegerBase::Decimal => N::from_small_number(10),
+            IntegerBase::Hexadecimal => N::from_small_number(16),
         };
 
-        let mut acc = 0u128;
+        let mut acc = N::from_small_number(0);
         for digit in self.main_part.bytes() {
             if digit == b'_' {
                 continue;
             }
 
-            // We don't actually need the base here: we already know t
+            // We don't actually need the base here: we already know this main
+            // part only contains digits valid for the specified base.
             let digit = match digit {
                 b'0'..=b'9' => digit - b'0',
                 b'a'..=b'f' => digit - b'a',
@@ -93,7 +95,7 @@ impl<'a> Integer<'a> {
             };
 
             acc = acc.checked_mul(base)?;
-            acc = acc.checked_add(digit.into())?;
+            acc = acc.checked_add(N::from_small_number(digit))?;
         }
 
         Some(acc)
@@ -178,6 +180,55 @@ impl<'a> Integer<'a> {
             type_suffix,
         })
     }
+}
+
+/// Implemented for all integer literal types. This trait is sealed and cannot
+/// be implemented outside of this crate. The trait's methods are implementation
+/// detail of this library and are not subject to semver.
+pub trait FromIntLiteral: self::sealed::Sealed + Copy {
+    /// Creates itself from the given number. `n` is guaranteed to be `<= 16`.
+    #[doc(hidden)]
+    fn from_small_number(n: u8) -> Self;
+
+    #[doc(hidden)]
+    fn checked_add(self, rhs: Self) -> Option<Self>;
+
+    #[doc(hidden)]
+    fn checked_mul(self, rhs: Self) -> Option<Self>;
+
+    #[doc(hidden)]
+    fn ty() -> IntegerType;
+}
+
+macro_rules! impl_from_int_literal {
+    ($( $ty:ty => $variant:ident ,)* ) => {
+        $(
+            impl self::sealed::Sealed for $ty {}
+            impl FromIntLiteral for $ty {
+                fn from_small_number(n: u8) -> Self {
+                    n as Self
+                }
+                fn checked_add(self, rhs: Self) -> Option<Self> {
+                    self.checked_add(rhs)
+                }
+                fn checked_mul(self, rhs: Self) -> Option<Self> {
+                    self.checked_mul(rhs)
+                }
+                fn ty() -> IntegerType {
+                    IntegerType::$variant
+                }
+            }
+        )*
+    };
+}
+
+impl_from_int_literal!(
+    u8 => U8, u16 => U16, u32 => U32, u64 => U64, u128 => U128, usize => Usize,
+    i8 => I8, i16 => I16, i32 => I32, i64 => I64, i128 => I128, isize => Isize,
+);
+
+mod sealed {
+    pub trait Sealed {}
 }
 
 
