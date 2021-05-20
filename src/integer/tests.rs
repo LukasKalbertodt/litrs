@@ -47,16 +47,16 @@ fn check<T: FromIntLiteral + PartialEq + Debug + Display>(
 #[test]
 fn parse_decimal() {
     check("0", 0u128, Decimal, "0", None);
-    check("1", 1, Decimal, "1", None);
-    check("8", 8, Decimal, "8", None);
-    check("9", 9, Decimal, "9", None);
-    check("10", 10, Decimal, "10", None);
-    check("11", 11, Decimal, "11", None);
-    check("123456789", 123456789, Decimal, "123456789", None);
+    check("1", 1u8, Decimal, "1", None);
+    check("8", 8u16, Decimal, "8", None);
+    check("9", 9u32, Decimal, "9", None);
+    check("10", 10u64, Decimal, "10", None);
+    check("11", 11i8, Decimal, "11", None);
+    check("123456789", 123456789i128, Decimal, "123456789", None);
 
-    check("05", 5, Decimal, "05", None);
-    check("00005", 5, Decimal, "00005", None);
-    check("0123456789", 123456789, Decimal, "0123456789", None);
+    check("05", 5i16, Decimal, "05", None);
+    check("00005", 5i32, Decimal, "00005", None);
+    check("0123456789", 123456789i64, Decimal, "0123456789", None);
 
     check("123_456_789", 123_456_789, Decimal, "123_456_789", None);
     check("0___4", 4, Decimal, "0___4", None);
@@ -85,6 +85,24 @@ fn parse_decimal() {
         "3_40_282_3669_20938_463463_3746074_31768211_455___",
         None,
     );
+}
+
+#[test]
+fn suffixes() {
+    [
+        ("123i8", Ty::I8),
+        ("123i16", Ty::I16),
+        ("123i32", Ty::I32),
+        ("123i64", Ty::I64),
+        ("123i128", Ty::I128),
+        ("123u8", Ty::U8),
+        ("123u16", Ty::U16),
+        ("123u32", Ty::U32),
+        ("123u64", Ty::U64),
+        ("123u128", Ty::U128),
+    ].iter().for_each(|&(s, ty)| {
+        assert_eq!(Integer::parse(s).unwrap().type_suffix(), Some(ty));
+    });
 }
 
 #[test]
@@ -132,33 +150,56 @@ fn overflow_u8() {
 
 #[test]
 fn parse_err() {
-    assert_err("");
-    assert_err("a");
-    assert_err(";");
-    assert_err("0;");
-    assert_err("0a");
-    assert_err("0b");
-    assert_err("0z");
-    assert_err(" 0");
-    assert_err("0 ");
+    [
+        "",
+        "a",
+        ";",
+        "0;",
+        "0a",
+        "0b",
+        "0z",
+        " 0",
+        "0 ",
+        "0a3",
+        "0b3",
+        "0z3",
+    ].iter().for_each(|s| assert_err(s));
+}
 
-    assert_eq!(Integer::parse("0x_"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x__"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x________"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x_i8"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x_u8"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x_isize"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0x_usize"), Err(Error::NoValidDigits));
+#[test]
+fn no_valid_digits() {
+    [
+        "0x_",
+        "0x__",
+        "0x________",
+        "0x_i8",
+        "0x_u8",
+        "0x_isize",
+        "0x_usize",
 
-    assert_eq!(Integer::parse("0o_"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0o__"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0o________"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0o_i32"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0o_u32"), Err(Error::NoValidDigits));
+        "0o_",
+        "0o__",
+        "0o________",
+        "0o_i32",
+        "0o_u32",
 
-    assert_eq!(Integer::parse("0b_"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0b__"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0b________"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0b_i128"), Err(Error::NoValidDigits));
-    assert_eq!(Integer::parse("0b_u128"), Err(Error::NoValidDigits));
+        "0b_",
+        "0b__",
+        "0b________",
+        "0b_i128",
+        "0b_u128",
+    ].iter().for_each(|s| assert_eq!(Integer::parse(s), Err(Error::NoValidDigits)));
+}
+
+#[test]
+fn invalid_suffix() {
+    [
+        "5u7", "5u9", "5u0", "33u12", "84u17", "99u80", "1234uu16",
+        "5i7", "5i9", "5i0", "33i12", "84i17", "99i80", "1234ii16",
+        "0ui32", "1iu32",
+        "54321a64",
+        "54321b64",
+        "54321x64",
+        "54321o64",
+    ].iter().for_each(|s| assert_err(s));
 }
