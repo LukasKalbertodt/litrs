@@ -88,6 +88,89 @@ fn parse_decimal() {
 }
 
 #[test]
+fn parse_binary() {
+    check("0b0", 0b0, Binary, "0", None);
+    check("0b000", 0b000, Binary, "000", None);
+    check("0b1", 0b1, Binary, "1", None);
+    check("0b01", 0b01, Binary, "01", None);
+    check("0b101010", 0b101010, Binary, "101010", None);
+    check("0b10_10_10", 0b10_10_10, Binary, "10_10_10", None);
+    check("0b01101110____", 0b01101110____, Binary, "01101110____", None);
+
+    check("0b10010u8", 0b10010u8, Binary, "10010", Some(Ty::U8));
+    check("0b10010i8", 0b10010u8, Binary, "10010", Some(Ty::I8));
+    check("0b10010u64", 0b10010u64, Binary, "10010", Some(Ty::U64));
+    check("0b10010i64", 0b10010u64, Binary, "10010", Some(Ty::I64));
+    check(
+        "0b1011001_00110000_00101000_10100101u32",
+        0b1011001_00110000_00101000_10100101u32,
+        Binary,
+        "1011001_00110000_00101000_10100101",
+        Some(Ty::U32),
+    );
+}
+
+#[test]
+fn parse_octal() {
+    check("0o0", 0o0, Octal, "0", None);
+    check("0o1", 0o1, Octal, "1", None);
+    check("0o6", 0o6, Octal, "6", None);
+    check("0o7", 0o7, Octal, "7", None);
+    check("0o17", 0o17, Octal, "17", None);
+    check("0o123", 0o123, Octal, "123", None);
+    check("0o7654321", 0o7654321, Octal, "7654321", None);
+    check("0o7_53_1", 0o7_53_1, Octal, "7_53_1", None);
+    check("0o66_", 0o66_, Octal, "66_", None);
+
+    check("0o755u16", 0o755u16, Octal, "755", Some(Ty::U16));
+    check("0o755i128", 0o755i128, Octal, "755", Some(Ty::I128));
+}
+
+#[test]
+fn parse_hexadecimal() {
+    check("0x0", 0x0, Hexadecimal, "0", None);
+    check("0x1", 0x1, Hexadecimal, "1", None);
+    check("0x9", 0x9, Hexadecimal, "9", None);
+
+    check("0xa", 0xa, Hexadecimal, "a", None);
+    check("0xf", 0xf, Hexadecimal, "f", None);
+    check("0x17", 0x17, Hexadecimal, "17", None);
+    check("0x1b", 0x1b, Hexadecimal, "1b", None);
+    check("0x123", 0x123, Hexadecimal, "123", None);
+    check("0xace", 0xace, Hexadecimal, "ace", None);
+    check("0xfdb971", 0xfdb971, Hexadecimal, "fdb971", None);
+    check("0xa_54_f", 0xa_54_f, Hexadecimal, "a_54_f", None);
+    check("0x6d_", 0x6d_, Hexadecimal, "6d_", None);
+
+    check("0xA", 0xA, Hexadecimal, "A", None);
+    check("0xF", 0xF, Hexadecimal, "F", None);
+    check("0x17", 0x17, Hexadecimal, "17", None);
+    check("0x1B", 0x1B, Hexadecimal, "1B", None);
+    check("0x123", 0x123, Hexadecimal, "123", None);
+    check("0xACE", 0xACE, Hexadecimal, "ACE", None);
+    check("0xFDB971", 0xFDB971, Hexadecimal, "FDB971", None);
+    check("0xA_54_F", 0xA_54_F, Hexadecimal, "A_54_F", None);
+    check("0x6D_", 0x6D_, Hexadecimal, "6D_", None);
+
+    check("0xFdB97a1", 0xFdB97a1, Hexadecimal, "FdB97a1", None);
+    check("0xfdB97A1", 0xfdB97A1, Hexadecimal, "fdB97A1", None);
+
+    check("0x40u16", 0x40u16, Hexadecimal, "40", Some(Ty::U16));
+    check("0xffi128", 0xffi128, Hexadecimal, "ff", Some(Ty::I128));
+}
+
+#[test]
+fn parse_overflowing_just_fine() {
+    check("256u8", 256u16, Decimal, "256", Some(Ty::U8));
+    check("123_456_789u8", 123_456_789u32, Decimal, "123_456_789", Some(Ty::U8));
+    check("123_456_789u16", 123_456_789u32, Decimal, "123_456_789", Some(Ty::U16));
+
+    check("123_123_456_789u8", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U8));
+    check("123_123_456_789u16", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U16));
+    check("123_123_456_789u32", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U32));
+}
+
+#[test]
 fn suffixes() {
     [
         ("123i8", Ty::I8),
@@ -163,6 +246,35 @@ fn parse_err() {
         "0a3",
         "0b3",
         "0z3",
+    ].iter().for_each(|s| assert_err(s));
+}
+
+#[test]
+fn invalid_digits() {
+    [
+        "0b10201",
+        "0b9",
+        "0b07",
+        "0b0a", "0b0A",
+        "0b0f", "0b0F",
+
+        "0o12380",
+        "0o192",
+        "0o7a_", "0o7A_",
+        "0o7f_0", "0o7F_0",
+
+        "12a3",
+        "12f3",
+        "12f_",
+        "12F_",
+        "a_123",
+        "B_123",
+
+        "0x8cg",
+        "0x8cG",
+        "0x8ch_",
+        "0x8cH_",
+        "0x8czu16",
     ].iter().for_each(|s| assert_err(s));
 }
 
