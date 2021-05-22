@@ -1,6 +1,7 @@
 
-mod integer;
 mod bool;
+mod float;
+mod integer;
 mod parse;
 
 #[cfg(test)]
@@ -10,6 +11,7 @@ mod test_util;
 
 pub use self::{
     bool::Bool,
+    float::{Float},
     integer::{Integer, IntegerBase, IntegerType},
 };
 
@@ -18,7 +20,7 @@ pub use self::{
 pub enum Lit<'a> {
     Bool(Bool),
     Integer(Integer<'a>),
-    Float,
+    Float(Float<'a>),
     Char,
     String,
     Byte,
@@ -49,4 +51,8 @@ pub enum Error {
 
     /// An integer literal overflows the target type.
     IntegerOverflow,
+
+    InvalidFloatTypeSuffix {
+        offset: usize,
+    },
 }
