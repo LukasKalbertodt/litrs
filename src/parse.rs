@@ -1,15 +1,15 @@
-use crate::Float;
+use crate::{Buffer, Float};
 
 use super::{Bool, Error, Lit, Integer};
 
 
-impl<'a> Lit<'a> {
-    pub fn parse(input: &'a str) -> Result<Self, Error> {
-        let first = first_byte_or_empty(input)?;
+impl<B: Buffer> Lit<B> {
+    pub fn parse(input: B) -> Result<Self, Error> {
+        let first = first_byte_or_empty(&input)?;
 
         match first {
-            b'f' if input == "false" => Ok(Self::Bool(Bool::False)),
-            b't' if input == "true" => Ok(Self::Bool(Bool::True)),
+            b'f' if &*input == "false" => Ok(Self::Bool(Bool::False)),
+            b't' if &*input == "true" => Ok(Self::Bool(Bool::True)),
 
             // A number literal (integer or float).
             digit @ b'0'..=b'9' => {

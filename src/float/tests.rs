@@ -211,5 +211,5 @@ fn parse_err() {
         "3.7e-",
         "3.7e-+3",
         "3.7e+-3",
-    ].iter().for_each(|s| assert_err(s));
+    ].iter().for_each(|&s| assert_err(s));
 }

@@ -1,7 +1,4 @@
-use crate::{
-    Error,
-    parse::first_byte_or_empty,
-};
+use crate::{Buffer, Error, parse::first_byte_or_empty};
 
 
 /// An integer literal consisting of an optional base prefix (`0b`, `0o`, `0x`),
@@ -17,9 +14,9 @@ use crate::{
 /// not perform an overflow check.
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
-pub struct Integer<'a> {
+pub struct Integer<B: Buffer> {
     base: IntegerBase,
-    main_part: &'a str,
+    main_part: B,
     type_suffix: Option<IntegerType>,
 }
 
@@ -58,9 +55,9 @@ impl IntegerBase {
     }
 }
 
-impl<'a> Integer<'a> {
-    pub fn parse(s: &'a str) -> Result<Self, Error> {
-        match first_byte_or_empty(s)? {
+impl<B: Buffer> Integer<B> {
+    pub fn parse(s: B) -> Result<Self, Error> {
+        match first_byte_or_empty(&s)? {
             digit @ b'0'..=b'9' => Self::parse_impl(s, digit),
             _ => Err(Error::DoesNotStartWithDigit),
         }
@@ -109,7 +106,7 @@ impl<'a> Integer<'a> {
     /// The main part containing the digits and potentially `_`. Do not try to
     /// parse this directly as that would ignore the base!
     pub fn raw_main_part(&self) -> &str {
-        self.main_part
+        &self.main_part
     }
 
     /// The type suffix, if specified.
@@ -118,12 +115,12 @@ impl<'a> Integer<'a> {
     }
 
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
-    pub(crate) fn parse_impl(input: &'a str, first: u8) -> Result<Self, Error> {
+    pub(crate) fn parse_impl(input: B, first: u8) -> Result<Self, Error> {
         // Figure out base and strip prefix base, if it exists.
-        let (without_prefix, base) = match (first, input.as_bytes().get(1)) {
-            (b'0', Some(b'b')) => (&input[2..], IntegerBase::Binary),
-            (b'0', Some(b'o')) => (&input[2..], IntegerBase::Octal),
-            (b'0', Some(b'x')) => (&input[2..], IntegerBase::Hexadecimal),
+        let (end_prefix, base) = match (first, input.as_bytes().get(1)) {
+            (b'0', Some(b'b')) => (2, IntegerBase::Binary),
+            (b'0', Some(b'o')) => (2, IntegerBase::Octal),
+            (b'0', Some(b'x')) => (2, IntegerBase::Hexadecimal),
 
             // Everything else is treated as decimal. Several cases are caught
             // by this:
@@ -131,8 +128,9 @@ impl<'a> Integer<'a> {
             // - "0"
             // - "0u8"
             // - "0r" -> this will error later
-            _ => (input, IntegerBase::Decimal),
+            _ => (0, IntegerBase::Decimal),
         };
+        let without_prefix = &(*input)[end_prefix..];
 
         // Find end of main part.
         let end_main = match base {
@@ -174,7 +172,7 @@ impl<'a> Integer<'a> {
 
         Ok(Self {
             base,
-            main_part,
+            main_part: input.cut(end_prefix..end_main + end_prefix),
             type_suffix,
         })
     }

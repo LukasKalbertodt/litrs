@@ -9,18 +9,24 @@ mod tests;
 #[cfg(test)]
 mod test_util;
 
+use std::ops::{Deref, Range};
+
 pub use self::{
     bool::Bool,
-    float::{Float},
+    float::{Float, FloatType},
     integer::{Integer, IntegerBase, IntegerType},
 };
 
 
+pub type OwnedLit = Lit<String>;
+pub type SharedLit<'a> = Lit<&'a str>;
+
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Lit<'a> {
+pub enum Lit<B: Buffer> {
     Bool(Bool),
-    Integer(Integer<'a>),
-    Float(Float<'a>),
+    Integer(Integer<B>),
+    Float(Float<B>),
     Char,
     String,
     Byte,
@@ -65,4 +71,40 @@ pub enum Error {
 
     /// Exponent of a float literal does not contain any digits.
     NoExponentDigits,
+}
+
+/// A shared or owned string buffer, implemented for `String` and `&str`.
+///
+/// This is trait is implementation detail of this library, cannot be
+/// implemented in other crates and is not subject to semantic versioning.
+/// `litrs` only gurantees that this trait is implemented for `String` and
+/// `&str`.
+pub trait Buffer: sealed::Sealed + Deref<Target = str> {
+    /// Cuts away some characters at the beginning and some at the end. Given
+    /// range has to be in bounds.
+    #[doc(hidden)]
+    fn cut(self, range: Range<usize>) -> Self;
+}
+
+mod sealed {
+    pub trait Sealed {}
+}
+
+impl<'a> sealed::Sealed for &'a str {}
+impl<'a> Buffer for &'a str {
+    fn cut(self, range: Range<usize>) -> Self {
+        &self[range]
+    }
+}
+
+impl sealed::Sealed for String {}
+impl Buffer for String {
+    fn cut(mut self, range: Range<usize>) -> Self {
+        // This is not the most efficient way, but it works. First we cut the
+        // end, then the beginning. Note that `drain` also removes the range if
+        // the iterator is not consumed.
+        self.truncate(range.end);
+        self.drain(..range.start);
+        self
+    }
 }

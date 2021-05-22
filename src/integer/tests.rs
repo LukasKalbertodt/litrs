@@ -220,7 +220,7 @@ fn overflow_u128() {
         "3402823669209384634633746074317682114570",
     ];
 
-    for input in &inputs {
+    for &input in &inputs {
         let lit = Integer::parse(input).expect("failed to parse");
         assert!(lit.value::<u128>().is_none());
     }
@@ -241,7 +241,7 @@ fn overflow_u8() {
         "256__",
     ];
 
-    for input in &inputs {
+    for &input in &inputs {
         let lit = Integer::parse(input).expect("failed to parse");
         assert!(lit.value::<u8>().is_none());
     }
@@ -264,7 +264,7 @@ fn parse_err() {
         "0z3",
         "_",
         "_3",
-    ].iter().for_each(|s| assert_err(s));
+    ].iter().for_each(|&s| assert_err(s));
 }
 
 #[test]
@@ -293,7 +293,7 @@ fn invalid_digits() {
         "0x8ch_",
         "0x8cH_",
         "0x8czu16",
-    ].iter().for_each(|s| assert_err(s));
+    ].iter().for_each(|&s| assert_err(s));
 }
 
 #[test]
@@ -318,7 +318,7 @@ fn no_valid_digits() {
         "0b________",
         "0b_i128",
         "0b_u128",
-    ].iter().for_each(|s| assert_eq!(Integer::parse(s), Err(Error::NoValidDigits)));
+    ].iter().for_each(|&s| assert_eq!(Integer::parse(s), Err(Error::NoValidDigits)));
 }
 
 #[test]
@@ -331,5 +331,5 @@ fn invalid_suffix() {
         "54321b64",
         "54321x64",
         "54321o64",
-    ].iter().for_each(|s| assert_err(s));
+    ].iter().for_each(|&s| assert_err(s));
 }
