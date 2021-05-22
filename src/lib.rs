@@ -62,4 +62,7 @@ pub enum Error {
     InvalidFloatTypeSuffix {
         offset: usize,
     },
+
+    /// Exponent of a float literal does not contain any digits.
+    NoExponentDigits,
 }

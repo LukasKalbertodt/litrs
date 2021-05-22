@@ -38,7 +38,7 @@ pub struct Float<'a> {
     type_suffix: Option<FloatType>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FloatType {
     F32,
     F64,
@@ -83,6 +83,10 @@ impl<'a> Float<'a> {
         &self.number_part[self.end_fractional_part..]
     }
 
+    pub fn type_suffix(&self) -> Option<FloatType> {
+        self.type_suffix
+    }
+
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
     pub(crate) fn parse_impl(input: &'a str) -> Result<Self, Error> {
         // Integer part.
@@ -118,7 +122,19 @@ impl<'a> Float<'a> {
 
         // Optional exponent.
         let end_number_part = if rest.starts_with('e') || rest.starts_with('E') {
-            todo!()
+            // Strip single - or + sign at the beginning.
+            let exp_number_start = match rest.as_bytes().get(1) {
+                Some(b'-') | Some(b'+') => 2,
+                _ => 1,
+            };
+
+            // Find end of exponent and make sure there is at least one digit.
+            let end_exponent = end_dec_digits(&rest[exp_number_start..]) + exp_number_start;
+            if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
+                return Err(Error::NoExponentDigits);
+            }
+
+            end_exponent + end_fractional_part
         } else {
             end_fractional_part
         };

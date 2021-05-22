@@ -1,4 +1,3 @@
-// use std::fmt::{Debug, Display};
 use crate::{
     Lit, Error,
     test_util::assert_parse_ok_eq,
@@ -44,30 +43,75 @@ fn manual_without_suffix() -> Result<(), Error> {
     assert_eq!(f.integer_part(), "3");
     assert_eq!(f.fractional_part(), Some("14"));
     assert_eq!(f.exponent_part(), "");
+    assert_eq!(f.type_suffix(), None);
 
     let f = Float::parse("9.")?;
     assert_eq!(f.number_part(), "9.");
     assert_eq!(f.integer_part(), "9");
     assert_eq!(f.fractional_part(), Some(""));
     assert_eq!(f.exponent_part(), "");
+    assert_eq!(f.type_suffix(), None);
 
-    // let f = Float::parse("8e1")?;
-    // assert_eq!(f.number_part(), "8e1");
-    // assert_eq!(f.integer_part(), "8");
-    // assert_eq!(f.fractional_part(), None);
-    // assert_eq!(f.exponent_part(), "e1");
+    let f = Float::parse("8e1")?;
+    assert_eq!(f.number_part(), "8e1");
+    assert_eq!(f.integer_part(), "8");
+    assert_eq!(f.fractional_part(), None);
+    assert_eq!(f.exponent_part(), "e1");
+    assert_eq!(f.type_suffix(), None);
 
-    // let f = Float::parse("8E3")?;
-    // assert_eq!(f.number_part(), "8E3");
-    // assert_eq!(f.integer_part(), "8");
-    // assert_eq!(f.fractional_part(), None);
-    // assert_eq!(f.exponent_part(), "E3");
+    let f = Float::parse("8E3")?;
+    assert_eq!(f.number_part(), "8E3");
+    assert_eq!(f.integer_part(), "8");
+    assert_eq!(f.fractional_part(), None);
+    assert_eq!(f.exponent_part(), "E3");
+    assert_eq!(f.type_suffix(), None);
 
-    // let f = Float::parse("8_7_6.1_23e15")?;
-    // assert_eq!(f.number_part(), "8_7_6.1_23e15");
-    // assert_eq!(f.integer_part(), "8_7_6");
-    // assert_eq!(f.fractional_part(), Some("1_23"));
-    // assert_eq!(f.exponent_part(), "e15");
+    let f = Float::parse("8_7_6.1_23e15")?;
+    assert_eq!(f.number_part(), "8_7_6.1_23e15");
+    assert_eq!(f.integer_part(), "8_7_6");
+    assert_eq!(f.fractional_part(), Some("1_23"));
+    assert_eq!(f.exponent_part(), "e15");
+    assert_eq!(f.type_suffix(), None);
+
+    let f = Float::parse("8.2e-_04_9")?;
+    assert_eq!(f.number_part(), "8.2e-_04_9");
+    assert_eq!(f.integer_part(), "8");
+    assert_eq!(f.fractional_part(), Some("2"));
+    assert_eq!(f.exponent_part(), "e-_04_9");
+    assert_eq!(f.type_suffix(), None);
+
+    Ok(())
+}
+
+#[test]
+fn manual_with_suffix() -> Result<(), Error> {
+    let f = Float::parse("3.14f32")?;
+    assert_eq!(f.number_part(), "3.14");
+    assert_eq!(f.integer_part(), "3");
+    assert_eq!(f.fractional_part(), Some("14"));
+    assert_eq!(f.exponent_part(), "");
+    assert_eq!(f.type_suffix(), Some(FloatType::F32));
+
+    let f = Float::parse("8e1f64")?;
+    assert_eq!(f.number_part(), "8e1");
+    assert_eq!(f.integer_part(), "8");
+    assert_eq!(f.fractional_part(), None);
+    assert_eq!(f.exponent_part(), "e1");
+    assert_eq!(f.type_suffix(), Some(FloatType::F64));
+
+    let f = Float::parse("8_7_6.1_23e15f32")?;
+    assert_eq!(f.number_part(), "8_7_6.1_23e15");
+    assert_eq!(f.integer_part(), "8_7_6");
+    assert_eq!(f.fractional_part(), Some("1_23"));
+    assert_eq!(f.exponent_part(), "e15");
+    assert_eq!(f.type_suffix(), Some(FloatType::F32));
+
+    let f = Float::parse("8.2e-_04_9f64")?;
+    assert_eq!(f.number_part(), "8.2e-_04_9");
+    assert_eq!(f.integer_part(), "8");
+    assert_eq!(f.fractional_part(), Some("2"));
+    assert_eq!(f.exponent_part(), "e-_04_9");
+    assert_eq!(f.type_suffix(), Some(FloatType::F64));
 
     Ok(())
 }
