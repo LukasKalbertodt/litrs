@@ -141,3 +141,7 @@ impl<'a> Float<'a> {
         })
     }
 }
+
+
+#[cfg(test)]
+mod tests;
