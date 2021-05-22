@@ -52,6 +52,13 @@ pub enum Error {
     /// An integer literal overflows the target type.
     IntegerOverflow,
 
+    /// Found a integer type suffix that is invalid.
+    InvalidIntegerTypeSuffix {
+        offset: usize,
+    },
+
+    /// Found a float type suffix that is invalid. Only `f32` and `f64` are
+    /// valid.
     InvalidFloatTypeSuffix {
         offset: usize,
     },

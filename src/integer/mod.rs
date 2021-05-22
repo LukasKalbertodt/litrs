@@ -167,9 +167,7 @@ impl<'a> Integer<'a> {
             "i64" => Some(IntegerType::I64),
             "i128" => Some(IntegerType::I128),
             "isize" => Some(IntegerType::Isize),
-            _ => return Err(Error::UnexpectedChar {
-                // We know it's not empty: we checked above.
-                c: type_suffix.chars().next().unwrap(),
+            _ => return Err(Error::InvalidIntegerTypeSuffix {
                 offset: main_part.len() + base.prefix().len(),
             }),
         };
