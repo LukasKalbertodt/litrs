@@ -33,6 +33,16 @@ macro_rules! check {
     (@stringify_suffix $suffix:ident) => { stringify!($suffix) };
 }
 
+#[track_caller]
+fn assert_err(input: &str) {
+    if Lit::parse(input).is_ok() {
+        panic!("Parsing '{}' with `Lit::parse` should fail, but it didn't!", input);
+    }
+    if Float::parse(input).is_ok() {
+        panic!("Parsing '{}' with `Float::parse` should fail, but it didn't!", input);
+    }
+}
+
 
 // ===== Actual tests ===========================================================================
 
@@ -118,13 +128,88 @@ fn manual_with_suffix() -> Result<(), Error> {
 
 #[test]
 fn simple() {
-    check!("3" ".14" "" f32);
     check!("3" ".14" "" -);
+    check!("3" ".14" "" f32);
+    check!("3" ".14" "" f64);
+
+    check!("3" "" "" f32);
+    check!("3" "" "e987654321" -);
+    check!("3" "" "e987654321" f64);
+
+    check!("42_888" ".05" "" -);
+    check!("42_888" ".05" "E5___" f32);
+    check!("123456789" "" "e_1" f64);
+    check!("123456789" ".99" "e_1" f64);
+    check!("123456789" ".99" "" f64);
+    check!("123456789" ".99" "" -);
+
+    check!("147" ".3_33" "" -);
+    check!("147" ".3_33__" "E3" f64);
+    check!("147" ".3_33__" "" f32);
+
+    check!("147" ".333" "e-10" -);
+    check!("147" ".333" "e-_7" f32);
+    check!("147" ".333" "e+10" -);
+    check!("147" ".333" "e+_7" f32);
+
+    check!("86" "." "" -);
+    check!("0" "." "" -);
+    check!("0_" "." "" -);
+    check!("0" ".0000001" "" -);
+    check!("0" ".000_0001" "" -);
+
+    check!("0" ".0" "e+0" -);
+    check!("0" "" "E+0" -);
+    check!("34" "" "e+0" -);
+    check!("0" ".9182" "E+0" f32);
 }
 
+#[test]
+fn parse_err() {
+    [
+        "",
+        ".",
+        "+",
+        "-",
+        "e",
+        "e8",
+        "0e",
+        "f32",
+        "foo",
 
-// 3._4
-// 1.e4
-// 1e
-// .5
-//
+        "inf",
+        "nan",
+        "NaN",
+        "NAN",
+
+        "_2.7",
+        "0x44.5",
+        "1e",
+        ".5",
+        "1.e4",
+        "3._4",
+        "12345._987",
+        "46._",
+        "46.f32",
+        "46.e3",
+        "46._e3",
+        "46.e3f64",
+        "23.4e_",
+        "23E___f32",
+        "7f23",
+        "7f320",
+        "7f64_",
+        "8f649",
+        "8f64f32",
+        "55e3.1",
+
+        "3.7+",
+        "3.7+2",
+        "3.7-",
+        "3.7-2",
+        "3.7e+",
+        "3.7e-",
+        "3.7e-+3",
+        "3.7e+-3",
+    ].iter().for_each(|s| assert_err(s));
+}

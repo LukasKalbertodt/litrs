@@ -11,8 +11,12 @@ use super::FromIntLiteral;
 
 #[track_caller]
 fn assert_err(input: &str) {
-    assert!(Lit::parse(input).is_err());
-    assert!(Integer::parse(input).is_err());
+    if Lit::parse(input).is_ok() {
+        panic!("Parsing '{}' with `Lit::parse` should fail, but it didn't!", input);
+    }
+    if Integer::parse(input).is_ok() {
+        panic!("Parsing '{}' with `Integer::parse` should fail, but it didn't!", input);
+    }
 }
 
 #[track_caller]
