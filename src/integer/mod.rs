@@ -1,4 +1,4 @@
-use crate::{Buffer, Error, parse::first_byte_or_empty};
+use crate::{Buffer, Error, parse::{first_byte_or_empty, hex_digit_value}};
 
 
 /// An integer literal consisting of an optional base prefix (`0b`, `0o`, `0x`),
@@ -56,9 +56,9 @@ impl IntegerBase {
 }
 
 impl<B: Buffer> Integer<B> {
-    pub fn parse(s: B) -> Result<Self, Error> {
-        match first_byte_or_empty(&s)? {
-            digit @ b'0'..=b'9' => Self::parse_impl(s, digit),
+    pub fn parse(input: B) -> Result<Self, Error> {
+        match first_byte_or_empty(&input)? {
+            digit @ b'0'..=b'9' => Self::parse_impl(input, digit),
             _ => Err(Error::DoesNotStartWithDigit),
         }
     }
@@ -84,12 +84,8 @@ impl<B: Buffer> Integer<B> {
 
             // We don't actually need the base here: we already know this main
             // part only contains digits valid for the specified base.
-            let digit = match digit {
-                b'0'..=b'9' => digit - b'0',
-                b'a'..=b'f' => digit - b'a' + 10,
-                b'A'..=b'F' => digit - b'A' + 10,
-                _ => unreachable!("bug: integer main part contains non-digit"),
-            };
+            let digit = hex_digit_value(digit)
+                .unwrap_or_else(|| unreachable!("bug: integer main part contains non-digit"));
 
             acc = acc.checked_mul(base)?;
             acc = acc.checked_add(N::from_small_number(digit))?;
