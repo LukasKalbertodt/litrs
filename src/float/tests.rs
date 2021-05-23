@@ -156,48 +156,48 @@ fn simple() {
 
 #[test]
 fn parse_err() {
-    assert_err!(Float::parse(""), Empty, None);
-    assert_err!(Float::parse("."), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("+"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("-"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("e"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("e8"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("0e"), NoExponentDigits, 1..2);
-    assert_err!(Float::parse("f32"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("foo"), DoesNotStartWithDigit, 0);
+    assert_err!(Float, "", Empty, None);
+    assert_err_single!(Float::parse("."), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("+"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("-"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("e"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("e8"), DoesNotStartWithDigit, 0);
+    assert_err!(Float, "0e", NoExponentDigits, 1..2);
+    assert_err_single!(Float::parse("f32"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("foo"), DoesNotStartWithDigit, 0);
 
-    assert_err!(Float::parse("inf"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("nan"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("NaN"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("NAN"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("inf"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("nan"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("NaN"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("NAN"), DoesNotStartWithDigit, 0);
 
-    assert_err!(Float::parse("_2.7"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("0x44.5"), InvalidFloatTypeSuffix, 1..6);
-    assert_err!(Float::parse("1e"), NoExponentDigits, 1..2);
-    assert_err!(Float::parse(".5"), DoesNotStartWithDigit, 0);
-    assert_err!(Float::parse("1.e4"), UnexpectedChar, 2);
-    assert_err!(Float::parse("3._4"), UnexpectedChar, 2);
-    assert_err!(Float::parse("12345._987"), UnexpectedChar, 6);
-    assert_err!(Float::parse("46._"), UnexpectedChar, 3);
-    assert_err!(Float::parse("46.f32"), UnexpectedChar, 3);
-    assert_err!(Float::parse("46.e3"), UnexpectedChar, 3);
-    assert_err!(Float::parse("46._e3"), UnexpectedChar, 3);
-    assert_err!(Float::parse("46.e3f64"), UnexpectedChar, 3);
-    assert_err!(Float::parse("23.4e_"), NoExponentDigits, 4..6);
-    assert_err!(Float::parse("23E___f32"), NoExponentDigits, 2..6);
-    assert_err!(Float::parse("7f23"), InvalidFloatTypeSuffix, 1..4);
-    assert_err!(Float::parse("7f320"), InvalidFloatTypeSuffix, 1..5);
-    assert_err!(Float::parse("7f64_"), InvalidFloatTypeSuffix, 1..5);
-    assert_err!(Float::parse("8f649"), InvalidFloatTypeSuffix, 1..5);
-    assert_err!(Float::parse("8f64f32"), InvalidFloatTypeSuffix, 1..7);
-    assert_err!(Float::parse("55e3.1"), InvalidFloatTypeSuffix, 4..6);  // suboptimal
+    assert_err_single!(Float::parse("_2.7"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse(".5"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Float::parse("0x44.5"), InvalidFloatTypeSuffix, 1..6);
+    assert_err!(Float, "1e", NoExponentDigits, 1..2);
+    assert_err!(Float, "1.e4", UnexpectedChar, 2);
+    assert_err!(Float, "3._4", UnexpectedChar, 2);
+    assert_err!(Float, "12345._987", UnexpectedChar, 6);
+    assert_err!(Float, "46._", UnexpectedChar, 3);
+    assert_err!(Float, "46.f32", UnexpectedChar, 3);
+    assert_err!(Float, "46.e3", UnexpectedChar, 3);
+    assert_err!(Float, "46._e3", UnexpectedChar, 3);
+    assert_err!(Float, "46.e3f64", UnexpectedChar, 3);
+    assert_err!(Float, "23.4e_", NoExponentDigits, 4..6);
+    assert_err!(Float, "23E___f32", NoExponentDigits, 2..6);
+    assert_err!(Float, "7f23", InvalidFloatTypeSuffix, 1..4);
+    assert_err!(Float, "7f320", InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float, "7f64_", InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float, "8f649", InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float, "8f64f32", InvalidFloatTypeSuffix, 1..7);
+    assert_err!(Float, "55e3.1", InvalidFloatTypeSuffix, 4..6);  // suboptimal
 
-    assert_err!(Float::parse("3.7+"), InvalidFloatTypeSuffix, 3..4);
-    assert_err!(Float::parse("3.7+2"), InvalidFloatTypeSuffix, 3..5);
-    assert_err!(Float::parse("3.7-"), InvalidFloatTypeSuffix, 3..4);
-    assert_err!(Float::parse("3.7-2"), InvalidFloatTypeSuffix, 3..5);
-    assert_err!(Float::parse("3.7e+"), NoExponentDigits, 3..5);
-    assert_err!(Float::parse("3.7e-"), NoExponentDigits, 3..5);
-    assert_err!(Float::parse("3.7e-+3"), NoExponentDigits, 3..5);  // suboptimal
-    assert_err!(Float::parse("3.7e+-3"), NoExponentDigits, 3..5);  // suboptimal
+    assert_err!(Float, "3.7+", InvalidFloatTypeSuffix, 3..4);
+    assert_err!(Float, "3.7+2", InvalidFloatTypeSuffix, 3..5);
+    assert_err!(Float, "3.7-", InvalidFloatTypeSuffix, 3..4);
+    assert_err!(Float, "3.7-2", InvalidFloatTypeSuffix, 3..5);
+    assert_err!(Float, "3.7e+", NoExponentDigits, 3..5);
+    assert_err!(Float, "3.7e-", NoExponentDigits, 3..5);
+    assert_err!(Float, "3.7e-+3", NoExponentDigits, 3..5);  // suboptimal
+    assert_err!(Float, "3.7e+-3", NoExponentDigits, 3..5);  // suboptimal
 }

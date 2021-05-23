@@ -239,98 +239,98 @@ fn overflow_u8() {
 
 #[test]
 fn parse_err() {
-    assert_err!(Integer::parse(""), Empty, None);
-    assert_err!(Integer::parse("a"), DoesNotStartWithDigit, 0);
-    assert_err!(Integer::parse(";"), DoesNotStartWithDigit, 0);
-    assert_err!(Integer::parse("0;"), InvalidIntegerTypeSuffix, 1..2);
-    assert_err!(Integer::parse("0a"), InvalidDigit, 1);
-    assert_err!(Integer::parse("0b"), NoDigits, 2..2);
-    assert_err!(Integer::parse("0z"), InvalidIntegerTypeSuffix, 1..2);
-    assert_err!(Integer::parse(" 0"), DoesNotStartWithDigit, 0);
-    assert_err!(Integer::parse("0 "), InvalidIntegerTypeSuffix, 1);
-    assert_err!(Integer::parse("0a3"), InvalidDigit, 1);
-    assert_err!(Integer::parse("0b3"), InvalidDigit, 2);
-    assert_err!(Integer::parse("0z3"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("_"), DoesNotStartWithDigit, 0);
-    assert_err!(Integer::parse("_3"), DoesNotStartWithDigit, 0);
+    assert_err!(Integer, "", Empty, None);
+    assert_err_single!(Integer::parse("a"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse(";"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse("0;"), InvalidIntegerTypeSuffix, 1..2);
+    assert_err_single!(Integer::parse("0a"), InvalidDigit, 1);
+    assert_err!(Integer, "0b", NoDigits, 2..2);
+    assert_err_single!(Integer::parse("0z"), InvalidIntegerTypeSuffix, 1..2);
+    assert_err_single!(Integer::parse(" 0"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse("0 "), InvalidIntegerTypeSuffix, 1);
+    assert_err_single!(Integer::parse("0a3"), InvalidDigit, 1);
+    assert_err!(Integer, "0b3", InvalidDigit, 2);
+    assert_err_single!(Integer::parse("0z3"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err_single!(Integer::parse("_"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse("_3"), DoesNotStartWithDigit, 0);
 }
 
 #[test]
 fn invalid_digits() {
-    assert_err!(Integer::parse("0b10201"), InvalidDigit, 4);
-    assert_err!(Integer::parse("0b9"), InvalidDigit, 2);
-    assert_err!(Integer::parse("0b07"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0b0a"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0b0A"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0b01f"), InvalidDigit, 4);
-    assert_err!(Integer::parse("0b01F"), InvalidDigit, 4);
+    assert_err!(Integer, "0b10201", InvalidDigit, 4);
+    assert_err!(Integer, "0b9", InvalidDigit, 2);
+    assert_err!(Integer, "0b07", InvalidDigit, 3);
+    assert_err!(Integer, "0b0a", InvalidDigit, 3);
+    assert_err!(Integer, "0b0A", InvalidDigit, 3);
+    assert_err!(Integer, "0b01f", InvalidDigit, 4);
+    assert_err!(Integer, "0b01F", InvalidDigit, 4);
 
-    assert_err!(Integer::parse("0o12380"), InvalidDigit, 5);
-    assert_err!(Integer::parse("0o192"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0o7a_"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0o7A_"), InvalidDigit, 3);
-    assert_err!(Integer::parse("0o72f_0"), InvalidDigit, 4);
-    assert_err!(Integer::parse("0o72F_0"), InvalidDigit, 4);
+    assert_err!(Integer, "0o12380", InvalidDigit, 5);
+    assert_err!(Integer, "0o192", InvalidDigit, 3);
+    assert_err!(Integer, "0o7a_", InvalidDigit, 3);
+    assert_err!(Integer, "0o7A_", InvalidDigit, 3);
+    assert_err!(Integer, "0o72f_0", InvalidDigit, 4);
+    assert_err!(Integer, "0o72F_0", InvalidDigit, 4);
 
-    assert_err!(Integer::parse("12a3"), InvalidDigit, 2);
-    assert_err!(Integer::parse("12f3"), InvalidDigit, 2);
-    assert_err!(Integer::parse("12f_"), InvalidDigit, 2);
-    assert_err!(Integer::parse("12F_"), InvalidDigit, 2);
-    assert_err!(Integer::parse("a_123"), DoesNotStartWithDigit, 0);
-    assert_err!(Integer::parse("B_123"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse("12a3"), InvalidDigit, 2);
+    assert_err_single!(Integer::parse("12f3"), InvalidDigit, 2);
+    assert_err_single!(Integer::parse("12f_"), InvalidDigit, 2);
+    assert_err_single!(Integer::parse("12F_"), InvalidDigit, 2);
+    assert_err_single!(Integer::parse("a_123"), DoesNotStartWithDigit, 0);
+    assert_err_single!(Integer::parse("B_123"), DoesNotStartWithDigit, 0);
 
-    assert_err!(Integer::parse("0x8cg"), InvalidIntegerTypeSuffix, 4..5);
-    assert_err!(Integer::parse("0x8cG"), InvalidIntegerTypeSuffix, 4..5);
-    assert_err!(Integer::parse("0x8c1h_"), InvalidIntegerTypeSuffix, 5..7);
-    assert_err!(Integer::parse("0x8c1H_"), InvalidIntegerTypeSuffix, 5..7);
-    assert_err!(Integer::parse("0x8czu16"), InvalidIntegerTypeSuffix, 4..8);
+    assert_err!(Integer, "0x8cg", InvalidIntegerTypeSuffix, 4..5);
+    assert_err!(Integer, "0x8cG", InvalidIntegerTypeSuffix, 4..5);
+    assert_err!(Integer, "0x8c1h_", InvalidIntegerTypeSuffix, 5..7);
+    assert_err!(Integer, "0x8c1H_", InvalidIntegerTypeSuffix, 5..7);
+    assert_err!(Integer, "0x8czu16", InvalidIntegerTypeSuffix, 4..8);
 }
 
 #[test]
 fn no_valid_digits() {
-    assert_err!(Integer::parse("0x_"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0x__"), NoDigits, 2..4);
-    assert_err!(Integer::parse("0x________"), NoDigits, 2..10);
-    assert_err!(Integer::parse("0x_i8"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0x_u8"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0x_isize"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0x_usize"), NoDigits, 2..3);
+    assert_err!(Integer, "0x_", NoDigits, 2..3);
+    assert_err!(Integer, "0x__", NoDigits, 2..4);
+    assert_err!(Integer, "0x________", NoDigits, 2..10);
+    assert_err!(Integer, "0x_i8", NoDigits, 2..3);
+    assert_err!(Integer, "0x_u8", NoDigits, 2..3);
+    assert_err!(Integer, "0x_isize", NoDigits, 2..3);
+    assert_err!(Integer, "0x_usize", NoDigits, 2..3);
 
-    assert_err!(Integer::parse("0o_"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0o__"), NoDigits, 2..4);
-    assert_err!(Integer::parse("0o________"), NoDigits, 2..10);
-    assert_err!(Integer::parse("0o_i32"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0o_u32"), NoDigits, 2..3);
+    assert_err!(Integer, "0o_", NoDigits, 2..3);
+    assert_err!(Integer, "0o__", NoDigits, 2..4);
+    assert_err!(Integer, "0o________", NoDigits, 2..10);
+    assert_err!(Integer, "0o_i32", NoDigits, 2..3);
+    assert_err!(Integer, "0o_u32", NoDigits, 2..3);
 
-    assert_err!(Integer::parse("0b_"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0b__"), NoDigits, 2..4);
-    assert_err!(Integer::parse("0b________"), NoDigits, 2..10);
-    assert_err!(Integer::parse("0b_i128"), NoDigits, 2..3);
-    assert_err!(Integer::parse("0b_u128"), NoDigits, 2..3);
+    assert_err!(Integer, "0b_", NoDigits, 2..3);
+    assert_err!(Integer, "0b__", NoDigits, 2..4);
+    assert_err!(Integer, "0b________", NoDigits, 2..10);
+    assert_err!(Integer, "0b_i128", NoDigits, 2..3);
+    assert_err!(Integer, "0b_u128", NoDigits, 2..3);
 }
 
 #[test]
 fn invalid_suffix() {
-    assert_err!(Integer::parse("5u7"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("5u9"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("5u0"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("33u12"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("84u17"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("99u80"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("1234uu16"), InvalidIntegerTypeSuffix, 4..8);
+    assert_err!(Integer, "5u7", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "5u9", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "5u0", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "33u12", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "84u17", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "99u80", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "1234uu16", InvalidIntegerTypeSuffix, 4..8);
 
-    assert_err!(Integer::parse("5i7"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("5i9"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("5i0"), InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(Integer::parse("33i12"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("84i17"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("99i80"), InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(Integer::parse("1234ii16"), InvalidIntegerTypeSuffix, 4..8);
+    assert_err!(Integer, "5i7", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "5i9", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "5i0", InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer, "33i12", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "84i17", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "99i80", InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer, "1234ii16", InvalidIntegerTypeSuffix, 4..8);
 
-    assert_err!(Integer::parse("0ui32"), InvalidIntegerTypeSuffix, 1..5);
-    assert_err!(Integer::parse("1iu32"), InvalidIntegerTypeSuffix, 1..5);
-    assert_err!(Integer::parse("54321a64"), InvalidDigit, 5);
-    assert_err!(Integer::parse("54321b64"), InvalidDigit, 5);
-    assert_err!(Integer::parse("54321x64"), InvalidIntegerTypeSuffix, 5..8);
-    assert_err!(Integer::parse("54321o64"), InvalidIntegerTypeSuffix, 5..8);
+    assert_err!(Integer, "0ui32", InvalidIntegerTypeSuffix, 1..5);
+    assert_err!(Integer, "1iu32", InvalidIntegerTypeSuffix, 1..5);
+    assert_err_single!(Integer::parse("54321a64"), InvalidDigit, 5);
+    assert_err!(Integer, "54321b64", InvalidDigit, 5);
+    assert_err!(Integer, "54321x64", InvalidIntegerTypeSuffix, 5..8);
+    assert_err!(Integer, "54321o64", InvalidIntegerTypeSuffix, 5..8);
 }

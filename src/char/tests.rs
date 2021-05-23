@@ -101,47 +101,47 @@ fn ascii_escapes() {
 
 #[test]
 fn invald_ascii_escapes() {
-    assert_err!(Char::parse(r"'\x80'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\x81'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\x8a'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\x8F'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xa0'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xB0'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xc3'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xDf'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xff'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xfF'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xFf'"), NonAsciiXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xFF'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\x80'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\x81'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\x8a'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\x8F'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xa0'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xB0'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xc3'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xDf'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xff'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xfF'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xFf'", NonAsciiXEscape, 1..5);
+    assert_err!(Char, r"'\xFF'", NonAsciiXEscape, 1..5);
 }
 
 #[test]
 fn invald_escapes() {
-    assert_err!(Char::parse(r"'\a'"), UnknownEscape, 1..3);
-    assert_err!(Char::parse(r"'\y'"), UnknownEscape, 1..3);
-    assert_err!(Char::parse(r"'\"), UnterminatedCharLiteral, None);
-    assert_err!(Char::parse(r"'\x'"), UnterminatedEscape, 1..3);
-    assert_err!(Char::parse(r"'\x1'"), UnterminatedEscape, 1..4);
-    assert_err!(Char::parse(r"'\xaj'"), InvalidXEscape, 1..5);
-    assert_err!(Char::parse(r"'\xjb'"), InvalidXEscape, 1..5);
+    assert_err!(Char, r"'\a'", UnknownEscape, 1..3);
+    assert_err!(Char, r"'\y'", UnknownEscape, 1..3);
+    assert_err!(Char, r"'\", UnterminatedCharLiteral, None);
+    assert_err!(Char, r"'\x'", UnterminatedEscape, 1..3);
+    assert_err!(Char, r"'\x1'", UnterminatedEscape, 1..4);
+    assert_err!(Char, r"'\xaj'", InvalidXEscape, 1..5);
+    assert_err!(Char, r"'\xjb'", InvalidXEscape, 1..5);
 }
 
 #[test]
 fn parse_err() {
-    assert_err!(Char::parse(r"''"), EmptyCharLiteral, None);
-    assert_err!(Char::parse(r"' ''"), OverlongCharLiteral, 2..3);
+    assert_err!(Char, r"''", EmptyCharLiteral, None);
+    assert_err!(Char, r"' ''", OverlongCharLiteral, 2..3);
 
-    assert_err!(Char::parse(r"'"), UnterminatedCharLiteral, None);
-    assert_err!(Char::parse(r"'a"), UnterminatedCharLiteral, None);
-    assert_err!(Char::parse(r"'\n"), UnterminatedCharLiteral, None);
-    assert_err!(Char::parse(r"'\x35"), UnterminatedCharLiteral, None);
+    assert_err!(Char, r"'", UnterminatedCharLiteral, None);
+    assert_err!(Char, r"'a", UnterminatedCharLiteral, None);
+    assert_err!(Char, r"'\n", UnterminatedCharLiteral, None);
+    assert_err!(Char, r"'\x35", UnterminatedCharLiteral, None);
 
-    assert_err!(Char::parse(r"'ab'"), OverlongCharLiteral, 2..3);
-    assert_err!(Char::parse(r"'a _'"), OverlongCharLiteral, 2..4);
-    assert_err!(Char::parse(r"'\n3'"), OverlongCharLiteral, 3..4);
+    assert_err!(Char, r"'ab'", OverlongCharLiteral, 2..3);
+    assert_err!(Char, r"'a _'", OverlongCharLiteral, 2..4);
+    assert_err!(Char, r"'\n3'", OverlongCharLiteral, 3..4);
 
-    assert_err!(Char::parse(r""), Empty, None);
+    assert_err!(Char, r"", Empty, None);
 
-    assert_err!(Char::parse(r"'''"), UnescapedSingleQuote, 1);
-    assert_err!(Char::parse(r"''''"), UnescapedSingleQuote, 1);
+    assert_err!(Char, r"'''", UnescapedSingleQuote, 1);
+    assert_err!(Char, r"''''", UnescapedSingleQuote, 1);
 }

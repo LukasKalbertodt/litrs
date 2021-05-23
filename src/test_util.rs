@@ -30,6 +30,13 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
 }
 
 macro_rules! assert_err {
+    ($ty:ident, $input:literal, $kind:ident, $( $span:tt )+ ) => {
+        assert_err_single!($ty::parse($input), $kind, $($span)+);
+        assert_err_single!($crate::Lit::parse($input), $kind, $($span)+);
+    };
+}
+
+macro_rules! assert_err_single {
     ($expr:expr, $kind:ident, $( $span:tt )+ ) => {
         let res = $expr;
         let err = match res {
@@ -48,7 +55,7 @@ macro_rules! assert_err {
                 err.kind,
             )
         }
-        let expected_span = assert_err!(@span $($span)+);
+        let expected_span = assert_err_single!(@span $($span)+);
         if err.span != expected_span {
             panic!(
                 "Expected error span {:?} for `{}` but got {:?}",
