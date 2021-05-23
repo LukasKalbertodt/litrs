@@ -125,7 +125,7 @@ impl<B: Buffer> Float<B> {
             let end_exponent = end_dec_digits(&rest[exp_number_start..]) + exp_number_start;
             if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
                 return Err(Error::new(
-                    end_fractional_part + exp_number_start..end_fractional_part + end_exponent,
+                    end_fractional_part..end_fractional_part + end_exponent,
                     ErrorKind::NoExponentDigits
                 ));
             }
@@ -142,7 +142,7 @@ impl<B: Buffer> Float<B> {
             "f32" => Some(FloatType::F32),
             "f64" => Some(FloatType::F64),
             _ => return Err(Error::new(
-                input.len() - rest.len()..input.len(),
+                end_number_part..input.len(),
                 ErrorKind::InvalidFloatTypeSuffix,
             )),
         };
