@@ -1,4 +1,4 @@
-use crate::{Buffer, Error, escape::unescape, parse::first_byte_or_empty};
+use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
 
@@ -12,7 +12,7 @@ impl<B: Buffer> Char<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             b'\'' => Self::parse_impl(input),
-            _ => Err(Error::DoesNotStartWithDigit),
+            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithQuote)),
         }
     }
 
@@ -24,18 +24,19 @@ impl<B: Buffer> Char<B> {
     /// Precondition: first character in input must be `'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
         let inner = &(*input)[1..];
-        let (c, len) = match inner.chars().nth(0).ok_or(Error::UnterminatedLiteral)? {
-            '\\' => unescape::<char>(inner)?,
-            '\'' if input.len() == 2 => return Err(Error::EmptyCharLiteral),
-            '\'' => return Err(Error::UnescapedQuote),
+        let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::UnterminatedLiteral))?;
+        let (c, len) = match first {
+            '\\' => unescape::<char>(inner, 1)?,
+            '\'' if input.len() == 2 => return Err(Error::spanless(ErrorKind::EmptyCharLiteral)),
+            '\'' => return Err(Error::single(1, ErrorKind::UnescapedQuote)),
             other => (other, other.len_utf8()),
         };
         let rest = &inner[len..];
 
         if rest.len() > 1 {
-            return Err(Error::OverlongCharLiteral);
+            return Err(Error::new(len + 1..input.len(), ErrorKind::OverlongCharLiteral));
         } else if rest != "'" {
-            return Err(Error::UnterminatedLiteral);
+            return Err(Error::spanless(ErrorKind::UnterminatedLiteral));
         }
 
         Ok(Self {

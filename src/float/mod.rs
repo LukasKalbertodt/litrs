@@ -1,5 +1,4 @@
-use crate::{Buffer, Error, parse::{end_dec_digits, first_byte_or_empty}};
-
+use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empty}};
 
 
 
@@ -49,7 +48,7 @@ impl<B: Buffer> Float<B> {
     pub fn parse(s: B) -> Result<Self, Error> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => Self::parse_impl(s),
-            _ => Err(Error::DoesNotStartWithDigit),
+            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithDigit)),
         }
     }
 
@@ -98,10 +97,7 @@ impl<B: Buffer> Float<B> {
         let end_fractional_part = if rest.as_bytes().get(0) == Some(&b'.') {
             // The fractional part must not start with `_`.
             if rest.as_bytes().get(1) == Some(&b'_') {
-                return Err(Error::UnexpectedChar {
-                    c: '_',
-                    offset: end_integer_part + 1,
-                });
+                return Err(Error::single(end_integer_part + 1, ErrorKind::UnexpectedChar));
             }
 
             end_dec_digits(&rest[1..]) + 1 + end_integer_part
@@ -113,10 +109,7 @@ impl<B: Buffer> Float<B> {
         // If we have a period that is not followed by decimal digits, the
         // literal must end now.
         if end_integer_part + 1 == end_fractional_part && !rest.is_empty() {
-            return Err(Error::UnexpectedChar {
-                c: rest.chars().next().unwrap(),
-                offset: end_integer_part + 1,
-            });
+            return Err(Error::single(end_integer_part + 1, ErrorKind::UnexpectedChar));
         }
 
 
@@ -131,7 +124,10 @@ impl<B: Buffer> Float<B> {
             // Find end of exponent and make sure there is at least one digit.
             let end_exponent = end_dec_digits(&rest[exp_number_start..]) + exp_number_start;
             if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
-                return Err(Error::NoExponentDigits);
+                return Err(Error::new(
+                    end_fractional_part + exp_number_start..end_fractional_part + end_exponent,
+                    ErrorKind::NoExponentDigits
+                ));
             }
 
             end_exponent + end_fractional_part
@@ -145,7 +141,10 @@ impl<B: Buffer> Float<B> {
             "" => None,
             "f32" => Some(FloatType::F32),
             "f64" => Some(FloatType::F64),
-            _ => Err(Error::InvalidFloatTypeSuffix { offset: input.len() - rest.len() })?,
+            _ => return Err(Error::new(
+                input.len() - rest.len()..input.len(),
+                ErrorKind::InvalidFloatTypeSuffix,
+            )),
         };
 
         Ok(Self {

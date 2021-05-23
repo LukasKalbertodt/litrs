@@ -1,3 +1,9 @@
+#[cfg(test)]
+#[macro_use]
+mod test_util;
+
+#[cfg(test)]
+mod tests;
 
 mod bool;
 mod char;
@@ -6,10 +12,6 @@ mod float;
 mod integer;
 mod parse;
 
-#[cfg(test)]
-mod tests;
-#[cfg(test)]
-mod test_util;
 
 use std::ops::{Deref, Range};
 
@@ -37,17 +39,42 @@ pub enum Lit<B: Buffer> {
 }
 
 
+#[derive(Debug, Clone)]
+pub struct Error {
+    span: Option<Range<usize>>,
+    kind: ErrorKind,
+}
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Error {
+impl Error {
+    fn new(span: Range<usize>, kind: ErrorKind) -> Self {
+        Self {
+            span: Some(span),
+            kind,
+        }
+    }
+
+    fn single(at: usize, kind: ErrorKind) -> Self {
+        Self {
+            span: Some(at..at + 1),
+            kind,
+        }
+    }
+
+    fn spanless(kind: ErrorKind) -> Self {
+        Self {
+            span: None,
+            kind,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorKind {
     /// The input was an empty string
     Empty,
 
     /// An unexpected char was encountered.
-    UnexpectedChar {
-        c: char,
-        offset: usize,
-    },
+    UnexpectedChar,
 
     /// Literal was not recognized.
     InvalidLiteral,
@@ -62,20 +89,14 @@ pub enum Error {
     IntegerOverflow,
 
     /// Found a integer type suffix that is invalid.
-    InvalidIntegerTypeSuffix {
-        offset: usize,
-    },
+    InvalidIntegerTypeSuffix,
 
     /// Found a float type suffix that is invalid. Only `f32` and `f64` are
     /// valid.
-    InvalidFloatTypeSuffix {
-        offset: usize,
-    },
+    InvalidFloatTypeSuffix,
 
     /// Exponent of a float literal does not contain any digits.
     NoExponentDigits,
-
-    // TODO: add some offsets here
 
     /// Something about an escape in a string, character, byte string or byte
     /// literal is broken.
@@ -97,6 +118,11 @@ pub enum Error {
     /// A `'` character was not escaped in a character or byte literal, or a `"`
     /// character was not escaped in a string or byte string literal.
     UnescapedQuote,
+
+    /// When parsing a character, byte, string or byte string literal directly
+    /// and the input does not start with the corresponding quote character
+    /// (plus optional raw string prefix).
+    DoesNotStartWithQuote,
 }
 
 /// A shared or owned string buffer, implemented for `String` and `&str`.

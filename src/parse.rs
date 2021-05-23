@@ -1,4 +1,4 @@
-use crate::{Buffer, Char, Float};
+use crate::{Buffer, Char, ErrorKind, Float};
 
 use super::{Bool, Error, Lit, Integer};
 
@@ -30,23 +30,20 @@ impl<B: Buffer> Lit<B> {
                     Some(b'.') | Some(b'e') | Some(b'E') | Some(b'f')
                         => Float::parse_impl(input).map(Lit::Float),
 
-                    _ => Err(Error::UnexpectedChar {
-                        c: input[end..].chars().next().unwrap(),
-                        offset: end,
-                    }),
+                    _ => Err(Error::single(end, ErrorKind::UnexpectedChar)),
                 }
             },
 
             b'\'' => Char::parse_impl(input).map(Lit::Char),
 
-            _ => Err(Error::InvalidLiteral),
+            _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
         }
     }
 }
 
 
 pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, Error> {
-    s.as_bytes().get(0).copied().ok_or(Error::Empty)
+    s.as_bytes().get(0).copied().ok_or(Error::spanless(ErrorKind::Empty))
 }
 
 /// Returns the index of the first non-underscore, non-decimal digit in `input`,

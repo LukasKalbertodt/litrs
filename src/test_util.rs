@@ -28,3 +28,37 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
         }
     }
 }
+
+macro_rules! assert_err {
+    ($expr:expr, $kind:ident, $( $span:tt )+ ) => {
+        let res = $expr;
+        let err = match res {
+            Err(e) => e,
+            Ok(v) => panic!(
+                "Expected `{}` to return an error, but it returned Ok({:?})",
+                stringify!($expr),
+                v,
+            ),
+        };
+        let expected_span = assert_err!(@span $($span)+);
+        if err.span != expected_span {
+            panic!(
+                "Expected error span {:?} for `{}` but got {:?}",
+                expected_span,
+                stringify!($expr),
+                err.span,
+            )
+        }
+        if err.kind != $crate::ErrorKind::$kind {
+            panic!(
+                "Expected error kind {} for `{}` but got {:?}",
+                stringify!($kind),
+                stringify!($expr),
+                err.kind,
+            )
+        }
+    };
+    (@span $start:literal .. $end:literal) => { Some($start .. $end) };
+    (@span $at:literal) => { Some($at.. $at + 1) };
+    (@span None) => { None };
+}

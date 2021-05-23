@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{Error, ErrorKind};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -12,7 +12,7 @@ impl Bool {
         match s {
             "false" => Ok(Self::False),
             "true" => Ok(Self::True),
-            _ => Err(Error::InvalidLiteral)
+            _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
         }
     }
 

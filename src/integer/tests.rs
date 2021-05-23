@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 use crate::{
-    Lit, Error, Integer, IntegerType as Ty, IntegerBase, IntegerBase::*,
+    Lit, Integer, IntegerType as Ty, IntegerBase, IntegerBase::*,
     test_util::assert_parse_ok_eq,
 };
 
@@ -269,6 +269,7 @@ fn parse_err() {
 
 #[test]
 fn invalid_digits() {
+    // TODO: emit better error
     [
         "0b10201",
         "0b9",
@@ -298,38 +299,49 @@ fn invalid_digits() {
 
 #[test]
 fn no_valid_digits() {
-    [
-        "0x_",
-        "0x__",
-        "0x________",
-        "0x_i8",
-        "0x_u8",
-        "0x_isize",
-        "0x_usize",
+    assert_err!(Integer::parse("0x_"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0x__"), NoValidDigits, 2..4);
+    assert_err!(Integer::parse("0x________"), NoValidDigits, 2..10);
+    assert_err!(Integer::parse("0x_i8"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0x_u8"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0x_isize"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0x_usize"), NoValidDigits, 2..3);
 
-        "0o_",
-        "0o__",
-        "0o________",
-        "0o_i32",
-        "0o_u32",
+    assert_err!(Integer::parse("0o_"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0o__"), NoValidDigits, 2..4);
+    assert_err!(Integer::parse("0o________"), NoValidDigits, 2..10);
+    assert_err!(Integer::parse("0o_i32"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0o_u32"), NoValidDigits, 2..3);
 
-        "0b_",
-        "0b__",
-        "0b________",
-        "0b_i128",
-        "0b_u128",
-    ].iter().for_each(|&s| assert_eq!(Integer::parse(s), Err(Error::NoValidDigits)));
+    assert_err!(Integer::parse("0b_"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0b__"), NoValidDigits, 2..4);
+    assert_err!(Integer::parse("0b________"), NoValidDigits, 2..10);
+    assert_err!(Integer::parse("0b_i128"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0b_u128"), NoValidDigits, 2..3);
 }
 
 #[test]
 fn invalid_suffix() {
-    [
-        "5u7", "5u9", "5u0", "33u12", "84u17", "99u80", "1234uu16",
-        "5i7", "5i9", "5i0", "33i12", "84i17", "99i80", "1234ii16",
-        "0ui32", "1iu32",
-        "54321a64",
-        "54321b64",
-        "54321x64",
-        "54321o64",
-    ].iter().for_each(|&s| assert_err(s));
+    assert_err!(Integer::parse("5u7"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("5u9"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("5u0"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("33u12"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("84u17"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("99u80"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("1234uu16"), InvalidIntegerTypeSuffix, 4..8);
+
+    assert_err!(Integer::parse("5i7"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("5i9"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("5i0"), InvalidIntegerTypeSuffix, 1..3);
+    assert_err!(Integer::parse("33i12"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("84i17"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("99i80"), InvalidIntegerTypeSuffix, 2..5);
+    assert_err!(Integer::parse("1234ii16"), InvalidIntegerTypeSuffix, 4..8);
+
+    assert_err!(Integer::parse("0ui32"), InvalidIntegerTypeSuffix, 1..5);
+    assert_err!(Integer::parse("1iu32"), InvalidIntegerTypeSuffix, 1..5);
+    assert_err!(Integer::parse("54321a64"), InvalidIntegerTypeSuffix, 5..8);
+    assert_err!(Integer::parse("54321b64"), InvalidIntegerTypeSuffix, 5..8);
+    assert_err!(Integer::parse("54321x64"), InvalidIntegerTypeSuffix, 5..8);
+    assert_err!(Integer::parse("54321o64"), InvalidIntegerTypeSuffix, 5..8);
 }

@@ -1,7 +1,4 @@
-use crate::{
-    Lit, Error,
-    test_util::assert_parse_ok_eq,
-};
+use crate::{Lit, test_util::assert_parse_ok_eq};
 use super::Char;
 
 // ===== Utility functions =======================================================================
@@ -22,7 +19,6 @@ macro_rules! check {
 
 
 // ===== Actual tests ============================================================================
-
 
 #[test]
 fn alphanumeric() {
@@ -105,33 +101,33 @@ fn ascii_escapes() {
 
 #[test]
 fn invald_ascii_escapes() {
-    assert_eq!(Char::parse(r"'\x80'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\x81'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\x8a'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\x8F'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xa0'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xB0'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xc3'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xDf'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xff'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xfF'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xFf'"), Err(Error::NonAsciiXEscape));
-    assert_eq!(Char::parse(r"'\xFF'"), Err(Error::NonAsciiXEscape));
+    assert_err!(Char::parse(r"'\x80'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\x81'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\x8a'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\x8F'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xa0'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xB0'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xc3'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xDf'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xff'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xfF'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xFf'"), NonAsciiXEscape, 1..5);
+    assert_err!(Char::parse(r"'\xFF'"), NonAsciiXEscape, 1..5);
 }
 
 #[test]
 fn parse_err() {
-    assert_eq!(Char::parse(r"''"), Err(Error::EmptyCharLiteral));
+    assert_err!(Char::parse(r"''"), EmptyCharLiteral, None);
 
-    assert_eq!(Char::parse(r"'"), Err(Error::UnterminatedLiteral));
-    assert_eq!(Char::parse(r"'a"), Err(Error::UnterminatedLiteral));
-    assert_eq!(Char::parse(r"'\n"), Err(Error::UnterminatedLiteral));
-    assert_eq!(Char::parse(r"'\x35"), Err(Error::UnterminatedLiteral));
+    assert_err!(Char::parse(r"'"), UnterminatedLiteral, None);
+    assert_err!(Char::parse(r"'a"), UnterminatedLiteral, None);
+    assert_err!(Char::parse(r"'\n"), UnterminatedLiteral, None);
+    assert_err!(Char::parse(r"'\x35"), UnterminatedLiteral, None);
 
-    assert_eq!(Char::parse(r"'ab'"), Err(Error::OverlongCharLiteral));
-    assert_eq!(Char::parse(r"'a _'"), Err(Error::OverlongCharLiteral));
+    assert_err!(Char::parse(r"'ab'"), OverlongCharLiteral, 2..4);
+    assert_err!(Char::parse(r"'a _'"), OverlongCharLiteral, 2..5);
 
-    assert_eq!(Char::parse(r""), Err(Error::Empty));
+    assert_err!(Char::parse(r""), Empty, None);
 
-    assert!(Char::parse(r"'''").is_err());
+    assert_err!(Char::parse(r"'''"), UnescapedQuote, 1);
 }

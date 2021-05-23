@@ -1,4 +1,4 @@
-use crate::{Buffer, Error, parse::{first_byte_or_empty, hex_digit_value}};
+use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_value}};
 
 
 /// An integer literal consisting of an optional base prefix (`0b`, `0o`, `0x`),
@@ -59,7 +59,7 @@ impl<B: Buffer> Integer<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             digit @ b'0'..=b'9' => Self::parse_impl(input, digit),
-            _ => Err(Error::DoesNotStartWithDigit),
+            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithDigit)),
         }
     }
 
@@ -143,7 +143,7 @@ impl<B: Buffer> Integer<B> {
         let (main_part, type_suffix) = without_prefix.split_at(end_main);
 
         if main_part.bytes().filter(|&b| b != b'_').count() == 0 {
-            return Err(Error::NoValidDigits);
+            return Err(Error::new(end_prefix..end_prefix + end_main, ErrorKind::NoValidDigits));
         }
 
         // Parse type suffix
@@ -161,9 +161,10 @@ impl<B: Buffer> Integer<B> {
             "i64" => Some(IntegerType::I64),
             "i128" => Some(IntegerType::I128),
             "isize" => Some(IntegerType::Isize),
-            _ => return Err(Error::InvalidIntegerTypeSuffix {
-                offset: main_part.len() + base.prefix().len(),
-            }),
+            _ => return Err(Error::new(
+                end_main + end_prefix..input.len(),
+                ErrorKind::InvalidIntegerTypeSuffix,
+            )),
         };
 
         Ok(Self {

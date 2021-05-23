@@ -1,6 +1,6 @@
-use crate::{Lit, Error};
+use crate::Lit;
 
 #[test]
 fn empty() {
-    assert!(matches!(Lit::parse(""), Err(Error::Empty)));
+    assert_err!(Lit::parse(""), Empty, None);
 }
