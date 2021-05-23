@@ -150,7 +150,7 @@ impl<B: Buffer> Integer<B> {
         }
 
         if main_part.bytes().filter(|&b| b != b'_').count() == 0 {
-            return Err(Error::new(end_prefix..end_prefix + end_main, ErrorKind::NoValidDigits));
+            return Err(Error::new(end_prefix..end_prefix + end_main, ErrorKind::NoDigits));
         }
 
 

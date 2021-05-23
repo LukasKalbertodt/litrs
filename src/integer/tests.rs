@@ -244,7 +244,7 @@ fn parse_err() {
     assert_err!(Integer::parse(";"), DoesNotStartWithDigit, 0);
     assert_err!(Integer::parse("0;"), InvalidIntegerTypeSuffix, 1..2);
     assert_err!(Integer::parse("0a"), InvalidDigit, 1);
-    assert_err!(Integer::parse("0b"), NoValidDigits, 2..2);
+    assert_err!(Integer::parse("0b"), NoDigits, 2..2);
     assert_err!(Integer::parse("0z"), InvalidIntegerTypeSuffix, 1..2);
     assert_err!(Integer::parse(" 0"), DoesNotStartWithDigit, 0);
     assert_err!(Integer::parse("0 "), InvalidIntegerTypeSuffix, 1);
@@ -288,25 +288,25 @@ fn invalid_digits() {
 
 #[test]
 fn no_valid_digits() {
-    assert_err!(Integer::parse("0x_"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0x__"), NoValidDigits, 2..4);
-    assert_err!(Integer::parse("0x________"), NoValidDigits, 2..10);
-    assert_err!(Integer::parse("0x_i8"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0x_u8"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0x_isize"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0x_usize"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0x_"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0x__"), NoDigits, 2..4);
+    assert_err!(Integer::parse("0x________"), NoDigits, 2..10);
+    assert_err!(Integer::parse("0x_i8"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0x_u8"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0x_isize"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0x_usize"), NoDigits, 2..3);
 
-    assert_err!(Integer::parse("0o_"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0o__"), NoValidDigits, 2..4);
-    assert_err!(Integer::parse("0o________"), NoValidDigits, 2..10);
-    assert_err!(Integer::parse("0o_i32"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0o_u32"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0o_"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0o__"), NoDigits, 2..4);
+    assert_err!(Integer::parse("0o________"), NoDigits, 2..10);
+    assert_err!(Integer::parse("0o_i32"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0o_u32"), NoDigits, 2..3);
 
-    assert_err!(Integer::parse("0b_"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0b__"), NoValidDigits, 2..4);
-    assert_err!(Integer::parse("0b________"), NoValidDigits, 2..10);
-    assert_err!(Integer::parse("0b_i128"), NoValidDigits, 2..3);
-    assert_err!(Integer::parse("0b_u128"), NoValidDigits, 2..3);
+    assert_err!(Integer::parse("0b_"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0b__"), NoDigits, 2..4);
+    assert_err!(Integer::parse("0b________"), NoDigits, 2..10);
+    assert_err!(Integer::parse("0b_i128"), NoDigits, 2..3);
+    assert_err!(Integer::parse("0b_u128"), NoDigits, 2..3);
 }
 
 #[test]

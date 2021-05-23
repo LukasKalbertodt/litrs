@@ -86,10 +86,7 @@ pub enum ErrorKind {
     InvalidDigit,
 
     /// Integer literal does not contain any valid digits.
-    NoValidDigits,
-
-    /// An integer literal overflows the target type.
-    IntegerOverflow,
+    NoDigits,
 
     /// Found a integer type suffix that is invalid.
     InvalidIntegerTypeSuffix,
