@@ -148,6 +148,28 @@ enum ErrorKind {
     /// A string or character literal using the `\xNN` escape where `NN > 0x7F`.
     NonAsciiXEscape,
 
+    /// A `\u{...}` escape in a byte or byte string literal.
+    UnicodeEscapeInByteLiteral,
+
+    /// A Unicode escape that does not start with a hex digit.
+    InvalidStartOfUnicodeEscape,
+
+    /// A `\u{...}` escape that lacks the opening brace.
+    UnicodeEscapeWithoutBrace,
+
+    /// In a `\u{...}` escape, a non-hex digit and non-underscore character was
+    /// found.
+    NonHexDigitInUnicodeEscape,
+
+    /// More than 6 digits found in unicode escape.
+    TooManyDigitInUnicodeEscape,
+
+    /// The value from a unicode escape does not represent a valid character.
+    InvalidUnicodeEscapeChar,
+
+    /// A `\u{..` escape that is not terminated (lacks the closing brace).
+    UnterminatedUnicodeEscape,
+
     /// A character literal that's not terminated.
     UnterminatedCharLiteral,
 
@@ -187,6 +209,13 @@ impl fmt::Display for Error {
             UnterminatedEscape => "unterminated escape: input ended too soon",
             InvalidXEscape => r"invalid `\x` escape: not followed by two hex digits",
             NonAsciiXEscape => r"`\x` escape in char/string literal exceed ASCII range",
+            UnicodeEscapeInByteLiteral => r"`\u{...}` escape in byte (string) literal not allowed",
+            InvalidStartOfUnicodeEscape => r"invalid start of `\u{...}` escape",
+            UnicodeEscapeWithoutBrace => r"`Unicode \u{...}` escape without opening brace",
+            NonHexDigitInUnicodeEscape => r"non-hex digit found in `\u{...}` escape",
+            TooManyDigitInUnicodeEscape => r"more than six digits in `\u{...}` escape",
+            InvalidUnicodeEscapeChar => r"value specified in `\u{...}` escape is not a valid char",
+            UnterminatedUnicodeEscape => r"unterminated `\u{...}` escape",
             UnterminatedCharLiteral => "character literal is not terminated",
             OverlongCharLiteral => "character literal contains more than one character",
             EmptyCharLiteral => "empty character literal",

@@ -100,6 +100,33 @@ fn ascii_escapes() {
 }
 
 #[test]
+fn unicode_escapes() {
+    check!('\u{0}');
+    check!('\u{00}');
+    check!('\u{b}');
+    check!('\u{B}');
+    check!('\u{7e}');
+    check!('\u{E4}');
+    check!('\u{e4}');
+    check!('\u{fc}');
+    check!('\u{Fc}');
+    check!('\u{fC}');
+    check!('\u{FC}');
+    check!('\u{b10}');
+    check!('\u{B10}');
+    check!('\u{0b10}');
+    check!('\u{2764}');
+    check!('\u{1f602}');
+    check!('\u{1F602}');
+
+    check!('\u{0}');
+    check!('\u{0__}');
+    check!('\u{3_b}');
+    check!('\u{1_F_6_0_2}');
+    check!('\u{1_F6_02_____}');
+}
+
+#[test]
 fn invald_ascii_escapes() {
     assert_err!(Char, r"'\x80'", NonAsciiXEscape, 1..5);
     assert_err!(Char, r"'\x81'", NonAsciiXEscape, 1..5);
@@ -124,6 +151,34 @@ fn invald_escapes() {
     assert_err!(Char, r"'\x1'", UnterminatedEscape, 1..4);
     assert_err!(Char, r"'\xaj'", InvalidXEscape, 1..5);
     assert_err!(Char, r"'\xjb'", InvalidXEscape, 1..5);
+}
+
+#[test]
+fn invalid_unicode_escapes() {
+    assert_err!(Char, r"'\u'", UnicodeEscapeWithoutBrace, 1..3);
+    assert_err!(Char, r"'\u '", UnicodeEscapeWithoutBrace, 1..3);
+    assert_err!(Char, r"'\u3'", UnicodeEscapeWithoutBrace, 1..3);
+
+    assert_err!(Char, r"'\u{'", UnterminatedUnicodeEscape, 1..4);
+    assert_err!(Char, r"'\u{12'", UnterminatedUnicodeEscape, 1..6);
+    assert_err!(Char, r"'\u{a0b'", UnterminatedUnicodeEscape, 1..7);
+    assert_err!(Char, r"'\u{a0_b  '", UnterminatedUnicodeEscape, 1..10);
+
+    assert_err!(Char, r"'\u{_}'", InvalidStartOfUnicodeEscape, 4);
+    assert_err!(Char, r"'\u{_5f}'", InvalidStartOfUnicodeEscape, 4);
+
+    assert_err!(Char, r"'\u{x}'", NonHexDigitInUnicodeEscape, 4);
+    assert_err!(Char, r"'\u{0x}'", NonHexDigitInUnicodeEscape, 5);
+    assert_err!(Char, r"'\u{3bx}'", NonHexDigitInUnicodeEscape, 6);
+    assert_err!(Char, r"'\u{3b_x}'", NonHexDigitInUnicodeEscape, 7);
+    assert_err!(Char, r"'\u{4x_}'", NonHexDigitInUnicodeEscape, 5);
+
+    assert_err!(Char, r"'\u{1234567}'", TooManyDigitInUnicodeEscape, 10);
+    assert_err!(Char, r"'\u{1234567}'", TooManyDigitInUnicodeEscape, 10);
+    assert_err!(Char, r"'\u{1_23_4_56_7}'", TooManyDigitInUnicodeEscape, 14);
+    assert_err!(Char, r"'\u{abcdef123}'", TooManyDigitInUnicodeEscape, 10);
+
+    assert_err!(Char, r"'\u{110000}'", InvalidUnicodeEscapeChar, 1..10);
 }
 
 #[test]
