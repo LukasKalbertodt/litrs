@@ -1,5 +1,7 @@
 
 mod bool;
+mod char;
+mod escape;
 mod float;
 mod integer;
 mod parse;
@@ -13,6 +15,7 @@ use std::ops::{Deref, Range};
 
 pub use self::{
     bool::Bool,
+    char::Char,
     float::{Float, FloatType},
     integer::{Integer, IntegerBase, IntegerType},
 };
@@ -27,7 +30,7 @@ pub enum Lit<B: Buffer> {
     Bool(Bool),
     Integer(Integer<B>),
     Float(Float<B>),
-    Char,
+    Char(Char<B>),
     String,
     Byte,
     ByteString,
@@ -71,6 +74,25 @@ pub enum Error {
 
     /// Exponent of a float literal does not contain any digits.
     NoExponentDigits,
+
+    // TODO: add some offsets here
+
+    /// Something about an escape in a string, character, byte string or byte
+    /// literal is broken.
+    InvalidEscape,
+
+    /// A string or character literal using the `\xNN` escape where `NN > 0x7F`.
+    NonAsciiXEscape,
+
+    /// A (raw) string, character, (raw) byte string or byte literal that's not
+    /// terminated.
+    UnterminatedLiteral,
+
+    /// A character contains more than one character.
+    OverlongCharLiteral,
+
+    /// An empty character literal, i.e. `''`.
+    EmptyCharLiteral,
 }
 
 /// A shared or owned string buffer, implemented for `String` and `&str`.

@@ -1,4 +1,4 @@
-use crate::{Buffer, Float};
+use crate::{Buffer, Char, Float};
 
 use super::{Bool, Error, Lit, Integer};
 
@@ -36,6 +36,8 @@ impl<B: Buffer> Lit<B> {
                     }),
                 }
             },
+
+            b'\'' => Char::parse_impl(input).map(Lit::Char),
 
             _ => Err(Error::InvalidLiteral),
         }
