@@ -24,13 +24,11 @@ impl<B: Buffer> Char<B> {
     /// Precondition: first character in input must be `'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
         let inner = &(*input)[1..];
-        let first = inner.chars().nth(0).ok_or(Error::UnterminatedLiteral)?;
-        let (c, len) = if first == '\\' {
-            unescape::<char>(inner)?
-        } else if first == '\'' {
-            return Err(Error::EmptyCharLiteral);
-        } else {
-            (first, first.len_utf8())
+        let (c, len) = match inner.chars().nth(0).ok_or(Error::UnterminatedLiteral)? {
+            '\\' => unescape::<char>(inner)?,
+            '\'' if input.len() == 2 => return Err(Error::EmptyCharLiteral),
+            '\'' => return Err(Error::UnescapedQuote),
+            other => (other, other.len_utf8()),
         };
         let rest = &inner[len..];
 

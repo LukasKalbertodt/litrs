@@ -93,6 +93,10 @@ pub enum Error {
 
     /// An empty character literal, i.e. `''`.
     EmptyCharLiteral,
+
+    /// A `'` character was not escaped in a character or byte literal, or a `"`
+    /// character was not escaped in a string or byte string literal.
+    UnescapedQuote,
 }
 
 /// A shared or owned string buffer, implemented for `String` and `&str`.
