@@ -129,22 +129,30 @@ impl<B: Buffer> Integer<B> {
         let without_prefix = &(*input)[end_prefix..];
 
         // Find end of main part.
-        let end_main = match base {
-            IntegerBase::Binary => without_prefix.bytes()
-                .position(|b| !matches!(b, b'0' | b'1' | b'_')),
-            IntegerBase::Octal => without_prefix.bytes()
-                .position(|b| !matches!(b, b'0'..=b'7' | b'_')),
-            IntegerBase::Decimal => without_prefix.bytes()
-                .position(|b| !matches!(b, b'0'..=b'9' | b'_')),
-            IntegerBase::Hexadecimal => without_prefix.bytes()
-                .position(|b| !matches!(b, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' | b'_')),
-        };
-        let end_main = end_main.unwrap_or(without_prefix.len());
+        let end_main = without_prefix.bytes()
+                .position(|b| !matches!(b, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' | b'_'))
+                .unwrap_or(without_prefix.len());
         let (main_part, type_suffix) = without_prefix.split_at(end_main);
+
+        // Check for invalid digits and make sure there is at least one valid digit.
+        let invalid_digit_pos = match base {
+            IntegerBase::Binary => main_part.bytes()
+                .position(|b| !matches!(b, b'0' | b'1' | b'_')),
+            IntegerBase::Octal => main_part.bytes()
+                .position(|b| !matches!(b, b'0'..=b'7' | b'_')),
+            IntegerBase::Decimal => main_part.bytes()
+                .position(|b| !matches!(b, b'0'..=b'9' | b'_')),
+            IntegerBase::Hexadecimal => None,
+        };
+
+        if let Some(pos) = invalid_digit_pos {
+            return Err(Error::single(end_prefix + pos, ErrorKind::InvalidDigit));
+        }
 
         if main_part.bytes().filter(|&b| b != b'_').count() == 0 {
             return Err(Error::new(end_prefix..end_prefix + end_main, ErrorKind::NoValidDigits));
         }
+
 
         // Parse type suffix
         let type_suffix = match type_suffix {

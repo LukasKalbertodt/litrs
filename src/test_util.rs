@@ -40,6 +40,14 @@ macro_rules! assert_err {
                 v,
             ),
         };
+        if err.kind != $crate::ErrorKind::$kind {
+            panic!(
+                "Expected error kind {} for `{}` but got {:?}",
+                stringify!($kind),
+                stringify!($expr),
+                err.kind,
+            )
+        }
         let expected_span = assert_err!(@span $($span)+);
         if err.span != expected_span {
             panic!(
@@ -47,14 +55,6 @@ macro_rules! assert_err {
                 expected_span,
                 stringify!($expr),
                 err.span,
-            )
-        }
-        if err.kind != $crate::ErrorKind::$kind {
-            panic!(
-                "Expected error kind {} for `{}` but got {:?}",
-                stringify!($kind),
-                stringify!($expr),
-                err.kind,
             )
         }
     };

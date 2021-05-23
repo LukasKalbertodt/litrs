@@ -82,6 +82,9 @@ pub enum ErrorKind {
     /// Input does not start with decimal digit when trying to parse an integer.
     DoesNotStartWithDigit,
 
+    /// A digit invalid for the specified integer base was found.
+    InvalidDigit,
+
     /// Integer literal does not contain any valid digits.
     NoValidDigits,
 
