@@ -33,16 +33,6 @@ macro_rules! check {
     (@stringify_suffix $suffix:ident) => { stringify!($suffix) };
 }
 
-#[track_caller]
-fn assert_err(input: &str) {
-    if Lit::parse(input).is_ok() {
-        panic!("Parsing '{}' with `Lit::parse` should fail, but it didn't!", input);
-    }
-    if Float::parse(input).is_ok() {
-        panic!("Parsing '{}' with `Float::parse` should fail, but it didn't!", input);
-    }
-}
-
 
 // ===== Actual tests ===========================================================================
 
@@ -166,50 +156,48 @@ fn simple() {
 
 #[test]
 fn parse_err() {
-    [
-        "",
-        ".",
-        "+",
-        "-",
-        "e",
-        "e8",
-        "0e",
-        "f32",
-        "foo",
+    assert_err!(Float::parse(""), Empty, None);
+    assert_err!(Float::parse("."), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("+"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("-"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("e"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("e8"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("0e"), NoExponentDigits, 1..2);
+    assert_err!(Float::parse("f32"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("foo"), DoesNotStartWithDigit, 0);
 
-        "inf",
-        "nan",
-        "NaN",
-        "NAN",
+    assert_err!(Float::parse("inf"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("nan"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("NaN"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("NAN"), DoesNotStartWithDigit, 0);
 
-        "_2.7",
-        "0x44.5",
-        "1e",
-        ".5",
-        "1.e4",
-        "3._4",
-        "12345._987",
-        "46._",
-        "46.f32",
-        "46.e3",
-        "46._e3",
-        "46.e3f64",
-        "23.4e_",
-        "23E___f32",
-        "7f23",
-        "7f320",
-        "7f64_",
-        "8f649",
-        "8f64f32",
-        "55e3.1",
+    assert_err!(Float::parse("_2.7"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("0x44.5"), InvalidFloatTypeSuffix, 1..6);
+    assert_err!(Float::parse("1e"), NoExponentDigits, 1..2);
+    assert_err!(Float::parse(".5"), DoesNotStartWithDigit, 0);
+    assert_err!(Float::parse("1.e4"), UnexpectedChar, 2);
+    assert_err!(Float::parse("3._4"), UnexpectedChar, 2);
+    assert_err!(Float::parse("12345._987"), UnexpectedChar, 6);
+    assert_err!(Float::parse("46._"), UnexpectedChar, 3);
+    assert_err!(Float::parse("46.f32"), UnexpectedChar, 3);
+    assert_err!(Float::parse("46.e3"), UnexpectedChar, 3);
+    assert_err!(Float::parse("46._e3"), UnexpectedChar, 3);
+    assert_err!(Float::parse("46.e3f64"), UnexpectedChar, 3);
+    assert_err!(Float::parse("23.4e_"), NoExponentDigits, 4..6);
+    assert_err!(Float::parse("23E___f32"), NoExponentDigits, 2..6);
+    assert_err!(Float::parse("7f23"), InvalidFloatTypeSuffix, 1..4);
+    assert_err!(Float::parse("7f320"), InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float::parse("7f64_"), InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float::parse("8f649"), InvalidFloatTypeSuffix, 1..5);
+    assert_err!(Float::parse("8f64f32"), InvalidFloatTypeSuffix, 1..7);
+    assert_err!(Float::parse("55e3.1"), InvalidFloatTypeSuffix, 4..6);  // suboptimal
 
-        "3.7+",
-        "3.7+2",
-        "3.7-",
-        "3.7-2",
-        "3.7e+",
-        "3.7e-",
-        "3.7e-+3",
-        "3.7e+-3",
-    ].iter().for_each(|&s| assert_err(s));
+    assert_err!(Float::parse("3.7+"), InvalidFloatTypeSuffix, 3..4);
+    assert_err!(Float::parse("3.7+2"), InvalidFloatTypeSuffix, 3..5);
+    assert_err!(Float::parse("3.7-"), InvalidFloatTypeSuffix, 3..4);
+    assert_err!(Float::parse("3.7-2"), InvalidFloatTypeSuffix, 3..5);
+    assert_err!(Float::parse("3.7e+"), NoExponentDigits, 3..5);
+    assert_err!(Float::parse("3.7e-"), NoExponentDigits, 3..5);
+    assert_err!(Float::parse("3.7e-+3"), NoExponentDigits, 3..5);  // suboptimal
+    assert_err!(Float::parse("3.7e+-3"), NoExponentDigits, 3..5);  // suboptimal
 }

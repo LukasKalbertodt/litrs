@@ -126,7 +126,7 @@ impl<B: Buffer> Integer<B> {
             // - "0r" -> this will error later
             _ => (0, IntegerBase::Decimal),
         };
-        let without_prefix = &(*input)[end_prefix..];
+        let without_prefix = &input[end_prefix..];
 
         // Find end of main part.
         let end_main = without_prefix.bytes()

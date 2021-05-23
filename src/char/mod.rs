@@ -30,7 +30,7 @@ impl<B: Buffer> Char<B> {
             return Err(Error::spanless(ErrorKind::UnterminatedCharLiteral));
         }
 
-        let inner = &(*input)[1..input.len() - 1];
+        let inner = &input[1..input.len() - 1];
         let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::EmptyCharLiteral))?;
         let (c, len) = match first {
             '\\' => unescape::<char>(inner, 1)?,
