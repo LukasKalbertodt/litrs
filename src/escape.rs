@@ -21,9 +21,9 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
                 .ok_or(Error::new(offset..offset + input.len(), ErrorKind::UnterminatedEscape))?
                 .as_bytes();
             let first = hex_digit_value(hex_string[0])
-                .ok_or(Error::single(offset + 2, ErrorKind::InvalidXEscape))?;
+                .ok_or(Error::new(offset..offset + 4, ErrorKind::InvalidXEscape))?;
             let second = hex_digit_value(hex_string[1])
-                .ok_or(Error::single(offset + 3, ErrorKind::InvalidXEscape))?;
+                .ok_or(Error::new(offset..offset + 4, ErrorKind::InvalidXEscape))?;
             let value = second + 16 * first;
 
             if E::SUPPORTS_UNICODE && value > 0x7F {
