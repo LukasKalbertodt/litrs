@@ -11,15 +11,17 @@ mod escape;
 mod float;
 mod integer;
 mod parse;
+mod string;
 
 
-use std::{fmt, ops::{Deref, Range}};
+use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
 
 pub use self::{
     bool::BoolLit,
     char::CharLit,
     float::{FloatLit, FloatType},
     integer::{IntegerLit, IntegerBase, IntegerType},
+    string::StringLit,
 };
 
 
@@ -33,7 +35,7 @@ pub enum Literal<B: Buffer> {
     Integer(IntegerLit<B>),
     Float(FloatLit<B>),
     Char(CharLit<B>),
-    String(String),
+    String(StringLit<B>),
     Byte,
     ByteString,
 }
@@ -187,6 +189,12 @@ enum ErrorKind {
     /// and the input does not start with the corresponding quote character
     /// (plus optional raw string prefix).
     DoesNotStartWithQuote,
+
+    /// Unterminated raw string literal.
+    UnterminatedRawString,
+
+    /// Invalid start for a string literal.
+    InvalidStringLiteralStart,
 }
 
 impl std::error::Error for Error {}
@@ -221,6 +229,8 @@ impl fmt::Display for Error {
             EmptyCharLiteral => "empty character literal",
             UnescapedSingleQuote => "character literal contains unescaped ' character",
             DoesNotStartWithQuote => "invalid start for char/byte/string literal",
+            UnterminatedRawString => "unterminated raw string literal",
+            InvalidStringLiteralStart => "invalid start for string literal",
         };
 
         description.fmt(f)?;
@@ -239,6 +249,12 @@ impl fmt::Display for Error {
 /// `litrs` only gurantees that this trait is implemented for `String` and
 /// `&str`.
 pub trait Buffer: sealed::Sealed + Deref<Target = str> {
+    /// This is `Cow<'static, str>` for `String, and `Cow<'a, str>` for `&'a str`.
+    type Cow: From<String> + AsRef<str> + Borrow<str> + Deref<Target = str>;
+
+    #[doc(hidden)]
+    fn into_cow(self) -> Self::Cow;
+
     /// Cuts away some characters at the beginning and some at the end. Given
     /// range has to be in bounds.
     #[doc(hidden)]
@@ -254,6 +270,11 @@ impl<'a> Buffer for &'a str {
     fn cut(self, range: Range<usize>) -> Self {
         &self[range]
     }
+
+    type Cow = Cow<'a, str>;
+    fn into_cow(self) -> Self::Cow {
+        self.into()
+    }
 }
 
 impl sealed::Sealed for String {}
@@ -265,5 +286,10 @@ impl Buffer for String {
         self.truncate(range.end);
         self.drain(..range.start);
         self
+    }
+
+    type Cow = Cow<'static, str>;
+    fn into_cow(self) -> Self::Cow {
+        self.into()
     }
 }

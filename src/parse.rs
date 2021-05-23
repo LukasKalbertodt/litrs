@@ -1,4 +1,4 @@
-use crate::{Buffer, BoolLit, CharLit, Error, ErrorKind, FloatLit, IntegerLit, Literal};
+use crate::{BoolLit, Buffer, CharLit, Error, ErrorKind, FloatLit, IntegerLit, Literal, StringLit};
 
 
 impl<B: Buffer> Literal<B> {
@@ -33,6 +33,7 @@ impl<B: Buffer> Literal<B> {
             },
 
             b'\'' => CharLit::parse_impl(input).map(Literal::Char),
+            b'"' | b'r' => StringLit::parse_impl(input).map(Literal::String),
 
             _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
         }
