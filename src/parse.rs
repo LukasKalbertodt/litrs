@@ -1,15 +1,13 @@
-use crate::{Buffer, Char, ErrorKind, Float};
-
-use super::{Bool, Error, Lit, Integer};
+use crate::{Buffer, BoolLit, CharLit, Error, ErrorKind, FloatLit, IntegerLit, Literal};
 
 
-impl<B: Buffer> Lit<B> {
+impl<B: Buffer> Literal<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         let first = first_byte_or_empty(&input)?;
 
         match first {
-            b'f' if &*input == "false" => Ok(Self::Bool(Bool::False)),
-            b't' if &*input == "true" => Ok(Self::Bool(Bool::True)),
+            b'f' if &*input == "false" => Ok(Self::Bool(BoolLit::False)),
+            b't' if &*input == "true" => Ok(Self::Bool(BoolLit::True)),
 
             // A number literal (integer or float).
             digit @ b'0'..=b'9' => {
@@ -23,18 +21,18 @@ impl<B: Buffer> Lit<B> {
                     // Potential chars in integer literals: b, o, x for base; u
                     // and i for type suffix.
                     None | Some(b'b') | Some(b'o') | Some(b'x') | Some(b'u') | Some(b'i')
-                        => Integer::parse_impl(input, digit).map(Lit::Integer),
+                        => IntegerLit::parse_impl(input, digit).map(Literal::Integer),
 
                     // Potential chars for float literals: `.` as fractional
                     // period, e and E as exponent start and f as type suffix.
                     Some(b'.') | Some(b'e') | Some(b'E') | Some(b'f')
-                        => Float::parse_impl(input).map(Lit::Float),
+                        => FloatLit::parse_impl(input).map(Literal::Float),
 
                     _ => Err(Error::single(end, ErrorKind::UnexpectedChar)),
                 }
             },
 
-            b'\'' => Char::parse_impl(input).map(Lit::Char),
+            b'\'' => CharLit::parse_impl(input).map(Literal::Char),
 
             _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
         }

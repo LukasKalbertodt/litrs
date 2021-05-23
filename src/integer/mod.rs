@@ -14,7 +14,7 @@ use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_val
 /// not perform an overflow check.
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
-pub struct Integer<B: Buffer> {
+pub struct IntegerLit<B: Buffer> {
     base: IntegerBase,
     main_part: B,
     type_suffix: Option<IntegerType>,
@@ -55,7 +55,7 @@ impl IntegerBase {
     }
 }
 
-impl<B: Buffer> Integer<B> {
+impl<B: Buffer> IntegerLit<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             digit @ b'0'..=b'9' => Self::parse_impl(input, digit),

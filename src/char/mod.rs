@@ -3,12 +3,12 @@ use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_emp
 
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Char<B: Buffer> {
+pub struct CharLit<B: Buffer> {
     raw: B,
     value: char,
 }
 
-impl<B: Buffer> Char<B> {
+impl<B: Buffer> CharLit<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             b'\'' => Self::parse_impl(input),

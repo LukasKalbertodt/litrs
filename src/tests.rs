@@ -1,6 +1,6 @@
-use crate::Lit;
+use crate::Literal;
 
 #[test]
 fn empty() {
-    assert_err!(Lit, "", Empty, None);
+    assert_err!(Literal, "", Empty, None);
 }

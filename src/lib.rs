@@ -16,24 +16,24 @@ mod parse;
 use std::{fmt, ops::{Deref, Range}};
 
 pub use self::{
-    bool::Bool,
-    char::Char,
-    float::{Float, FloatType},
-    integer::{Integer, IntegerBase, IntegerType},
+    bool::BoolLit,
+    char::CharLit,
+    float::{FloatLit, FloatType},
+    integer::{IntegerLit, IntegerBase, IntegerType},
 };
 
 
-pub type OwnedLit = Lit<String>;
-pub type SharedLit<'a> = Lit<&'a str>;
+pub type OwnedLit = Literal<String>;
+pub type SharedLit<'a> = Literal<&'a str>;
 
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Lit<B: Buffer> {
-    Bool(Bool),
-    Integer(Integer<B>),
-    Float(Float<B>),
-    Char(Char<B>),
-    String,
+pub enum Literal<B: Buffer> {
+    Bool(BoolLit),
+    Integer(IntegerLit<B>),
+    Float(FloatLit<B>),
+    Char(CharLit<B>),
+    String(String),
     Byte,
     ByteString,
 }

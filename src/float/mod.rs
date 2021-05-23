@@ -3,7 +3,7 @@ use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empt
 
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Float<B: Buffer> {
+pub struct FloatLit<B: Buffer> {
     /// Basically the whole literal, but without the type suffix. Other `usize`
     /// fields in this struct partition this string. `end_integer_part` is
     /// always <= `end_fractional_part`.
@@ -44,7 +44,7 @@ pub enum FloatType {
 }
 
 
-impl<B: Buffer> Float<B> {
+impl<B: Buffer> FloatLit<B> {
     pub fn parse(s: B) -> Result<Self, Error> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => Self::parse_impl(s),

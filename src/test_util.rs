@@ -32,7 +32,7 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
 macro_rules! assert_err {
     ($ty:ident, $input:literal, $kind:ident, $( $span:tt )+ ) => {
         assert_err_single!($ty::parse($input), $kind, $($span)+);
-        assert_err_single!($crate::Lit::parse($input), $kind, $($span)+);
+        assert_err_single!($crate::Literal::parse($input), $kind, $($span)+);
     };
 }
 

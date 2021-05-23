@@ -2,12 +2,12 @@ use crate::{Error, ErrorKind};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Bool {
+pub enum BoolLit {
     False,
     True,
 }
 
-impl Bool {
+impl BoolLit {
     pub fn parse(s: &str) -> Result<Self, Error> {
         match s {
             "false" => Ok(Self::False),
