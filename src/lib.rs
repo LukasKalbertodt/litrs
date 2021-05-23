@@ -13,7 +13,7 @@ mod integer;
 mod parse;
 
 
-use std::ops::{Deref, Range};
+use std::{fmt, ops::{Deref, Range}};
 
 pub use self::{
     bool::Bool,
@@ -39,6 +39,34 @@ pub enum Lit<B: Buffer> {
 }
 
 
+/// Errors during parsing.
+///
+/// This type should be seen primarily for error reporting and not for catching
+/// specific cases. The span and error kind are not guaranteed to be stable
+/// over different versions, meaning that a returned error can change between
+/// versions of this library. There are simply too many fringe cases that are
+/// not easy to classify as a specific error kind. It depends entirely on the
+/// specific parser code how an invalid input is categorized.
+///
+/// Consider these examples:
+/// - `'\` can be seen as
+///     - invalid escape, or
+///     - unterminated character literal.
+/// - `'''` can be seen as
+///     - empty character literal, or
+///     - unescaped quote character.
+/// - `0b64` can be seen as
+///     - binary integer literal with invalid digit 6, or
+///     - binary integer literal with invalid digit 4, or
+///     - decimal integer literal with invalid digit b, or
+///     - decimal integer literal 0 with unknown type suffix `b64`.
+///
+/// If you want to see more if these examples, feel free to check out the unit
+/// tests of this library.
+///
+/// While this library does its best to emit sensible and precise errors, and to
+/// keep the returned errors as stable as possible, full stability cannot be
+/// guaranteed.
 #[derive(Debug, Clone)]
 pub struct Error {
     span: Option<Range<usize>>,
@@ -46,6 +74,19 @@ pub struct Error {
 }
 
 impl Error {
+    /// Returns the kind of this error. **Note**: this is not stable. See
+    /// [the documentation of this type][Error] for more information.
+    pub fn kind(&self) -> ErrorKind {
+        self.kind
+    }
+
+    /// Returns a span of this error, if available. **Note**: this is not
+    /// stable. See[the documentation of this type][Error] for more
+    /// information.
+    pub fn span(&self) -> Option<Range<usize>> {
+        self.span.clone()
+    }
+
     fn new(span: Range<usize>, kind: ErrorKind) -> Self {
         Self {
             span: Some(span),
@@ -68,7 +109,9 @@ impl Error {
     }
 }
 
+/// Kinds of errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ErrorKind {
     /// The input was an empty string
     Empty,
@@ -128,6 +171,42 @@ pub enum ErrorKind {
     /// and the input does not start with the corresponding quote character
     /// (plus optional raw string prefix).
     DoesNotStartWithQuote,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ErrorKind::*;
+
+        let description = match self.kind {
+            Empty => "input is empty",
+            UnexpectedChar => "unexpected character",
+            InvalidLiteral => "invalid literal",
+            DoesNotStartWithDigit => "number literal does not start with decimal digit",
+            InvalidDigit => "integer literal contains a digit invalid for its base",
+            NoDigits => "integer literal does not contain any digits",
+            InvalidIntegerTypeSuffix => "invalid integer type suffix",
+            InvalidFloatTypeSuffix => "invalid floating point type suffix",
+            NoExponentDigits => "exponent of floating point literal does not contain any digits",
+            UnknownEscape => "unknown escape",
+            UnterminatedEscape => "unterminated escape: input ended too soon",
+            InvalidXEscape => r"invalid `\x` escape: not followed by two hex digits",
+            NonAsciiXEscape => r"`\x` escape in char/string literal exceed ASCII range",
+            UnterminatedCharLiteral => "character literal is not terminated",
+            OverlongCharLiteral => "character literal contains more than one character",
+            EmptyCharLiteral => "empty character literal",
+            UnescapedSingleQuote => "character literal contains unescaped ' character",
+            DoesNotStartWithQuote => "invalid start for char/byte/string literal",
+        };
+
+        description.fmt(f)?;
+        if let Some(span) = &self.span {
+            write!(f, " (at {}..{})", span.start, span.end)?;
+        }
+
+        Ok(())
+    }
 }
 
 /// A shared or owned string buffer, implemented for `String` and `&str`.
