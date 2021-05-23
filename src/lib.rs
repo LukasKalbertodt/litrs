@@ -74,12 +74,6 @@ pub struct Error {
 }
 
 impl Error {
-    /// Returns the kind of this error. **Note**: this is not stable. See
-    /// [the documentation of this type][Error] for more information.
-    pub fn kind(&self) -> ErrorKind {
-        self.kind
-    }
-
     /// Returns a span of this error, if available. **Note**: this is not
     /// stable. See[the documentation of this type][Error] for more
     /// information.
@@ -112,7 +106,7 @@ impl Error {
 /// Kinds of errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum ErrorKind {
+enum ErrorKind {
     /// The input was an empty string
     Empty,
 
