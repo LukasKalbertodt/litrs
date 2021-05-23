@@ -24,11 +24,11 @@ impl<B: Buffer> Char<B> {
     /// Precondition: first character in input must be `'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
         let inner = &(*input)[1..];
-        let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::UnterminatedLiteral))?;
+        let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::UnterminatedCharLiteral))?;
         let (c, len) = match first {
             '\\' => unescape::<char>(inner, 1)?,
             '\'' if input.len() == 2 => return Err(Error::spanless(ErrorKind::EmptyCharLiteral)),
-            '\'' => return Err(Error::single(1, ErrorKind::UnescapedQuote)),
+            '\'' => return Err(Error::single(1, ErrorKind::UnescapedSingleQuote)),
             other => (other, other.len_utf8()),
         };
         let rest = &inner[len..];
@@ -36,7 +36,7 @@ impl<B: Buffer> Char<B> {
         if rest.len() > 1 {
             return Err(Error::new(len + 1..input.len(), ErrorKind::OverlongCharLiteral));
         } else if rest != "'" {
-            return Err(Error::spanless(ErrorKind::UnterminatedLiteral));
+            return Err(Error::spanless(ErrorKind::UnterminatedCharLiteral));
         }
 
         Ok(Self {

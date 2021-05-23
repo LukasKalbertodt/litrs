@@ -119,15 +119,15 @@ fn invald_ascii_escapes() {
 fn parse_err() {
     assert_err!(Char::parse(r"''"), EmptyCharLiteral, None);
 
-    assert_err!(Char::parse(r"'"), UnterminatedLiteral, None);
-    assert_err!(Char::parse(r"'a"), UnterminatedLiteral, None);
-    assert_err!(Char::parse(r"'\n"), UnterminatedLiteral, None);
-    assert_err!(Char::parse(r"'\x35"), UnterminatedLiteral, None);
+    assert_err!(Char::parse(r"'"), UnterminatedCharLiteral, None);
+    assert_err!(Char::parse(r"'a"), UnterminatedCharLiteral, None);
+    assert_err!(Char::parse(r"'\n"), UnterminatedCharLiteral, None);
+    assert_err!(Char::parse(r"'\x35"), UnterminatedCharLiteral, None);
 
     assert_err!(Char::parse(r"'ab'"), OverlongCharLiteral, 2..4);
     assert_err!(Char::parse(r"'a _'"), OverlongCharLiteral, 2..5);
 
     assert_err!(Char::parse(r""), Empty, None);
 
-    assert_err!(Char::parse(r"'''"), UnescapedQuote, 1);
+    assert_err!(Char::parse(r"'''"), UnescapedSingleQuote, 1);
 }

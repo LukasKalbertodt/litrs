@@ -101,18 +101,23 @@ pub enum ErrorKind {
     /// Exponent of a float literal does not contain any digits.
     NoExponentDigits,
 
-    /// Something about an escape in a string, character, byte string or byte
-    /// literal is broken.
-    InvalidEscape,
+    /// An unknown escape code, e.g. `\b`.
+    UnknownEscape,
+
+    /// A started escape sequence where the input ended before the escape was
+    /// finished.
+    UnterminatedEscape,
+
+    /// An `\x` escape where the two digits are not valid hex digits.
+    InvalidXEscape,
 
     /// A string or character literal using the `\xNN` escape where `NN > 0x7F`.
     NonAsciiXEscape,
 
-    /// A (raw) string, character, (raw) byte string or byte literal that's not
-    /// terminated.
-    UnterminatedLiteral,
+    /// A character literal that's not terminated.
+    UnterminatedCharLiteral,
 
-    /// A character contains more than one character.
+    /// A character literal that contains more than one character.
     OverlongCharLiteral,
 
     /// An empty character literal, i.e. `''`.
@@ -120,7 +125,7 @@ pub enum ErrorKind {
 
     /// A `'` character was not escaped in a character or byte literal, or a `"`
     /// character was not escaped in a string or byte string literal.
-    UnescapedQuote,
+    UnescapedSingleQuote,
 
     /// When parsing a character, byte, string or byte string literal directly
     /// and the input does not start with the corresponding quote character
