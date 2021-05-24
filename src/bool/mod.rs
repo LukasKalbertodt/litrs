@@ -1,6 +1,9 @@
 use crate::{Error, ErrorKind};
 
 
+/// A bool literal: `true` or `false`. Also see [the reference][ref].
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#boolean-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BoolLit {
     False,
@@ -8,6 +11,8 @@ pub enum BoolLit {
 }
 
 impl BoolLit {
+    /// Parses the input as a bool literal. Returns an error if the input is
+    /// invalid or represents a different kind of literal.
     pub fn parse(s: &str) -> Result<Self, Error> {
         match s {
             "false" => Ok(Self::False),
@@ -16,6 +21,7 @@ impl BoolLit {
         }
     }
 
+    /// Returns the actual Boolean value of this literal.
     pub fn value(self) -> bool {
         match self {
             Self::False => false,
@@ -23,6 +29,7 @@ impl BoolLit {
         }
     }
 
+    /// Returns the literal as string.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::False => "false",

@@ -24,15 +24,22 @@ pub use self::{
     bytestr::ByteStringLit,
     char::CharLit,
     float::{FloatLit, FloatType},
-    integer::{IntegerLit, IntegerBase, IntegerType},
+    integer::{FromIntegerLiteral, IntegerLit, IntegerBase, IntegerType},
     string::StringLit,
 };
 
 
-pub type OwnedLit = Literal<String>;
-pub type SharedLit<'a> = Literal<&'a str>;
+/// A literal which owns the underlying buffer.
+pub type OwnedLiteral = Literal<String>;
 
+/// A literal whose underlying buffer is borrowed.
+pub type SharedLiteral<'a> = Literal<&'a str>;
 
+/// A literal. This is the main type of this library.
+///
+/// This is generic over the underlying buffer `B`, which can be `&str` or
+/// `String`. There are two useful type aliases: [`OwnedLiteral`] and
+/// [`SharedLiteral`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal<B: Buffer> {
     Bool(BoolLit),
@@ -49,18 +56,18 @@ pub enum Literal<B: Buffer> {
 ///
 /// This type should be seen primarily for error reporting and not for catching
 /// specific cases. The span and error kind are not guaranteed to be stable
-/// over different versions, meaning that a returned error can change between
-/// versions of this library. There are simply too many fringe cases that are
-/// not easy to classify as a specific error kind. It depends entirely on the
-/// specific parser code how an invalid input is categorized.
+/// over different versions of this library, meaning that a returned error can
+/// change from one version to the next. There are simply too many fringe cases
+/// that are not easy to classify as a specific error kind. It depends entirely
+/// on the specific parser code how an invalid input is categorized.
 ///
 /// Consider these examples:
 /// - `'\` can be seen as
-///     - invalid escape, or
+///     - invalid escape in character literal, or
 ///     - unterminated character literal.
 /// - `'''` can be seen as
 ///     - empty character literal, or
-///     - unescaped quote character.
+///     - unescaped quote character in character literal.
 /// - `0b64` can be seen as
 ///     - binary integer literal with invalid digit 6, or
 ///     - binary integer literal with invalid digit 4, or
@@ -81,7 +88,7 @@ pub struct Error {
 
 impl Error {
     /// Returns a span of this error, if available. **Note**: this is not
-    /// stable. See[the documentation of this type][Error] for more
+    /// stable. See [the documentation of this type][Error] for more
     /// information.
     pub fn span(&self) -> Option<Range<usize>> {
         self.span.clone()
@@ -275,20 +282,20 @@ impl fmt::Display for Error {
     }
 }
 
-/// A shared or owned string buffer, implemented for `String` and `&str`.
+/// A shared or owned string buffer. Implemented for `String` and `&str`. *Implementation detail*.
 ///
 /// This is trait is implementation detail of this library, cannot be
 /// implemented in other crates and is not subject to semantic versioning.
 /// `litrs` only gurantees that this trait is implemented for `String` and
-/// `&str`.
+/// `for<'a> &'a str`.
 pub trait Buffer: sealed::Sealed + Deref<Target = str> {
-    /// This is `Cow<'static, str>` for `String, and `Cow<'a, str>` for `&'a str`.
+    /// This is `Cow<'static, str>` for `String`, and `Cow<'a, str>` for `&'a str`.
     type Cow: From<String> + AsRef<str> + Borrow<str> + Deref<Target = str>;
 
     #[doc(hidden)]
     fn into_cow(self) -> Self::Cow;
 
-    /// This is `Cow<'static, [u8]>` for `String, and `Cow<'a, [u8]>` for `&'a str`.
+    /// This is `Cow<'static, [u8]>` for `String`, and `Cow<'a, [u8]>` for `&'a str`.
     type ByteCow: From<Vec<u8>> + AsRef<[u8]> + Borrow<[u8]> + Deref<Target = [u8]>;
 
     #[doc(hidden)]
@@ -306,15 +313,18 @@ mod sealed {
 
 impl<'a> sealed::Sealed for &'a str {}
 impl<'a> Buffer for &'a str {
+    #[doc(hidden)]
     fn cut(self, range: Range<usize>) -> Self {
         &self[range]
     }
 
     type Cow = Cow<'a, str>;
+    #[doc(hidden)]
     fn into_cow(self) -> Self::Cow {
         self.into()
     }
     type ByteCow = Cow<'a, [u8]>;
+    #[doc(hidden)]
     fn into_byte_cow(self) -> Self::ByteCow {
         self.as_bytes().into()
     }
@@ -322,6 +332,7 @@ impl<'a> Buffer for &'a str {
 
 impl sealed::Sealed for String {}
 impl Buffer for String {
+    #[doc(hidden)]
     fn cut(mut self, range: Range<usize>) -> Self {
         // This is not the most efficient way, but it works. First we cut the
         // end, then the beginning. Note that `drain` also removes the range if
@@ -332,11 +343,13 @@ impl Buffer for String {
     }
 
     type Cow = Cow<'static, str>;
+    #[doc(hidden)]
     fn into_cow(self) -> Self::Cow {
         self.into()
     }
 
     type ByteCow = Cow<'static, [u8]>;
+    #[doc(hidden)]
     fn into_byte_cow(self) -> Self::ByteCow {
         self.into_bytes().into()
     }

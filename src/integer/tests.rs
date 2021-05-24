@@ -1,16 +1,14 @@
 use std::fmt::{Debug, Display};
 use crate::{
-    Literal, IntegerLit, IntegerType as Ty, IntegerBase, IntegerBase::*,
+    FromIntegerLiteral, Literal, IntegerLit, IntegerType as Ty, IntegerBase, IntegerBase::*,
     test_util::assert_parse_ok_eq,
 };
-
-use super::FromIntLiteral;
 
 
 // ===== Utility functions =======================================================================
 
 #[track_caller]
-fn check<T: FromIntLiteral + PartialEq + Debug + Display>(
+fn check<T: FromIntegerLiteral + PartialEq + Debug + Display>(
     input: &str,
     value: T,
     base: IntegerBase,

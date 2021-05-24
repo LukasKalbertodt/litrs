@@ -1,17 +1,21 @@
 use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_value}};
 
 
-/// An integer literal consisting of an optional base prefix (`0b`, `0o`, `0x`),
-/// the main part containing digits and optional `_`, and an optional type
-/// suffix (e.g. `u64` or `i8`).
+/// An integer literal.
+///
+/// An integer literal consists of an optional base prefix (`0b`, `0o`, `0x`),
+/// the main part (digits and underscores), and an optional type suffix
+/// (e.g. `u64` or `i8`). See [the reference][ref] for more information.
 ///
 /// Note that integer literals are always positive: the grammar does not contain
-/// the minus sign at all. The minus sign is just the unary negate operator, not
-/// part of the literal. Which is interesting for cases like `- 128i8`: here,
-/// the literal itself would overflow the specified type (`i8` cannot represent
-/// 128). That's why in rustc, the literal overflow check is performed as a lint
-/// after parsing, not during the lexing stage. Similarly, `Integer::parse` does
-/// not perform an overflow check.
+/// the minus sign at all. The minus sign is just the unary negate operator,
+/// not part of the literal. Which is interesting for cases like `- 128i8`:
+/// here, the literal itself would overflow the specified type (`i8` cannot
+/// represent 128). That's why in rustc, the literal overflow check is
+/// performed as a lint after parsing, not during the lexing stage. Similarly,
+/// [`IntegerLit::parse`] does not perform an overflow check.
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#integer-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IntegerLit<B: Buffer> {
@@ -20,6 +24,7 @@ pub struct IntegerLit<B: Buffer> {
     type_suffix: Option<IntegerType>,
 }
 
+/// The bases in which an integer can be specified.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IntegerBase {
     Binary,
@@ -28,6 +33,7 @@ pub enum IntegerBase {
     Hexadecimal,
 }
 
+/// All possible integer type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IntegerType {
     U8,
@@ -45,6 +51,8 @@ pub enum IntegerType {
 }
 
 impl IntegerBase {
+    /// Returns the literal prefix that indicates this base, i.e. `"0b"`,
+    /// `"0o"`, `""` and `"0x"`.
     pub fn prefix(self) -> &'static str {
         match self {
             Self::Binary => "0b",
@@ -56,6 +64,8 @@ impl IntegerBase {
 }
 
 impl<B: Buffer> IntegerLit<B> {
+    /// Parses the input as an integer literal. Returns an error if the input is
+    /// invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             digit @ b'0'..=b'9' => Self::parse_impl(input, digit),
@@ -65,10 +75,10 @@ impl<B: Buffer> IntegerLit<B> {
 
     /// Performs the actual string to int conversion to obtain the integer
     /// value. The optional type suffix of the literal **is ignored by this
-    /// method**.
+    /// method**. This means `N` does not need to match the type suffix!
     ///
     /// Returns `None` if the literal overflows `N`.
-    pub fn value<N: FromIntLiteral>(&self) -> Option<N> {
+    pub fn value<N: FromIntegerLiteral>(&self) -> Option<N> {
         let base = match self.base {
             IntegerBase::Binary => N::from_small_number(2),
             IntegerBase::Octal => N::from_small_number(8),
@@ -183,10 +193,12 @@ impl<B: Buffer> IntegerLit<B> {
     }
 }
 
+/// Integer literal types. *Implementation detail*.
+///
 /// Implemented for all integer literal types. This trait is sealed and cannot
 /// be implemented outside of this crate. The trait's methods are implementation
 /// detail of this library and are not subject to semver.
-pub trait FromIntLiteral: self::sealed::Sealed + Copy {
+pub trait FromIntegerLiteral: self::sealed::Sealed + Copy {
     /// Creates itself from the given number. `n` is guaranteed to be `<= 16`.
     #[doc(hidden)]
     fn from_small_number(n: u8) -> Self;
@@ -205,7 +217,7 @@ macro_rules! impl_from_int_literal {
     ($( $ty:ty => $variant:ident ,)* ) => {
         $(
             impl self::sealed::Sealed for $ty {}
-            impl FromIntLiteral for $ty {
+            impl FromIntegerLiteral for $ty {
                 fn from_small_number(n: u8) -> Self {
                     n as Self
                 }

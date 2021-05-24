@@ -2,6 +2,17 @@ use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empt
 
 
 
+/// A floating point literal.
+///
+/// This kind of literal has several forms, but generally consists of a main
+/// number part, an optional exponent and an optional type suffix. See
+/// [the reference][ref] for more information.
+///
+/// A leading minus sign `-` is not part of the literal grammar! `-3.14` are two
+/// tokens in the Rust grammar.
+///
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#floating-point-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FloatLit<B: Buffer> {
     /// Basically the whole literal, but without the type suffix. Other `usize`
@@ -37,14 +48,16 @@ pub struct FloatLit<B: Buffer> {
     type_suffix: Option<FloatType>,
 }
 
+/// All possible float type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FloatType {
     F32,
     F64,
 }
 
-
 impl<B: Buffer> FloatLit<B> {
+    /// Parses the input as a floating point literal. Returns an error if the
+    /// input is invalid or represents a different kind of literal.
     pub fn parse(s: B) -> Result<Self, Error> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => Self::parse_impl(s),
@@ -82,6 +95,7 @@ impl<B: Buffer> FloatLit<B> {
         &(*self.number_part)[self.end_fractional_part..]
     }
 
+    /// The optional type suffix.
     pub fn type_suffix(&self) -> Option<FloatType> {
         self.type_suffix
     }
