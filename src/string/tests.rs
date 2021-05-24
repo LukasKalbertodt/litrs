@@ -149,6 +149,7 @@ fn parse_err() {
     assert_err!(StringLit, r#""fox"peter"#, UnexpectedChar, 5..10);
     assert_err!(StringLit, r#""fox"peter""#, UnexpectedChar, 5..11);
     assert_err!(StringLit, r#""fox"🦊"#, UnexpectedChar, 5..9);
+    assert_err!(StringLit, r###"r#"foo "# bar"#"###, UnexpectedChar, 9..15);
 
     assert_err!(StringLit, "\"\r\"", IsolatedCr, 1);
     assert_err!(StringLit, "\"fo\rx\"", IsolatedCr, 3);

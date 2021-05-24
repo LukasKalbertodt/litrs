@@ -84,7 +84,7 @@ impl<B: Buffer> StringLit<B> {
 
             if closing_quote_pos + num_hashes != input.len() - 1 {
                 return Err(Error::new(
-                    closing_quote_pos + num_hashes..input.len(),
+                    closing_quote_pos + num_hashes + 1..input.len(),
                     ErrorKind::UnexpectedChar,
                 ));
             }
