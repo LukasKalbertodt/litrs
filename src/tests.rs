@@ -44,3 +44,53 @@ fn misc() {
     assert_err_single!(Literal::parse("B_123"), InvalidLiteral, None);
     assert_err_single!(Literal::parse("54321a64"), UnexpectedChar, 5);
 }
+
+macro_rules! assert_no_panic {
+    ($input:expr) => {
+        let arr = $input;
+        let input = std::str::from_utf8(&arr).expect("not unicode");
+        let res = std::panic::catch_unwind(move || {
+            let _ = Literal::parse(input);
+            let _ = crate::BoolLit::parse(input);
+            let _ = crate::IntegerLit::parse(input);
+            let _ = crate::FloatLit::parse(input);
+            let _ = crate::CharLit::parse(input);
+            let _ = crate::StringLit::parse(input);
+            let _ = crate::ByteLit::parse(input);
+            let _ = crate::ByteStringLit::parse(input);
+        });
+
+        if let Err(e) = res {
+            println!("\n!!! panic for: {:?}", input);
+            std::panic::resume_unwind(e);
+        }
+    };
+}
+
+#[test]
+fn never_panic_up_to_3() {
+    for a in 0..128 {
+        assert_no_panic!([a]);
+        for b in 0..128 {
+            assert_no_panic!([a, b]);
+            for c in 0..128 {
+                assert_no_panic!([a, b, c]);
+            }
+        }
+    }
+}
+
+// This test takes super long in debug mode, but in release mode it's fine.
+#[test]
+#[ignore]
+fn never_panic_len_4() {
+    for a in 0..128 {
+        for b in 0..128 {
+            for c in 0..128 {
+                for d in 0..128 {
+                    assert_no_panic!([a, b, c, d]);
+                }
+            }
+        }
+    }
+}
