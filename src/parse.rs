@@ -1,9 +1,22 @@
-use crate::{BoolLit, Buffer, ByteLit, CharLit, Error, ErrorKind, FloatLit, IntegerLit, Literal, StringLit};
+use crate::{
+    BoolLit,
+    Buffer,
+    ByteLit,
+    ByteStringLit,
+    CharLit,
+    Error,
+    ErrorKind,
+    FloatLit,
+    IntegerLit,
+    Literal,
+    StringLit,
+};
 
 
 impl<B: Buffer> Literal<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         let first = first_byte_or_empty(&input)?;
+        let second = input.as_bytes().get(1).copied();
 
         match first {
             b'f' if &*input == "false" => Ok(Self::Bool(BoolLit::False)),
@@ -35,8 +48,9 @@ impl<B: Buffer> Literal<B> {
             b'\'' => CharLit::parse_impl(input).map(Literal::Char),
             b'"' | b'r' => StringLit::parse_impl(input).map(Literal::String),
 
-            b'b' if input.as_bytes().get(1) == Some(&b'\'')
-                => ByteLit::parse_impl(input).map(Literal::Byte),
+            b'b' if second == Some(b'\'') => ByteLit::parse_impl(input).map(Literal::Byte),
+            b'b' if second == Some(b'r') || second == Some(b'"')
+                => ByteStringLit::parse_impl(input).map(Literal::ByteString),
 
             _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
         }

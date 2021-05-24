@@ -7,6 +7,7 @@ mod tests;
 
 mod bool;
 mod byte;
+mod bytestr;
 mod char;
 mod escape;
 mod float;
@@ -20,6 +21,7 @@ use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
 pub use self::{
     bool::BoolLit,
     byte::ByteLit,
+    bytestr::ByteStringLit,
     char::CharLit,
     float::{FloatLit, FloatType},
     integer::{IntegerLit, IntegerBase, IntegerType},
@@ -39,7 +41,7 @@ pub enum Literal<B: Buffer> {
     Char(CharLit<B>),
     String(StringLit<B>),
     Byte(ByteLit<B>),
-    ByteString,
+    ByteString(ByteStringLit<B>),
 }
 
 
@@ -212,6 +214,8 @@ enum ErrorKind {
     /// Invalid start for a byte literal.
     InvalidByteLiteralStart,
 
+    InvalidByteStringLiteralStart,
+
     /// An literal `\r` character not followed by a `\n` character in a
     /// (raw) string or byte string literal.
     IsolatedCr,
@@ -250,7 +254,7 @@ impl fmt::Display for Error {
             UnterminatedByteLiteral => "byte literal is not terminated",
             OverlongByteLiteral => "byte literal contains more than one byte",
             EmptyByteLiteral => "empty byte literal",
-            NonAsciiInByteLiteral => "non ASCII character in byte literal",
+            NonAsciiInByteLiteral => "non ASCII character in byte (string) literal",
             UnescapedSingleQuote => "character literal contains unescaped ' character",
             UnescapedSpecialWhitespace => r"unescaped newline (\n), tab (\t) or cr (\r) character",
             DoesNotStartWithQuote => "invalid start for char/byte/string literal",
@@ -258,6 +262,7 @@ impl fmt::Display for Error {
             UnterminatedString => "unterminated string literal",
             InvalidStringLiteralStart => "invalid start for string literal",
             InvalidByteLiteralStart => "invalid start for byte literal",
+            InvalidByteStringLiteralStart => "invalid start for byte string literal",
             IsolatedCr => r"`\r` not immediately followed by `\n` in string",
         };
 
