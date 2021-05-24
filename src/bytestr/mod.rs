@@ -114,6 +114,8 @@ impl<B: Buffer> ByteStringLit<B> {
                     b'\r' if input.as_bytes()[i + 1] != b'\n'
                         => return Err(Error::single(i, ErrorKind::IsolatedCr)),
                     b'"' => return Err(Error::new(i + 1..input.len(), ErrorKind::UnexpectedChar)),
+                    b if !b.is_ascii()
+                        => return Err(Error::single(i, ErrorKind::NonAsciiInByteLiteral)),
                     _ => i += 1,
                 }
             }

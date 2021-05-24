@@ -104,3 +104,66 @@ fn raw_byte_string() {
     check!(br"foo\n\t\r\0\\x60\u{123}doggo", false, Some(0));
     check!(br#"cat\n\t\r\0\\x60\u{123}doggo"#, false, Some(1));
 }
+
+#[test]
+fn parse_err() {
+    assert_err!(ByteStringLit, r#"b""#, UnterminatedString, None);
+    assert_err!(ByteStringLit, r#"b"cat"#, UnterminatedString, None);
+    assert_err!(ByteStringLit, r#"b"Jurgen"#, UnterminatedString, None);
+    assert_err!(ByteStringLit, r#"b"foo bar baz"#, UnterminatedString, None);
+
+    assert_err!(ByteStringLit, r#"b"fox"peter"#, UnexpectedChar, 6..11);
+    assert_err!(ByteStringLit, r#"b"fox"peter""#, UnexpectedChar, 6..12);
+    assert_err!(ByteStringLit, r#"b"fox"bar"#, UnexpectedChar, 6..9);
+    assert_err!(ByteStringLit, r###"br#"foo "# bar"#"###, UnexpectedChar, 10..16);
+
+    assert_err!(ByteStringLit, "b\"\r\"", IsolatedCr, 2);
+    assert_err!(ByteStringLit, "b\"fo\rx\"", IsolatedCr, 4);
+
+    assert_err!(ByteStringLit, r##"br####""##, UnterminatedRawString, None);
+    assert_err!(ByteStringLit, r#####"br##"foo"#bar"#####, UnterminatedRawString, None);
+    assert_err!(ByteStringLit, r##"br####"##, InvalidLiteral, None);
+    assert_err!(ByteStringLit, r##"br####x"##, InvalidLiteral, None);
+}
+
+#[test]
+fn non_ascii() {
+    assert_err!(ByteStringLit, r#"b"న""#, NonAsciiInByteLiteral, 2);
+    assert_err!(ByteStringLit, r#"b"foo犬""#, NonAsciiInByteLiteral, 5);
+    assert_err!(ByteStringLit, r#"b"x🦊baz""#, NonAsciiInByteLiteral, 3);
+    assert_err!(ByteStringLit, r#"br"న""#, NonAsciiInByteLiteral, 3);
+    assert_err!(ByteStringLit, r#"br"foo犬""#, NonAsciiInByteLiteral, 6);
+    assert_err!(ByteStringLit, r#"br"x🦊baz""#, NonAsciiInByteLiteral, 4);
+}
+
+#[test]
+fn invald_escapes() {
+    assert_err!(ByteStringLit, r#"b"\a""#, UnknownEscape, 2..4);
+    assert_err!(ByteStringLit, r#"b"foo\y""#, UnknownEscape, 5..7);
+    assert_err!(ByteStringLit, r#"b"\"#, UnterminatedString, None);
+    assert_err!(ByteStringLit, r#"b"\x""#, UnterminatedEscape, 2..4);
+    assert_err!(ByteStringLit, r#"b"foo\x1""#, UnterminatedEscape, 5..8);
+    assert_err!(ByteStringLit, r#"b" \xaj""#, InvalidXEscape, 3..7);
+    assert_err!(ByteStringLit, r#"b"\xjbbaz""#, InvalidXEscape, 2..6);
+}
+
+#[test]
+fn unicode_escape_not_allowed() {
+    assert_err!(ByteStringLit, r#"b"\u{0}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{00}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{b}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{B}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{7e}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{E4}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{e4}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{fc}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{Fc}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{fC}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{FC}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{b10}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{B10}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{0b10}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{2764}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{1f602}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(ByteStringLit, r#"b"\u{1F602}""#, UnicodeEscapeInByteLiteral, 2..4);
+}
