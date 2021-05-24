@@ -75,7 +75,7 @@ impl<B: Buffer> StringLit<B> {
                     break;
                 }
 
-                if b == b'\r' && input.as_bytes()[start_inner + i + 1] != b'\n' {
+                if b == b'\r' && input.as_bytes().get(start_inner + i + 1) != Some(&b'\n') {
                     return Err(Error::single(i + start_inner, ErrorKind::IsolatedCr));
                 }
             }
