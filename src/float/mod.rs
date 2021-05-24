@@ -170,6 +170,19 @@ impl<B: Buffer> FloatLit<B> {
     }
 }
 
+impl FloatLit<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn to_owned(&self) -> FloatLit<String> {
+        FloatLit {
+            number_part: self.number_part.to_owned(),
+            end_integer_part: self.end_integer_part,
+            end_fractional_part: self.end_fractional_part,
+            type_suffix: self.type_suffix,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

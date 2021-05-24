@@ -53,6 +53,17 @@ impl<B: Buffer> CharLit<B> {
     }
 }
 
+impl CharLit<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn to_owned(&self) -> CharLit<String> {
+        CharLit {
+            raw: self.raw.to_owned(),
+            value: self.value,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

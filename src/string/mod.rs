@@ -138,6 +138,18 @@ impl<B: Buffer> StringLit<B> {
     }
 }
 
+impl StringLit<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn into_owned(self) -> StringLit<String> {
+        StringLit {
+            raw: self.raw.to_owned(),
+            value: self.value,
+            num_hashes: self.num_hashes,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

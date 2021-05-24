@@ -193,6 +193,18 @@ impl<B: Buffer> IntegerLit<B> {
     }
 }
 
+impl IntegerLit<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn to_owned(&self) -> IntegerLit<String> {
+        IntegerLit {
+            base: self.base,
+            main_part: self.main_part.to_owned(),
+            type_suffix: self.type_suffix,
+        }
+    }
+}
+
 /// Integer literal types. *Implementation detail*.
 ///
 /// Implemented for all integer literal types. This trait is sealed and cannot

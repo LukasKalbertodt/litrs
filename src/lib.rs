@@ -51,6 +51,22 @@ pub enum Literal<B: Buffer> {
     ByteString(ByteStringLit<B>),
 }
 
+impl Literal<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn into_owned(self) -> OwnedLiteral {
+        match self {
+            Literal::Bool(l) => Literal::Bool(l.to_owned()),
+            Literal::Integer(l) => Literal::Integer(l.to_owned()),
+            Literal::Float(l) => Literal::Float(l.to_owned()),
+            Literal::Char(l) => Literal::Char(l.to_owned()),
+            Literal::String(l) => Literal::String(l.into_owned()),
+            Literal::Byte(l) => Literal::Byte(l.to_owned()),
+            Literal::ByteString(l) => Literal::ByteString(l.into_owned()),
+        }
+    }
+}
+
 
 /// Errors during parsing.
 ///

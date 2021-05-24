@@ -58,6 +58,16 @@ impl<B: Buffer> ByteLit<B> {
     }
 }
 
+impl ByteLit<&str> {
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn to_owned(&self) -> ByteLit<String> {
+        ByteLit {
+            raw: self.raw.to_owned(),
+            value: self.value,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests;
