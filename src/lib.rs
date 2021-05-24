@@ -1,3 +1,51 @@
+//! Parsing and inspecting Rust literal tokens.
+//!
+//! This library offers functionality to parse Rust literals, i.e. tokens in the
+//! Rust programming language that represent fixed values. The grammar for
+//! those is defined [here][ref].
+//!
+//! This kind of functionality already exists in the crate `syn`. However, as
+//! you oftentimes don't need (nor want) the full power of `syn`, `litrs` was
+//! built. This crate also offers a bit more flexibility compared to `syn`
+//! (only regarding literals, of course).
+//!
+//! The main type of this library is [`Literal`]. You can obtain it via
+//! [`Literal::parse`] or by using the `From<proc_macro[2]::Literal>` impls.
+//!
+//! ```
+//! use litrs::Literal;
+//!
+//! let lit = Literal::parse("3.14f32").expect("failed to parse literal");
+//! match lit {
+//!     Literal::Float(lit) => {
+//!         println!("{:?}", lit.type_suffix());
+//!     }
+//!     Literal::Bool(lit) => { /* ... */ }
+//!     Literal::Integer(lit) => { /* ... */ }
+//!     Literal::Char(lit) => { /* ... */ }
+//!     Literal::String(lit) => { /* ... */ }
+//!     Literal::Byte(lit) => { /* ... */ }
+//!     Literal::ByteString(lit) => { /* ... */ }
+//! }
+//! ```
+//!
+//! If you know what kind of literal your input represents, or if you want to
+//! allow only one specific literal kind, you can also parse into specific
+//! literal types (e.g. [`IntegerLit`]) directly. All literal types have a
+//! `parse` method for that purpose.
+//!
+//!
+//! # Crate features
+//!
+//! - `proc-macro` (**default**): adds `impl From<proc_macro::Literal> for Literal`.
+//! - `proc-macro2` (**default**): adds `impl From<proc_macro2::Literal> for Literal`.
+//!
+//!
+//! [ref]: https://doc.rust-lang.org/reference/tokens.html
+//!
+
+#![deny(missing_debug_implementations)]
+
 extern crate proc_macro;
 
 #[cfg(test)]
