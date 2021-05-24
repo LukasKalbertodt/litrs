@@ -6,6 +6,7 @@ mod test_util;
 mod tests;
 
 mod bool;
+mod byte;
 mod char;
 mod escape;
 mod float;
@@ -18,6 +19,7 @@ use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
 
 pub use self::{
     bool::BoolLit,
+    byte::ByteLit,
     char::CharLit,
     float::{FloatLit, FloatType},
     integer::{IntegerLit, IntegerBase, IntegerType},
@@ -36,7 +38,7 @@ pub enum Literal<B: Buffer> {
     Float(FloatLit<B>),
     Char(CharLit<B>),
     String(StringLit<B>),
-    Byte,
+    Byte(ByteLit<B>),
     ByteString,
 }
 
@@ -181,6 +183,11 @@ enum ErrorKind {
     /// An empty character literal, i.e. `''`.
     EmptyCharLiteral,
 
+    UnterminatedByteLiteral,
+    OverlongByteLiteral,
+    EmptyByteLiteral,
+    NonAsciiInByteLiteral,
+
     /// A `'` character was not escaped in a character or byte literal, or a `"`
     /// character was not escaped in a string or byte string literal.
     UnescapedSingleQuote,
@@ -198,6 +205,9 @@ enum ErrorKind {
 
     /// Invalid start for a string literal.
     InvalidStringLiteralStart,
+
+    /// Invalid start for a byte literal.
+    InvalidByteLiteralStart,
 }
 
 impl std::error::Error for Error {}
@@ -230,11 +240,16 @@ impl fmt::Display for Error {
             UnterminatedCharLiteral => "character literal is not terminated",
             OverlongCharLiteral => "character literal contains more than one character",
             EmptyCharLiteral => "empty character literal",
+            UnterminatedByteLiteral => "byte literal is not terminated",
+            OverlongByteLiteral => "byte literal contains more than one byte",
+            EmptyByteLiteral => "empty byte literal",
+            NonAsciiInByteLiteral => "non ASCII character in byte literal",
             UnescapedSingleQuote => "character literal contains unescaped ' character",
             DoesNotStartWithQuote => "invalid start for char/byte/string literal",
             UnterminatedRawString => "unterminated raw string literal",
             UnterminatedString => "unterminated string literal",
             InvalidStringLiteralStart => "invalid start for string literal",
+            InvalidByteLiteralStart => "invalid start for byte literal",
         };
 
         description.fmt(f)?;
