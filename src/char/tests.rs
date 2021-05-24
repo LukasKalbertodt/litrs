@@ -73,6 +73,13 @@ fn special_chars() {
 }
 
 #[test]
+fn unicode() {
+    check!('న');
+    check!('犬');
+    check!('🦊');
+}
+
+#[test]
 fn quote_escapes() {
     check!('\'');
     check!('\"');
