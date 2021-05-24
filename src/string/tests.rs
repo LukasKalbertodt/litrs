@@ -35,6 +35,29 @@ fn simple() {
 }
 
 #[test]
+fn special_whitespace() {
+    let strings = ["\n", "\t", "foo\tbar", "🦊\n", "\r\n"];
+
+    for &s in &strings {
+        let input = format!(r#""{}""#, s);
+        let input_raw = format!(r#"r"{}""#, s);
+        for (input, num_hashes) in vec![(input, None), (input_raw, Some(0))] {
+            let expected = StringLit {
+                raw: &*input,
+                value: None,
+                num_hashes,
+            };
+            assert_parse_ok_eq(
+                &input, StringLit::parse(&*input), expected.clone(), "StringLit::parse");
+            assert_parse_ok_eq(
+                &input, Literal::parse(&*input), Literal::String(expected), "Literal::parse");
+            assert_eq!(StringLit::parse(&*input).unwrap().value(), s);
+            assert_eq!(StringLit::parse(&*input).unwrap().into_value(), s);
+        }
+    }
+}
+
+#[test]
 fn simple_escapes() {
     check!("a\nb", true, None);
     check!("\nb", true, None);
@@ -126,6 +149,11 @@ fn parse_err() {
     assert_err!(StringLit, r#""fox"peter"#, UnexpectedChar, 5..10);
     assert_err!(StringLit, r#""fox"peter""#, UnexpectedChar, 5..11);
     assert_err!(StringLit, r#""fox"🦊"#, UnexpectedChar, 5..9);
+
+    assert_err!(StringLit, "\"\r\"", IsolatedCr, 1);
+    assert_err!(StringLit, "\"fo\rx\"", IsolatedCr, 3);
+    assert_err!(StringLit, "r\"\r\"", IsolatedCr, 2);
+    assert_err!(StringLit, "r\"fo\rx\"", IsolatedCr, 4);
 }
 
 #[test]

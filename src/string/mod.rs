@@ -68,12 +68,18 @@ impl<B: Buffer> StringLit<B> {
             let start_inner = 1 + num_hashes + 1;
             let hashes = &input[1..num_hashes + 1];
 
-            // Find the end of the string and make sure there is nothing afterwards.
-            // TODO: is this potentially O(n²)?
-            let closing_quote_pos = input[start_inner..].bytes()
-                .enumerate()
-                .position(|(i, b)| b == b'"' && input[start_inner + i + 1..].starts_with(hashes))
-                .map(|pos| pos + start_inner)
+            let mut closing_quote_pos = None;
+            for (i, b) in input[start_inner..].bytes().enumerate() {
+                if b == b'"' && input[start_inner + i + 1..].starts_with(hashes) {
+                    closing_quote_pos = Some(i + start_inner);
+                    break;
+                }
+
+                if b == b'\r' && input.as_bytes()[start_inner + i + 1] != b'\n' {
+                    return Err(Error::single(i + start_inner, ErrorKind::IsolatedCr));
+                }
+            }
+            let closing_quote_pos = closing_quote_pos
                 .ok_or(Error::spanless(ErrorKind::UnterminatedRawString))?;
 
             if closing_quote_pos + num_hashes != input.len() - 1 {
@@ -101,6 +107,8 @@ impl<B: Buffer> StringLit<B> {
                         i += len;
                         end_last_escape = i;
                     }
+                    b'\r' if input.as_bytes()[i + 1] != b'\n'
+                        => return Err(Error::single(i, ErrorKind::IsolatedCr)),
                     b'"' => return Err(Error::new(i + 1..input.len(), ErrorKind::UnexpectedChar)),
                     _ => i += 1,
                 }

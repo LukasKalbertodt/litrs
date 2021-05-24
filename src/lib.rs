@@ -211,6 +211,10 @@ enum ErrorKind {
 
     /// Invalid start for a byte literal.
     InvalidByteLiteralStart,
+
+    /// An literal `\r` character not followed by a `\n` character in a
+    /// (raw) string or byte string literal.
+    IsolatedCr,
 }
 
 impl std::error::Error for Error {}
@@ -254,6 +258,7 @@ impl fmt::Display for Error {
             UnterminatedString => "unterminated string literal",
             InvalidStringLiteralStart => "invalid start for string literal",
             InvalidByteLiteralStart => "invalid start for byte literal",
+            IsolatedCr => r"`\r` not immediately followed by `\n` in string",
         };
 
         description.fmt(f)?;
