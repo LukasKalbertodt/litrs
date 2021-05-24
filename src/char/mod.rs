@@ -2,7 +2,7 @@ use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_emp
 
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CharLit<B: Buffer> {
     raw: B,
     value: char,

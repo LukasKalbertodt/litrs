@@ -12,7 +12,7 @@ use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_val
 /// 128). That's why in rustc, the literal overflow check is performed as a lint
 /// after parsing, not during the lexing stage. Similarly, `Integer::parse` does
 /// not perform an overflow check.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IntegerLit<B: Buffer> {
     base: IntegerBase,

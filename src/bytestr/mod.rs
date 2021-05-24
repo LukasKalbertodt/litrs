@@ -3,7 +3,7 @@ use std::ops::Range;
 use crate::{Buffer, Error, ErrorKind, escape::unescape};
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ByteStringLit<B: Buffer> {
     /// The raw input.
     raw: B,

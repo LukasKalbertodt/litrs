@@ -3,7 +3,7 @@ use std::ops::Range;
 use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StringLit<B: Buffer> {
     /// The raw input.
     raw: B,

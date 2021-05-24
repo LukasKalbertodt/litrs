@@ -2,7 +2,7 @@ use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empt
 
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FloatLit<B: Buffer> {
     /// Basically the whole literal, but without the type suffix. Other `usize`
     /// fields in this struct partition this string. `end_integer_part` is
@@ -37,7 +37,7 @@ pub struct FloatLit<B: Buffer> {
     type_suffix: Option<FloatType>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FloatType {
     F32,
     F64,

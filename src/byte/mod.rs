@@ -2,7 +2,7 @@ use crate::{Buffer, Error, ErrorKind, escape::unescape};
 
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ByteLit<B: Buffer> {
     raw: B,
     value: u8,

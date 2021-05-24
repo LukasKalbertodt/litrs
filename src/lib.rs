@@ -33,7 +33,7 @@ pub type OwnedLit = Literal<String>;
 pub type SharedLit<'a> = Literal<&'a str>;
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal<B: Buffer> {
     Bool(BoolLit),
     Integer(IntegerLit<B>),

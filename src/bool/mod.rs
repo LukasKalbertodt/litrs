@@ -1,7 +1,7 @@
 use crate::{Error, ErrorKind};
 
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BoolLit {
     False,
     True,
