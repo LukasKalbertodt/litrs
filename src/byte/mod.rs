@@ -3,7 +3,11 @@ use core::fmt;
 use crate::{Buffer, Error, ErrorKind, escape::unescape};
 
 
-
+/// A (single) byte literal, e.g. `b'k'` or `b'!'`.
+///
+/// See [the reference][ref] for more information.
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#byte-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ByteLit<B: Buffer> {
     raw: B,
@@ -11,6 +15,8 @@ pub struct ByteLit<B: Buffer> {
 }
 
 impl<B: Buffer> ByteLit<B> {
+    /// Parses the input as a byte literal. Returns an error if the input is
+    /// invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         if input.is_empty() {
             return Err(Error::spanless(ErrorKind::Empty));

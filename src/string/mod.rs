@@ -3,6 +3,11 @@ use std::{fmt, ops::Range};
 use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
+/// A string or raw string literal, e.g. `"foo"`, `"Grüße"` or `r#"a🦊c"d🦀f"#`.
+///
+/// See [the reference][ref] for more information.
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#string-literals
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StringLit<B: Buffer> {
     /// The raw input.
@@ -18,6 +23,8 @@ pub struct StringLit<B: Buffer> {
 }
 
 impl<B: Buffer> StringLit<B> {
+    /// Parses the input as a (raw) string literal. Returns an error if the
+    /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             b'r' | b'"' => Self::parse_impl(input),

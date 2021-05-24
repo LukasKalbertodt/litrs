@@ -4,7 +4,7 @@ use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empt
 
 
 
-/// A floating point literal.
+/// A floating point literal, e.g. `3.14`, `8.`, `135e12`, `27f32` or `1.956e2f64`.
 ///
 /// This kind of literal has several forms, but generally consists of a main
 /// number part, an optional exponent and an optional type suffix. See

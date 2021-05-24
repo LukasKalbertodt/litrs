@@ -3,7 +3,7 @@ use std::fmt;
 use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_value}};
 
 
-/// An integer literal.
+/// An integer literal, e.g. `27`, `0x7F`, `0b101010u8` or `5_000_000i64`.
 ///
 /// An integer literal consists of an optional base prefix (`0b`, `0o`, `0x`),
 /// the main part (digits and underscores), and an optional type suffix

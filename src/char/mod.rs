@@ -3,7 +3,11 @@ use std::fmt;
 use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
-
+/// A character literal, e.g. `'g'` or `'🦊'`.
+///
+/// See [the reference][ref] for more information.
+///
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#character-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CharLit<B: Buffer> {
     raw: B,
@@ -11,6 +15,8 @@ pub struct CharLit<B: Buffer> {
 }
 
 impl<B: Buffer> CharLit<B> {
+    /// Parses the input as a character literal. Returns an error if the input
+    /// is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             b'\'' => Self::parse_impl(input),
