@@ -1,3 +1,5 @@
+extern crate proc_macro;
+
 #[cfg(test)]
 #[macro_use]
 mod test_util;
@@ -37,9 +39,14 @@ pub type SharedLiteral<'a> = Literal<&'a str>;
 
 /// A literal. This is the main type of this library.
 ///
-/// This is generic over the underlying buffer `B`, which can be `&str` or
+/// This type is generic over the underlying buffer `B`, which can be `&str` or
 /// `String`. There are two useful type aliases: [`OwnedLiteral`] and
 /// [`SharedLiteral`].
+///
+/// To create this type, you have to either call [`Literal::parse`] with an
+/// input string or use the `From<proc_macro[2]::Literal>` impls. The impls are
+/// only available of the corresponding crate features are enabled (they are
+/// enabled by default).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal<B: Buffer> {
     Bool(BoolLit),
@@ -78,6 +85,26 @@ impl<B: Buffer> fmt::Display for Literal<B> {
             Literal::Byte(l) => l.fmt(f),
             Literal::ByteString(l) => l.fmt(f),
         }
+    }
+}
+
+#[cfg(feature = "proc-macro")]
+impl From<proc_macro::Literal> for Literal<String> {
+    fn from(src: proc_macro::Literal) -> Self {
+        // This library aims to implement exactly the Rust grammar, so if we
+        // have a valid Rust literal, we should always be able to parse it.
+        Self::parse(src.to_string())
+            .expect("bug: failed to parse output of `Literal::to_string`")
+    }
+}
+
+#[cfg(feature = "proc-macro2")]
+impl From<proc_macro2::Literal> for Literal<String> {
+    fn from(src: proc_macro2::Literal) -> Self {
+        // This library aims to implement exactly the Rust grammar, so if we
+        // have a valid Rust literal, we should always be able to parse it.
+        Self::parse(src.to_string())
+            .expect("bug: failed to parse output of `Literal::to_string`")
     }
 }
 

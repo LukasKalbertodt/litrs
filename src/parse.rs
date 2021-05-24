@@ -14,6 +14,7 @@ use crate::{
 
 
 impl<B: Buffer> Literal<B> {
+    /// Parses the given input as a Rust literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         let first = first_byte_or_empty(&input)?;
         let second = input.as_bytes().get(1).copied();
