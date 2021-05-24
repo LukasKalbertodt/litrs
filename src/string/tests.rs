@@ -155,6 +155,11 @@ fn parse_err() {
     assert_err!(StringLit, "\"fo\rx\"", IsolatedCr, 3);
     assert_err!(StringLit, "r\"\r\"", IsolatedCr, 2);
     assert_err!(StringLit, "r\"fo\rx\"", IsolatedCr, 4);
+
+    assert_err!(StringLit, r##"r####""##, UnterminatedRawString, None);
+    assert_err!(StringLit, r#####"r##"foo"#bar"#####, UnterminatedRawString, None);
+    assert_err!(StringLit, r##"r####"##, InvalidLiteral, None);
+    assert_err!(StringLit, r##"r####x"##, InvalidLiteral, None);
 }
 
 #[test]
