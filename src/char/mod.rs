@@ -33,8 +33,11 @@ impl<B: Buffer> CharLit<B> {
         let inner = &input[1..input.len() - 1];
         let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::EmptyCharLiteral))?;
         let (c, len) = match first {
-            '\\' => unescape::<char>(inner, 1)?,
             '\'' => return Err(Error::single(1, ErrorKind::UnescapedSingleQuote)),
+            '\n' | '\t' | '\r'
+                => return Err(Error::single(1, ErrorKind::UnescapedSpecialWhitespace)),
+
+            '\\' => unescape::<char>(inner, 1)?,
             other => (other, other.len_utf8()),
         };
         let rest = &inner[len..];

@@ -162,4 +162,8 @@ fn parse_err() {
 
     assert_err!(ByteLit, r"b'''", UnescapedSingleQuote, 2);
     assert_err!(ByteLit, r"b''''", UnescapedSingleQuote, 2);
+
+    assert_err!(ByteLit, "b'\n'", UnescapedSpecialWhitespace, 2);
+    assert_err!(ByteLit, "b'\t'", UnescapedSpecialWhitespace, 2);
+    assert_err!(ByteLit, "b'\r'", UnescapedSpecialWhitespace, 2);
 }

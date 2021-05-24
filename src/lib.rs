@@ -192,6 +192,9 @@ enum ErrorKind {
     /// character was not escaped in a string or byte string literal.
     UnescapedSingleQuote,
 
+    /// A \n, \t or \r raw character in a char or byte literal.
+    UnescapedSpecialWhitespace,
+
     /// When parsing a character, byte, string or byte string literal directly
     /// and the input does not start with the corresponding quote character
     /// (plus optional raw string prefix).
@@ -245,6 +248,7 @@ impl fmt::Display for Error {
             EmptyByteLiteral => "empty byte literal",
             NonAsciiInByteLiteral => "non ASCII character in byte literal",
             UnescapedSingleQuote => "character literal contains unescaped ' character",
+            UnescapedSpecialWhitespace => r"unescaped newline (\n), tab (\t) or cr (\r) character",
             DoesNotStartWithQuote => "invalid start for char/byte/string literal",
             UnterminatedRawString => "unterminated raw string literal",
             UnterminatedString => "unterminated string literal",

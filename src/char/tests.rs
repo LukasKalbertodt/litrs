@@ -206,4 +206,8 @@ fn parse_err() {
 
     assert_err!(CharLit, r"'''", UnescapedSingleQuote, 1);
     assert_err!(CharLit, r"''''", UnescapedSingleQuote, 1);
+
+    assert_err!(CharLit, "'\n'", UnescapedSpecialWhitespace, 1);
+    assert_err!(CharLit, "'\t'", UnescapedSpecialWhitespace, 1);
+    assert_err!(CharLit, "'\r'", UnescapedSpecialWhitespace, 1);
 }
