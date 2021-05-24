@@ -193,6 +193,9 @@ enum ErrorKind {
     /// Unterminated raw string literal.
     UnterminatedRawString,
 
+    /// String literal without a `"` at the end.
+    UnterminatedString,
+
     /// Invalid start for a string literal.
     InvalidStringLiteralStart,
 }
@@ -230,6 +233,7 @@ impl fmt::Display for Error {
             UnescapedSingleQuote => "character literal contains unescaped ' character",
             DoesNotStartWithQuote => "invalid start for char/byte/string literal",
             UnterminatedRawString => "unterminated raw string literal",
+            UnterminatedString => "unterminated string literal",
             InvalidStringLiteralStart => "invalid start for string literal",
         };
 

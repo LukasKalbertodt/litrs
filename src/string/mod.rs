@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::{Buffer, Error, ErrorKind, parse::first_byte_or_empty};
+use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -69,6 +69,7 @@ impl<B: Buffer> StringLit<B> {
             let hashes = &input[1..num_hashes + 1];
 
             // Find the end of the string and make sure there is nothing afterwards.
+            // TODO: is this potentially O(n²)?
             let closing_quote_pos = input[start_inner..].bytes()
                 .enumerate()
                 .position(|(i, b)| b == b'"' && input[start_inner + i + 1..].starts_with(hashes))
@@ -88,7 +89,43 @@ impl<B: Buffer> StringLit<B> {
                 num_hashes: Some(num_hashes as u32),
             })
         } else {
-            todo!()
+            let mut i = 1;
+            let mut end_last_escape = 1;
+            let mut value = String::new();
+            while i < input.len() - 1 {
+                match input.as_bytes()[i] {
+                    b'\\' => {
+                        let (c, len) = unescape::<char>(&input[i..input.len() - 1], i)?;
+                        value.push_str(&input[end_last_escape..i]);
+                        value.push(c);
+                        i += len;
+                        end_last_escape = i;
+                    }
+                    b'"' => return Err(Error::new(i + 1..input.len(), ErrorKind::UnexpectedChar)),
+                    _ => i += 1,
+                }
+            }
+
+            if input.as_bytes()[input.len() - 1] != b'"' || input.len() == 1 {
+                return Err(Error::spanless(ErrorKind::UnterminatedString));
+            }
+
+            // `value` is only empty there was no escape in the input string
+            // (with the special case of the input being empty). This means the
+            // string value basically equals the input, so we store `None`.
+            let value = if value.is_empty() {
+                None
+            } else {
+                // There was an escape in the string, so we need to push the
+                // remaining unescaped part of the string still.
+                value.push_str(&input[end_last_escape..input.len() - 1]);
+                Some(value)
+            };
+            Ok(Self {
+                raw: input,
+                value,
+                num_hashes: None,
+            })
         }
     }
 }
