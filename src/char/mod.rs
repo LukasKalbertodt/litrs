@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
 
@@ -61,6 +63,12 @@ impl CharLit<&str> {
             raw: self.raw.to_owned(),
             value: self.value,
         }
+    }
+}
+
+impl<B: Buffer> fmt::Display for CharLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(&self.raw)
     }
 }
 

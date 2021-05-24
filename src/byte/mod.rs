@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{Buffer, Error, ErrorKind, escape::unescape};
 
 
@@ -66,6 +68,12 @@ impl ByteLit<&str> {
             raw: self.raw.to_owned(),
             value: self.value,
         }
+    }
+}
+
+impl<B: Buffer> fmt::Display for ByteLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(&self.raw)
     }
 }
 

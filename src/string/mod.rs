@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{fmt, ops::Range};
 
 use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
 
@@ -147,6 +147,12 @@ impl StringLit<&str> {
             value: self.value,
             num_hashes: self.num_hashes,
         }
+    }
+}
+
+impl<B: Buffer> fmt::Display for StringLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(&self.raw)
     }
 }
 

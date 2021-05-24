@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_value}};
 
 
@@ -202,6 +204,27 @@ impl IntegerLit<&str> {
             main_part: self.main_part.to_owned(),
             type_suffix: self.type_suffix,
         }
+    }
+}
+
+impl<B: Buffer> fmt::Display for IntegerLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let suffix = match self.type_suffix {
+            None => "",
+            Some(IntegerType::U8) => "u8",
+            Some(IntegerType::U16) => "u16",
+            Some(IntegerType::U32) => "u32",
+            Some(IntegerType::U64) => "u64",
+            Some(IntegerType::U128) => "u128",
+            Some(IntegerType::Usize) => "usize",
+            Some(IntegerType::I8) => "i8",
+            Some(IntegerType::I16) => "i16",
+            Some(IntegerType::I32) => "i32",
+            Some(IntegerType::I64) => "i64",
+            Some(IntegerType::I128) => "i128",
+            Some(IntegerType::Isize) => "isize",
+        };
+        write!(f, "{}{}{}", self.base.prefix(), &*self.main_part, suffix)
     }
 }
 

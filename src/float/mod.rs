@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empty}};
 
 
@@ -180,6 +182,17 @@ impl FloatLit<&str> {
             end_fractional_part: self.end_fractional_part,
             type_suffix: self.type_suffix,
         }
+    }
+}
+
+impl<B: Buffer> fmt::Display for FloatLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let suffix = match self.type_suffix {
+            None => "",
+            Some(FloatType::F32) => "f32",
+            Some(FloatType::F64) => "f64",
+        };
+        write!(f, "{}{}", self.number_part(), suffix)
     }
 }
 

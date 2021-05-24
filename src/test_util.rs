@@ -1,14 +1,24 @@
 use crate::*;
+use std::fmt::{Debug, Display};
+
 
 #[track_caller]
-pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
+pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
     input: &str,
     result: Result<T, Error>,
     expected: T,
     parse_method: &str,
 ) {
     match result {
-        Ok(actual) if actual == expected => {}
+        Ok(actual) if actual == expected => {
+            if actual.to_string() != input {
+                panic!(
+                    "formatting does not yield original input `{}`: {:?}",
+                    input,
+                    actual,
+                );
+            }
+        }
         Ok(actual) => {
             panic!(
                 "unexpected parsing result (with `{}`) for `{}`:\nactual:    {:?}\nexpected:  {:?}",
@@ -16,7 +26,7 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + std::fmt::Debug>(
                 input,
                 actual,
                 expected,
-            )
+            );
         }
         Err(e) => {
             panic!(

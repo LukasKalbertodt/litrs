@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{fmt, ops::Range};
 
 use crate::{Buffer, Error, ErrorKind, escape::unescape};
 
@@ -155,6 +155,13 @@ impl ByteStringLit<&str> {
         }
     }
 }
+
+impl<B: Buffer> fmt::Display for ByteStringLit<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(&self.raw)
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

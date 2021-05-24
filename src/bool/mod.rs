@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{Error, ErrorKind};
 
 
@@ -35,6 +37,12 @@ impl BoolLit {
             Self::False => "false",
             Self::True => "true",
         }
+    }
+}
+
+impl fmt::Display for BoolLit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(self.as_str())
     }
 }
 
