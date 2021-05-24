@@ -166,4 +166,8 @@ fn parse_err() {
     assert_err!(ByteLit, "b'\n'", UnescapedSpecialWhitespace, 2);
     assert_err!(ByteLit, "b'\t'", UnescapedSpecialWhitespace, 2);
     assert_err!(ByteLit, "b'\r'", UnescapedSpecialWhitespace, 2);
+
+    assert_err!(ByteLit, "b'న'", NonAsciiInByteLiteral, 2);
+    assert_err!(ByteLit, "b'犬'", NonAsciiInByteLiteral, 2);
+    assert_err!(ByteLit, "b'🦊'", NonAsciiInByteLiteral, 2);
 }

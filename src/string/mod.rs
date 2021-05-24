@@ -10,7 +10,7 @@ pub struct StringLit<B: Buffer> {
 
     /// The string value (with all escaped unescaped), or `None` if there were
     /// no escapes. In the latter case, `input` is the string value.
-    value: Option<std::string::String>,
+    value: Option<String>,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
