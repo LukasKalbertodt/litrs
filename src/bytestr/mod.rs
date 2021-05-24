@@ -35,15 +35,15 @@ impl<B: Buffer> ByteStringLit<B> {
         self.value.as_deref().unwrap_or(&self.raw.as_bytes()[self.inner_range()])
     }
 
-    // /// Like `value` but returns a potentially owned version of the value.
-    // ///
-    // /// The return value is either `Cow<'static, str>` if `B = String`, or
-    // /// `Cow<'a, str>` if `B = &'a str`.
-    // pub fn into_value(self) -> B::Cow {
-    //     let inner_range = self.inner_range();
-    //     let Self { raw, value, .. } = self;
-    //     value.map(B::Cow::from).unwrap_or_else(|| raw.cut(inner_range).into_cow())
-    // }
+    /// Like `value` but returns a potentially owned version of the value.
+    ///
+    /// The return value is either `Cow<'static, [u8]>` if `B = String`, or
+    /// `Cow<'a, [u8]>` if `B = &'a str`.
+    pub fn into_value(self) -> B::ByteCow {
+        let inner_range = self.inner_range();
+        let Self { raw, value, .. } = self;
+        value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+    }
 
     /// Returns whether this literal is a raw string literal (starting with
     /// `r`).

@@ -16,7 +16,7 @@ macro_rules! check {
         assert_parse_ok_eq(
             input, Literal::parse(input), Literal::ByteString(expected), "Literal::parse");
         assert_eq!(ByteStringLit::parse(input).unwrap().value(), $lit);
-        // assert_eq!(ByteStringLit::parse(input).unwrap().into_value(), $lit);
+        assert_eq!(ByteStringLit::parse(input).unwrap().into_value().as_ref(), $lit);
     };
 }
 
@@ -48,7 +48,7 @@ fn special_whitespace() {
             assert_parse_ok_eq(
                 &input, Literal::parse(&*input), Literal::ByteString(expected), "Literal::parse");
             assert_eq!(ByteStringLit::parse(&*input).unwrap().value(), s.as_bytes());
-            // assert_eq!(ByteStringLit::parse(&*input).unwrap().into_value(), s);
+            assert_eq!(ByteStringLit::parse(&*input).unwrap().into_value(), s.as_bytes());
         }
     }
 

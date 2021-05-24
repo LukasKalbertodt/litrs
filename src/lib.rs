@@ -288,6 +288,12 @@ pub trait Buffer: sealed::Sealed + Deref<Target = str> {
     #[doc(hidden)]
     fn into_cow(self) -> Self::Cow;
 
+    /// This is `Cow<'static, [u8]>` for `String, and `Cow<'a, [u8]>` for `&'a str`.
+    type ByteCow: From<Vec<u8>> + AsRef<[u8]> + Borrow<[u8]> + Deref<Target = [u8]>;
+
+    #[doc(hidden)]
+    fn into_byte_cow(self) -> Self::ByteCow;
+
     /// Cuts away some characters at the beginning and some at the end. Given
     /// range has to be in bounds.
     #[doc(hidden)]
@@ -308,6 +314,10 @@ impl<'a> Buffer for &'a str {
     fn into_cow(self) -> Self::Cow {
         self.into()
     }
+    type ByteCow = Cow<'a, [u8]>;
+    fn into_byte_cow(self) -> Self::ByteCow {
+        self.as_bytes().into()
+    }
 }
 
 impl sealed::Sealed for String {}
@@ -324,5 +334,10 @@ impl Buffer for String {
     type Cow = Cow<'static, str>;
     fn into_cow(self) -> Self::Cow {
         self.into()
+    }
+
+    type ByteCow = Cow<'static, [u8]>;
+    fn into_byte_cow(self) -> Self::ByteCow {
+        self.into_bytes().into()
     }
 }
