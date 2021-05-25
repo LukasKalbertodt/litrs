@@ -20,17 +20,51 @@ While this library is fairly young, it is extensively tested and I think the num
 I'm interested in community feedback!
 If you consider using this, please speak your mind [in this issue](https://github.com/LukasKalbertodt/litrs/issues/1).
 
+## Example
+
+### In proc macro
+
+```rust
+use proc_macro::{TokenStream, TokenTree};
+use litrs::Literal;
+
+#[proc_macro]
+pub fn foo(input: TokenStream) -> TokenStream {
+    let lit = match input.into_iter().next() {
+        // Use `From` impl to get a `litrs::Literal` from `proc_macro::Literal`
+        Some(TokenTree::Literal(lit)) => Literal::from(lit),
+        _ => panic!("invalid input"),
+    };
+
+    // You can now inspect the literal!
+    match lit {
+        Literal::Integer(i) => {
+            println!("Got an integer specified in base {:?}", i.base());
+
+            let value = i.value::<u64>().expect("integer literal too large");
+            println!(
+                "Is your integer even? {}",
+                if value % 2 == 0 { "yes" } else { "no" },
+            );
+        }
+        Literal::String(s) if s.is_raw_string() => println!("A raw string literal!"),
+        _ => println!("Got some other literal kind"),
+    }
+
+    TokenStream::new() // dummy output
+}
+```
+
+### Parsing from a `&str`
 
 ```rust
 use litrs::Literal;
 
 let lit = Literal::parse("3.14f32").expect("failed to parse literal");
 match lit {
-    Literal::Float(lit) => {
-        println!("{:?}", lit.type_suffix());
-    }
+    Literal::Float(lit) => println!("{:?}", lit.type_suffix()),
+    Literal::Integer(lit) => println!("{:?}", lit.base()),
     Literal::Bool(lit) => { /* ... */ }
-    Literal::Integer(lit) => { /* ... */ }
     Literal::Char(lit) => { /* ... */ }
     Literal::String(lit) => { /* ... */ }
     Literal::Byte(lit) => { /* ... */ }
@@ -38,7 +72,7 @@ match lit {
 }
 ```
 
-See [**the documentation**](https://docs.rs/litrs) for more information.
+See [**the documentation**](https://docs.rs/litrs) or the `examples/` directory for more information.
 
 
 <br />
