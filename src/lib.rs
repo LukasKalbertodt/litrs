@@ -37,8 +37,11 @@
 //!
 //! # Crate features
 //!
-//! - `proc-macro` (**default**): adds `impl From<proc_macro::Literal> for Literal`.
-//! - `proc-macro2` (**default**): adds `impl From<proc_macro2::Literal> for Literal`.
+//! - `proc-macro` (**default**): adds `From<proc_macro::Literal>` and
+//!   `From<&proc_macro::Literal>` for [`Literal`].
+//! - `proc-macro2` (**default**): adds the dependency `proc_macro2` and the
+//!    impls `From<proc_macro2::Literal>` and `From<&proc_macro2::Literal>` for
+//!    [`Literal`].
 //!
 //!
 //! [ref]: https://doc.rust-lang.org/reference/tokens.html
@@ -92,9 +95,9 @@ pub type SharedLiteral<'a> = Literal<&'a str>;
 /// [`SharedLiteral`].
 ///
 /// To create this type, you have to either call [`Literal::parse`] with an
-/// input string or use the `From<proc_macro[2]::Literal>` impls. The impls are
-/// only available of the corresponding crate features are enabled (they are
-/// enabled by default).
+/// input string or use the `From<_>` impls of this type. The impls are only
+/// available of the corresponding crate features are enabled (they are enabled
+/// by default).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal<B: Buffer> {
     Bool(BoolLit),
@@ -136,11 +139,20 @@ impl<B: Buffer> fmt::Display for Literal<B> {
     }
 }
 
+// We call `expect` in all these impls: this library aims to implement exactly
+// the Rust grammar, so if we have a valid Rust literal, we should always be
+// able to parse it.
 #[cfg(feature = "proc-macro")]
 impl From<proc_macro::Literal> for Literal<String> {
     fn from(src: proc_macro::Literal) -> Self {
-        // This library aims to implement exactly the Rust grammar, so if we
-        // have a valid Rust literal, we should always be able to parse it.
+        Self::parse(src.to_string())
+            .expect("bug: failed to parse output of `Literal::to_string`")
+    }
+}
+
+#[cfg(feature = "proc-macro")]
+impl From<&proc_macro::Literal> for Literal<String> {
+    fn from(src: &proc_macro::Literal) -> Self {
         Self::parse(src.to_string())
             .expect("bug: failed to parse output of `Literal::to_string`")
     }
@@ -149,8 +161,14 @@ impl From<proc_macro::Literal> for Literal<String> {
 #[cfg(feature = "proc-macro2")]
 impl From<proc_macro2::Literal> for Literal<String> {
     fn from(src: proc_macro2::Literal) -> Self {
-        // This library aims to implement exactly the Rust grammar, so if we
-        // have a valid Rust literal, we should always be able to parse it.
+        Self::parse(src.to_string())
+            .expect("bug: failed to parse output of `Literal::to_string`")
+    }
+}
+
+#[cfg(feature = "proc-macro2")]
+impl From<&proc_macro2::Literal> for Literal<String> {
+    fn from(src: &proc_macro2::Literal) -> Self {
         Self::parse(src.to_string())
             .expect("bug: failed to parse output of `Literal::to_string`")
     }
