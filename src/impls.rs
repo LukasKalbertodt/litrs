@@ -88,10 +88,12 @@ use crate::{Literal, err::{InvalidToken, TokenKind}};
 /// `proc_macro`/`proc_macro2` and `&`/owned.
 macro_rules! helper {
     ($callback:ident, $($input:tt)*) => {
-        $callback!([] [proc_macro::] => $($input)*);
-        $callback!([] [&proc_macro::] => $($input)*);
-        $callback!([#[cfg(feature = "proc-macro2")]] [proc_macro2::] => $($input)*);
-        $callback!([#[cfg(feature = "proc-macro2")]] [&proc_macro2::] => $($input)*);
+        $callback!([proc_macro::] => $($input)*);
+        $callback!([&proc_macro::] => $($input)*);
+        #[cfg(feature = "proc-macro2")]
+        $callback!([proc_macro2::] => $($input)*);
+        #[cfg(feature = "proc-macro2")]
+        $callback!([&proc_macro2::] => $($input)*);
     };
 }
 
@@ -126,8 +128,7 @@ impl_specific_lit_to_lit!(crate::ByteStringLit<B>, ByteString);
 
 
 macro_rules! impl_tt_to_lit {
-    ([$($cfg:tt)*] [$($prefix:tt)*] => ) => {
-        $($cfg)*
+    ([$($prefix:tt)*] => ) => {
         impl From<$($prefix)* Literal> for Literal<String> {
             fn from(src: $($prefix)* Literal) -> Self {
                 // We call `expect` in all these impls: this library aims to implement exactly
@@ -148,8 +149,7 @@ helper!(impl_tt_to_lit, );
 // ==============================================================================================
 
 macro_rules! impl_tt_to_lit {
-    ([$($cfg:tt)*] [$($prefix:tt)*] => ) => {
-        $($cfg)*
+    ([$($prefix:tt)*] => ) => {
         impl TryFrom<$($prefix)* TokenTree> for Literal<String> {
             type Error = InvalidToken;
             fn try_from(tt: $($prefix)* TokenTree) -> Result<Self, Self::Error> {
@@ -194,8 +194,7 @@ fn kind_of(lit: &Literal<String>) -> TokenKind {
 }
 
 macro_rules! impl_for_specific_lit {
-    ([$($cfg:tt)*] [$($prefix:tt)*] => $ty:ty, $variant:ident, $kind:ident) => {
-        $($cfg)*
+    ([$($prefix:tt)*] => $ty:ty, $variant:ident, $kind:ident) => {
         impl TryFrom<$($prefix)* Literal> for $ty {
             type Error = InvalidToken;
             fn try_from(src: $($prefix)* Literal) -> Result<Self, Self::Error> {
