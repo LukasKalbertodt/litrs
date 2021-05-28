@@ -138,7 +138,12 @@ macro_rules! impl_for_specific_lit {
             type Error = InvalidToken;
             fn try_from(tt: $($prefix)* TokenTree) -> Result<Self, Self::Error> {
                 let span = tt.span();
-                let res = impl_for_specific_lit!(@token_match [$($prefix)*] $variant tt);
+                let res = match tt {
+                    $($prefix)* TokenTree::Group(_) => Err(TokenKind::Group),
+                    $($prefix)* TokenTree::Punct(_) => Err(TokenKind::Punct),
+                    $($prefix)* TokenTree::Ident(_) => Err(TokenKind::Ident),
+                    $($prefix)* TokenTree::Literal(ref lit) => Ok(lit),
+                };
 
                 match res {
                     Ok(lit) => <$ty>::try_from(lit),
@@ -151,31 +156,8 @@ macro_rules! impl_for_specific_lit {
             }
         }
     };
-
-    // In case we are implementing it for `BoolLit`, we need to check for two extra cases.
-    (@token_match [$($prefix:tt)*] Bool $tt:ident) => {
-        match $tt {
-            $($prefix)* TokenTree::Group(_) => Err(TokenKind::Group),
-            $($prefix)* TokenTree::Punct(_) => Err(TokenKind::Punct),
-            $($prefix)* TokenTree::Ident(ref ident) if ident.to_string() == "true"
-                => return Ok(crate::BoolLit::True),
-            $($prefix)* TokenTree::Ident(ref ident) if ident.to_string() == "false"
-                => return Ok(crate::BoolLit::False),
-            $($prefix)* TokenTree::Ident(_) => Err(TokenKind::Ident),
-            $($prefix)* TokenTree::Literal(ref lit) => Ok(lit),
-        }
-    };
-    (@token_match [$($prefix:tt)*] $other:ident $tt:ident) => {
-        match $tt {
-            $($prefix)* TokenTree::Group(_) => Err(TokenKind::Group),
-            $($prefix)* TokenTree::Punct(_) => Err(TokenKind::Punct),
-            $($prefix)* TokenTree::Ident(_) => Err(TokenKind::Ident),
-            $($prefix)* TokenTree::Literal(ref lit) => Ok(lit),
-        }
-    };
 }
 
-helper!(impl_for_specific_lit, crate::BoolLit, Bool, BoolLit);
 helper!(impl_for_specific_lit, crate::IntegerLit<String>, Integer, IntegerLit);
 helper!(impl_for_specific_lit, crate::FloatLit<String>, Float, FloatLit);
 helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
@@ -183,6 +165,35 @@ helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
 helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
 helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);
 
+macro_rules! impl_from_tt_for_bool {
+    ([$($prefix:tt)*] => ) => {
+        impl TryFrom<$($prefix)* TokenTree> for crate::BoolLit {
+            type Error = InvalidToken;
+            fn try_from(tt: $($prefix)* TokenTree) -> Result<Self, Self::Error> {
+                let span = tt.span();
+                let actual = match tt {
+                    $($prefix)* TokenTree::Ident(ref ident) if ident.to_string() == "true"
+                        => return Ok(crate::BoolLit::True),
+                    $($prefix)* TokenTree::Ident(ref ident) if ident.to_string() == "false"
+                        => return Ok(crate::BoolLit::False),
+
+                    $($prefix)* TokenTree::Group(_) => TokenKind::Group,
+                    $($prefix)* TokenTree::Punct(_) => TokenKind::Punct,
+                    $($prefix)* TokenTree::Ident(_) => TokenKind::Ident,
+                    $($prefix)* TokenTree::Literal(ref lit) => kind_of(&Literal::from(lit)),
+                };
+
+                Err(InvalidToken {
+                    actual,
+                    expected: TokenKind::BoolLit,
+                    span: span.into(),
+                })
+            }
+        }
+    };
+}
+
+helper!(impl_from_tt_for_bool, );
 
 
 mod tests {
@@ -221,9 +232,6 @@ mod tests {
     //! let _ = litrs::Literal::try_from(give::<proc_macro::TokenTree>());
     //! let _ = litrs::Literal::try_from(give::<&proc_macro::TokenTree>());
     //!
-    //!
-    //! let _ = litrs::BoolLit::try_from(give::<proc_macro::Literal>());
-    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro::Literal>());
     //!
     //! let _ = litrs::IntegerLit::try_from(give::<proc_macro::Literal>());
     //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::Literal>());
@@ -287,9 +295,6 @@ mod tests_proc_macro2 {
     //! let _ = litrs::Literal::try_from(give::<proc_macro2::TokenTree>());
     //! let _ = litrs::Literal::try_from(give::<&proc_macro2::TokenTree>());
     //!
-    //!
-    //! let _ = litrs::BoolLit::try_from(give::<proc_macro2::Literal>());
-    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::Literal>());
     //!
     //! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::Literal>());
     //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::Literal>());

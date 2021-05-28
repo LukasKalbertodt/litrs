@@ -104,7 +104,9 @@ fn proc_macro() {
     use proc_macro2::{
         self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
     };
-    use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit, err::TokenKind};
+    use crate::{
+        BoolLit, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit, err::TokenKind
+    };
 
 
     macro_rules! assert_invalid_token {
@@ -189,13 +191,13 @@ fn proc_macro() {
         actual: TokenKind::FloatLit,
     );
     assert_invalid_token!(
-        BoolLit::try_from(pm_bytestr_lit.clone()),
-        expected: TokenKind::BoolLit,
+        ByteLit::try_from(pm_bytestr_lit.clone()),
+        expected: TokenKind::ByteLit,
         actual: TokenKind::ByteStringLit,
     );
     assert_invalid_token!(
-        BoolLit::try_from(pm_i16_lit.clone()),
-        expected: TokenKind::BoolLit,
+        ByteLit::try_from(pm_i16_lit.clone()),
+        expected: TokenKind::ByteLit,
         actual: TokenKind::IntegerLit,
     );
     assert_invalid_token!(

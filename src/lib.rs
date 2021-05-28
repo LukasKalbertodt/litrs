@@ -41,7 +41,9 @@
 //!
 //! **Note**: `true` and `false` are `Ident`s when passed to your proc macro.
 //! The `TryFrom<TokenTree>` impls check for those two special idents and
-//! return a `BoolLit` appropriately.
+//! return a `BoolLit` appropriately. For that reason, there is also no
+//! `TryFrom<proc_macro::Literal>` impl for `BoolLit`. The `proc_macro::Literal`
+//! simply cannot represent bool literals.
 //!
 //!
 //! # Examples
