@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind::*, err::perr, parse::{first_byte_or_empty, hex_digit_value}};
+use crate::{
+    Buffer, ParseError,
+    err::{perr, ParseErrorKind::*},
+    parse::{first_byte_or_empty, hex_digit_value},
+};
 
 
 /// An integer literal, e.g. `27`, `0x7F`, `0b101010u8` or `5_000_000i64`.
@@ -68,7 +72,7 @@ impl IntegerBase {
 impl<B: Buffer> IntegerLit<B> {
     /// Parses the input as an integer literal. Returns an error if the input is
     /// invalid or represents a different kind of literal.
-    pub fn parse(input: B) -> Result<Self, Error> {
+    pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
             digit @ b'0'..=b'9' => Self::parse_impl(input, digit),
             _ => Err(perr(0, DoesNotStartWithDigit)),
@@ -123,7 +127,7 @@ impl<B: Buffer> IntegerLit<B> {
     }
 
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
-    pub(crate) fn parse_impl(input: B, first: u8) -> Result<Self, Error> {
+    pub(crate) fn parse_impl(input: B, first: u8) -> Result<Self, ParseError> {
         // Figure out base and strip prefix base, if it exists.
         let (end_prefix, base) = match (first, input.as_bytes().get(1)) {
             (b'0', Some(b'b')) => (2, IntegerBase::Binary),

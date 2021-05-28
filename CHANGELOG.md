@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Breaking**: rename `Error` to `ParseError`. That describes its purpose more
+    closely and is particular useful now that other error types exist in the library.
 
 ## [0.1.1] - 2021-05-25
 ### Added

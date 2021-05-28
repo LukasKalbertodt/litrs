@@ -5,7 +5,7 @@ use std::fmt::{Debug, Display};
 #[track_caller]
 pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
     input: &str,
-    result: Result<T, Error>,
+    result: Result<T, ParseError>,
     expected: T,
     parse_method: &str,
 ) {
@@ -57,7 +57,7 @@ macro_rules! assert_err_single {
                 v,
             ),
         };
-        if err.kind != $crate::ErrorKind::$kind {
+        if err.kind != $crate::err::ParseErrorKind::$kind {
             panic!(
                 "Expected error kind {} for `{}` but got {:?}",
                 stringify!($kind),

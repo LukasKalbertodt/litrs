@@ -1,6 +1,10 @@
 use std::{fmt, ops::Range};
 
-use crate::{Buffer, Error, ErrorKind::*, err::perr, escape::unescape};
+use crate::{
+    Buffer, ParseError,
+    err::{perr, ParseErrorKind::*},
+    escape::unescape,
+};
 
 
 /// A byte string or raw byte string literal, e.g. `b"hello"` or `br#"abc"def"#`.
@@ -25,7 +29,7 @@ pub struct ByteStringLit<B: Buffer> {
 impl<B: Buffer> ByteStringLit<B> {
     /// Parses the input as a (raw) byte string literal. Returns an error if the
     /// input is invalid or represents a different kind of literal.
-    pub fn parse(input: B) -> Result<Self, Error> {
+    pub fn parse(input: B) -> Result<Self, ParseError> {
         if input.is_empty() {
             return Err(perr(None, Empty));
         }
@@ -67,7 +71,7 @@ impl<B: Buffer> ByteStringLit<B> {
     }
 
     /// Precondition: input has to start with either `b"` or `br`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
+    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.starts_with(r"br") {
             // Raw string literal
             let num_hashes = input[2..].bytes().position(|b| b != b'#')

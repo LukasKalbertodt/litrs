@@ -1,5 +1,5 @@
 use crate::{
-    Literal, Error,
+    Literal, ParseError,
     test_util::assert_parse_ok_eq,
 };
 use super::{FloatLit, FloatType};
@@ -39,7 +39,7 @@ macro_rules! check {
 // ===== Actual tests ===========================================================================
 
 #[test]
-fn manual_without_suffix() -> Result<(), Error> {
+fn manual_without_suffix() -> Result<(), ParseError> {
     let f = FloatLit::parse("3.14")?;
     assert_eq!(f.number_part(), "3.14");
     assert_eq!(f.integer_part(), "3");
@@ -86,7 +86,7 @@ fn manual_without_suffix() -> Result<(), Error> {
 }
 
 #[test]
-fn manual_with_suffix() -> Result<(), Error> {
+fn manual_with_suffix() -> Result<(), ParseError> {
     let f = FloatLit::parse("3.14f32")?;
     assert_eq!(f.number_part(), "3.14");
     assert_eq!(f.integer_part(), "3");

@@ -1,8 +1,8 @@
-use crate::{Error, ErrorKind::*, err::perr, parse::hex_digit_value};
+use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::hex_digit_value};
 
 
 /// Must start with `\`
-pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usize), Error> {
+pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usize), ParseError> {
     let first = input.as_bytes().get(1)
         .ok_or(perr(offset, UnterminatedEscape))?;
     let out = match first {

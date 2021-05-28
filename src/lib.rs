@@ -71,14 +71,13 @@ mod string;
 
 
 use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
-use self::err::ErrorKind;
 
 pub use self::{
     bool::BoolLit,
     byte::ByteLit,
     bytestr::ByteStringLit,
     char::CharLit,
-    err::Error,
+    err::ParseError,
     float::{FloatLit, FloatType},
     integer::{FromIntegerLiteral, IntegerLit, IntegerBase, IntegerType},
     string::StringLit,

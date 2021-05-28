@@ -4,19 +4,18 @@ use crate::{
     ByteLit,
     ByteStringLit,
     CharLit,
-    Error,
+    ParseError,
     FloatLit,
     IntegerLit,
     Literal,
     StringLit,
-    err::perr,
-    ErrorKind::*,
+    err::{perr, ParseErrorKind::*},
 };
 
 
 impl<B: Buffer> Literal<B> {
     /// Parses the given input as a Rust literal.
-    pub fn parse(input: B) -> Result<Self, Error> {
+    pub fn parse(input: B) -> Result<Self, ParseError> {
         let first = first_byte_or_empty(&input)?;
         let second = input.as_bytes().get(1).copied();
 
@@ -60,7 +59,7 @@ impl<B: Buffer> Literal<B> {
 }
 
 
-pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, Error> {
+pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, ParseError> {
     s.as_bytes().get(0).copied().ok_or(perr(None, Empty))
 }
 

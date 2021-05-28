@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Error, ErrorKind::*, err::perr};
+use crate::{ParseError, err::{perr, ParseErrorKind::*}};
 
 
 /// A bool literal: `true` or `false`. Also see [the reference][ref].
@@ -15,7 +15,7 @@ pub enum BoolLit {
 impl BoolLit {
     /// Parses the input as a bool literal. Returns an error if the input is
     /// invalid or represents a different kind of literal.
-    pub fn parse(s: &str) -> Result<Self, Error> {
+    pub fn parse(s: &str) -> Result<Self, ParseError> {
         match s {
             "false" => Ok(Self::False),
             "true" => Ok(Self::True),

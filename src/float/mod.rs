@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind::*, err::perr, parse::{end_dec_digits, first_byte_or_empty}};
+use crate::{
+    Buffer, ParseError,
+    err::{perr, ParseErrorKind::*},
+    parse::{end_dec_digits, first_byte_or_empty},
+};
 
 
 
@@ -60,7 +64,7 @@ pub enum FloatType {
 impl<B: Buffer> FloatLit<B> {
     /// Parses the input as a floating point literal. Returns an error if the
     /// input is invalid or represents a different kind of literal.
-    pub fn parse(s: B) -> Result<Self, Error> {
+    pub fn parse(s: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => Self::parse_impl(s),
             _ => Err(perr(0, DoesNotStartWithDigit)),
@@ -103,7 +107,7 @@ impl<B: Buffer> FloatLit<B> {
     }
 
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
+    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         // Integer part.
         let end_integer_part = end_dec_digits(&input);
         let rest = &input[end_integer_part..];

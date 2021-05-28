@@ -29,12 +29,12 @@ use std::{fmt, ops::Range};
 /// keep the returned errors as stable as possible, full stability cannot be
 /// guaranteed.
 #[derive(Debug, Clone)]
-pub struct Error {
+pub struct ParseError {
     pub(crate) span: Option<Range<usize>>,
-    pub(crate) kind: ErrorKind,
+    pub(crate) kind: ParseErrorKind,
 }
 
-impl Error {
+impl ParseError {
     /// Returns a span of this error, if available. **Note**: this is not
     /// stable. See [the documentation of this type][Error] for more
     /// information.
@@ -47,8 +47,8 @@ impl Error {
 /// This is a free standing function instead of an associated one to reduce
 /// noise around parsing code. There are lots of places that create errors, we
 /// I wanna keep them as short as possible.
-pub(crate) fn perr(span: impl SpanLike, kind: ErrorKind) -> Error {
-    Error {
+pub(crate) fn perr(span: impl SpanLike, kind: ParseErrorKind) -> ParseError {
+    ParseError {
         span: span.into_span(),
         kind,
     }
@@ -78,7 +78,7 @@ impl SpanLike for usize {
 /// Kinds of errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub(crate) enum ErrorKind {
+pub(crate) enum ParseErrorKind {
     /// The input was an empty string
     Empty,
 
@@ -187,11 +187,11 @@ pub(crate) enum ErrorKind {
     IsolatedCr,
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for ParseError {}
 
-impl fmt::Display for Error {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ErrorKind::*;
+        use ParseErrorKind::*;
 
         let description = match self.kind {
             Empty => "input is empty",

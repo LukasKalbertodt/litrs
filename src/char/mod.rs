@@ -1,6 +1,11 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind::*, err::perr, escape::unescape, parse::first_byte_or_empty};
+use crate::{
+    Buffer, ParseError,
+    err::{perr, ParseErrorKind::*},
+    escape::unescape,
+    parse::first_byte_or_empty,
+};
 
 
 /// A character literal, e.g. `'g'` or `'🦊'`.
@@ -17,7 +22,7 @@ pub struct CharLit<B: Buffer> {
 impl<B: Buffer> CharLit<B> {
     /// Parses the input as a character literal. Returns an error if the input
     /// is invalid or represents a different kind of literal.
-    pub fn parse(input: B) -> Result<Self, Error> {
+    pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
             b'\'' => Self::parse_impl(input),
             _ => Err(perr(0, DoesNotStartWithQuote)),
@@ -30,7 +35,7 @@ impl<B: Buffer> CharLit<B> {
     }
 
     /// Precondition: first character in input must be `'`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
+    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.len() == 1 {
             return Err(perr(None, UnterminatedCharLiteral));
         }
