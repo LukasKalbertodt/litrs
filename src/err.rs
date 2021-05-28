@@ -107,7 +107,7 @@ pub struct ParseError {
 impl ParseError {
     /// Returns a span of this error, if available. **Note**: the returned span
     /// might change in future versions of this library. See [the documentation
-    /// of this type][Error] for more information.
+    /// of this type][ParseError] for more information.
     pub fn span(&self) -> Option<Range<usize>> {
         self.span.clone()
     }
