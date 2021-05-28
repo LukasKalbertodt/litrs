@@ -76,7 +76,7 @@ pub use self::{
     byte::ByteLit,
     bytestr::ByteStringLit,
     char::CharLit,
-    err::ParseError,
+    err::{InvalidToken, ParseError},
     float::{FloatLit, FloatType},
     integer::{FromIntegerLiteral, IntegerLit, IntegerBase, IntegerType},
     string::StringLit,

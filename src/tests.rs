@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::TokenKind};
+use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::{InvalidToken, TokenKind}};
 
 #[test]
 fn empty() {
@@ -252,5 +252,28 @@ fn proc_macro() {
         IntegerLit::try_from(TokenTree::from(pm_char_lit.clone())),
         expected: TokenKind::IntegerLit,
         actual: TokenKind::CharLit,
+    );
+}
+
+#[cfg(feature = "proc-macro2")]
+#[test]
+fn invalid_token_display() {
+    let span = crate::err::Span::Two(proc_macro2::Span::call_site());
+    assert_eq!(
+        InvalidToken {
+            actual: TokenKind::StringLit,
+            expected: TokenKind::FloatLit,
+            span,
+        }.to_string(),
+        r#"expected a float literal (e.g. `3.14`), but found a string literal (e.g. "Ferris")"#,
+    );
+
+    assert_eq!(
+        InvalidToken {
+            actual: TokenKind::Punct,
+            expected: TokenKind::Literal,
+            span,
+        }.to_string(),
+        r#"expected a literal, but found a punctuation character"#,
     );
 }
