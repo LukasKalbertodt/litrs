@@ -1,10 +1,10 @@
-use crate::{Error, ErrorKind, parse::hex_digit_value};
+use crate::{Error, ErrorKind::*, err::perr, parse::hex_digit_value};
 
 
 /// Must start with `\`
 pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usize), Error> {
     let first = input.as_bytes().get(1)
-        .ok_or(Error::single(offset, ErrorKind::UnterminatedEscape))?;
+        .ok_or(perr(offset, UnterminatedEscape))?;
     let out = match first {
         // Quote escapes
         b'\'' => (E::from_byte(b'\''), 2),
@@ -18,16 +18,16 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
         b'0' => (E::from_byte(b'\0'), 2),
         b'x' => {
             let hex_string = input.get(2..4)
-                .ok_or(Error::new(offset..offset + input.len(), ErrorKind::UnterminatedEscape))?
+                .ok_or(perr(offset..offset + input.len(), UnterminatedEscape))?
                 .as_bytes();
             let first = hex_digit_value(hex_string[0])
-                .ok_or(Error::new(offset..offset + 4, ErrorKind::InvalidXEscape))?;
+                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
             let second = hex_digit_value(hex_string[1])
-                .ok_or(Error::new(offset..offset + 4, ErrorKind::InvalidXEscape))?;
+                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
             let value = second + 16 * first;
 
             if E::SUPPORTS_UNICODE && value > 0x7F {
-                return Err(Error::new(offset..offset + 4, ErrorKind::NonAsciiXEscape));
+                return Err(perr(offset..offset + 4, NonAsciiXEscape));
             }
 
             (E::from_byte(value), 4)
@@ -36,21 +36,19 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
         // Unicode escape
         b'u' => {
             if !E::SUPPORTS_UNICODE {
-                return Err(Error::new(offset..offset + 2, ErrorKind::UnicodeEscapeInByteLiteral));
+                return Err(perr(offset..offset + 2, UnicodeEscapeInByteLiteral));
             }
 
             if input.as_bytes().get(2) != Some(&b'{') {
-                return Err(Error::new(offset..offset + 2, ErrorKind::UnicodeEscapeWithoutBrace));
+                return Err(perr(offset..offset + 2, UnicodeEscapeWithoutBrace));
             }
 
-            let closing_pos = input.bytes().position(|b| b == b'}').ok_or(Error::new(
-                offset..offset + input.len(),
-                ErrorKind::UnterminatedUnicodeEscape,
-            ))?;
+            let closing_pos = input.bytes().position(|b| b == b'}')
+                .ok_or(perr(offset..offset + input.len(), UnterminatedUnicodeEscape))?;
 
             let inner = &input[3..closing_pos];
             if inner.as_bytes().first() == Some(&b'_') {
-                return Err(Error::single(4, ErrorKind::InvalidStartOfUnicodeEscape));
+                return Err(perr(4, InvalidStartOfUnicodeEscape));
             }
 
             let mut v: u32 = 0;
@@ -61,25 +59,22 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
                 }
 
                 let digit = hex_digit_value(b)
-                    .ok_or(Error::single(offset + 3 + i, ErrorKind::NonHexDigitInUnicodeEscape))?;
+                    .ok_or(perr(offset + 3 + i, NonHexDigitInUnicodeEscape))?;
 
                 if digit_count == 6 {
-                    return Err(Error::single(
-                        offset + 3 + i,
-                        ErrorKind::TooManyDigitInUnicodeEscape,
-                    ));
+                    return Err(perr(offset + 3 + i, TooManyDigitInUnicodeEscape));
                 }
                 digit_count += 1;
                 v = 16 * v + digit as u32;
             }
 
             let c = char::from_u32(v)
-                .ok_or(Error::new(offset..closing_pos + 1, ErrorKind::InvalidUnicodeEscapeChar))?;
+                .ok_or(perr(offset..closing_pos + 1, InvalidUnicodeEscapeChar))?;
 
             (E::from_char(c), closing_pos + 1)
         }
 
-        _ => return Err(Error::new(offset..offset + 2, ErrorKind::UnknownEscape)),
+        _ => return Err(perr(offset..offset + 2, UnknownEscape)),
     };
 
     Ok(out)

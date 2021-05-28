@@ -1,6 +1,6 @@
 use std::{fmt, ops::Range};
 
-use crate::{Buffer, Error, ErrorKind, escape::unescape};
+use crate::{Buffer, Error, ErrorKind::*, err::perr, escape::unescape};
 
 
 /// A byte string or raw byte string literal, e.g. `b"hello"` or `br#"abc"def"#`.
@@ -27,10 +27,10 @@ impl<B: Buffer> ByteStringLit<B> {
     /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         if input.is_empty() {
-            return Err(Error::spanless(ErrorKind::Empty));
+            return Err(perr(None, Empty));
         }
         if !input.starts_with(r#"b""#) && !input.starts_with("br") {
-            return Err(Error::spanless(ErrorKind::InvalidByteStringLiteralStart));
+            return Err(perr(None, InvalidByteStringLiteralStart));
         }
 
         Self::parse_impl(input)
@@ -71,10 +71,10 @@ impl<B: Buffer> ByteStringLit<B> {
         if input.starts_with(r"br") {
             // Raw string literal
             let num_hashes = input[2..].bytes().position(|b| b != b'#')
-                .ok_or(Error::spanless(ErrorKind::InvalidLiteral))?;
+                .ok_or(perr(None, InvalidLiteral))?;
 
             if input.as_bytes().get(2 + num_hashes) != Some(&b'"') {
-                return Err(Error::spanless(ErrorKind::InvalidLiteral));
+                return Err(perr(None, InvalidLiteral));
             }
             let start_inner = 2 + num_hashes + 1;
             let hashes = &input[2..num_hashes + 2];
@@ -87,17 +87,14 @@ impl<B: Buffer> ByteStringLit<B> {
                 }
 
                 if !b.is_ascii() {
-                    return Err(Error::single(i + start_inner, ErrorKind::NonAsciiInByteLiteral));
+                    return Err(perr(i + start_inner, NonAsciiInByteLiteral));
                 }
             }
             let closing_quote_pos = closing_quote_pos
-                .ok_or(Error::spanless(ErrorKind::UnterminatedRawString))?;
+                .ok_or(perr(None, UnterminatedRawString))?;
 
             if closing_quote_pos + num_hashes != input.len() - 1 {
-                return Err(Error::new(
-                    closing_quote_pos + num_hashes + 1..input.len(),
-                    ErrorKind::UnexpectedChar,
-                ));
+                return Err(perr(closing_quote_pos + num_hashes + 1..input.len(), UnexpectedChar));
             }
 
             Ok(Self {
@@ -119,16 +116,16 @@ impl<B: Buffer> ByteStringLit<B> {
                         end_last_escape = i;
                     }
                     b'\r' if input.as_bytes()[i + 1] != b'\n'
-                        => return Err(Error::single(i, ErrorKind::IsolatedCr)),
-                    b'"' => return Err(Error::new(i + 1..input.len(), ErrorKind::UnexpectedChar)),
+                        => return Err(perr(i, IsolatedCr)),
+                    b'"' => return Err(perr(i + 1..input.len(), UnexpectedChar)),
                     b if !b.is_ascii()
-                        => return Err(Error::single(i, ErrorKind::NonAsciiInByteLiteral)),
+                        => return Err(perr(i, NonAsciiInByteLiteral)),
                     _ => i += 1,
                 }
             }
 
             if input.as_bytes()[input.len() - 1] != b'"' || input.len() == 2 {
-                return Err(Error::spanless(ErrorKind::UnterminatedString));
+                return Err(perr(None, UnterminatedString));
             }
 
             // `value` is only empty there was no escape in the input string

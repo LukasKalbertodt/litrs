@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Error, ErrorKind};
+use crate::{Error, ErrorKind::*, err::perr};
 
 
 /// A bool literal: `true` or `false`. Also see [the reference][ref].
@@ -19,7 +19,7 @@ impl BoolLit {
         match s {
             "false" => Ok(Self::False),
             "true" => Ok(Self::True),
-            _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
+            _ => Err(perr(None, InvalidLiteral)),
         }
     }
 

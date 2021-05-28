@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::{Buffer, Error, ErrorKind, escape::unescape};
+use crate::{Buffer, Error, ErrorKind::*, err::perr, escape::unescape};
 
 
 /// A (single) byte literal, e.g. `b'k'` or `b'!'`.
@@ -19,10 +19,10 @@ impl<B: Buffer> ByteLit<B> {
     /// invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, Error> {
         if input.is_empty() {
-            return Err(Error::spanless(ErrorKind::Empty));
+            return Err(perr(None, Empty));
         }
         if !input.starts_with("b'") {
-            return Err(Error::spanless(ErrorKind::InvalidByteLiteralStart));
+            return Err(perr(None, InvalidByteLiteralStart));
         }
 
         Self::parse_impl(input)
@@ -36,27 +36,27 @@ impl<B: Buffer> ByteLit<B> {
     /// Precondition: must start with `b'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
         if input.len() == 2 {
-            return Err(Error::spanless(ErrorKind::UnterminatedByteLiteral));
+            return Err(perr(None, UnterminatedByteLiteral));
         }
         if *input.as_bytes().last().unwrap() != b'\'' {
-            return Err(Error::spanless(ErrorKind::UnterminatedByteLiteral));
+            return Err(perr(None, UnterminatedByteLiteral));
         }
 
         let inner = &input[2..input.len() - 1];
-        let first = inner.as_bytes().get(0).ok_or(Error::spanless(ErrorKind::EmptyByteLiteral))?;
+        let first = inner.as_bytes().get(0).ok_or(perr(None, EmptyByteLiteral))?;
         let (c, len) = match first {
-            b'\'' => return Err(Error::single(2, ErrorKind::UnescapedSingleQuote)),
+            b'\'' => return Err(perr(2, UnescapedSingleQuote)),
             b'\n' | b'\t' | b'\r'
-                => return Err(Error::single(2, ErrorKind::UnescapedSpecialWhitespace)),
+                => return Err(perr(2, UnescapedSpecialWhitespace)),
 
             b'\\' => unescape::<u8>(inner, 2)?,
             other if other.is_ascii() => (*other, 1),
-            _ => return Err(Error::single(2, ErrorKind::NonAsciiInByteLiteral)),
+            _ => return Err(perr(2, NonAsciiInByteLiteral)),
         };
         let rest = &inner[len..];
 
         if !rest.is_empty() {
-            return Err(Error::new(len + 2..input.len() - 1, ErrorKind::OverlongByteLiteral));
+            return Err(perr(len + 2..input.len() - 1, OverlongByteLiteral));
         }
 
         Ok(Self {

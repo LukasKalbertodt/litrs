@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind, escape::unescape, parse::first_byte_or_empty};
+use crate::{Buffer, Error, ErrorKind::*, err::perr, escape::unescape, parse::first_byte_or_empty};
 
 
 /// A character literal, e.g. `'g'` or `'🦊'`.
@@ -20,7 +20,7 @@ impl<B: Buffer> CharLit<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             b'\'' => Self::parse_impl(input),
-            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithQuote)),
+            _ => Err(perr(0, DoesNotStartWithQuote)),
         }
     }
 
@@ -32,18 +32,18 @@ impl<B: Buffer> CharLit<B> {
     /// Precondition: first character in input must be `'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, Error> {
         if input.len() == 1 {
-            return Err(Error::spanless(ErrorKind::UnterminatedCharLiteral));
+            return Err(perr(None, UnterminatedCharLiteral));
         }
         if *input.as_bytes().last().unwrap() != b'\'' {
-            return Err(Error::spanless(ErrorKind::UnterminatedCharLiteral));
+            return Err(perr(None, UnterminatedCharLiteral));
         }
 
         let inner = &input[1..input.len() - 1];
-        let first = inner.chars().nth(0).ok_or(Error::spanless(ErrorKind::EmptyCharLiteral))?;
+        let first = inner.chars().nth(0).ok_or(perr(None, EmptyCharLiteral))?;
         let (c, len) = match first {
-            '\'' => return Err(Error::single(1, ErrorKind::UnescapedSingleQuote)),
+            '\'' => return Err(perr(1, UnescapedSingleQuote)),
             '\n' | '\t' | '\r'
-                => return Err(Error::single(1, ErrorKind::UnescapedSpecialWhitespace)),
+                => return Err(perr(1, UnescapedSpecialWhitespace)),
 
             '\\' => unescape::<char>(inner, 1)?,
             other => (other, other.len_utf8()),
@@ -51,7 +51,7 @@ impl<B: Buffer> CharLit<B> {
         let rest = &inner[len..];
 
         if !rest.is_empty() {
-            return Err(Error::new(len + 1..input.len() - 1, ErrorKind::OverlongCharLiteral));
+            return Err(perr(len + 1..input.len() - 1, OverlongCharLiteral));
         }
 
         Ok(Self {

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind, parse::{end_dec_digits, first_byte_or_empty}};
+use crate::{Buffer, Error, ErrorKind::*, err::perr, parse::{end_dec_digits, first_byte_or_empty}};
 
 
 
@@ -63,7 +63,7 @@ impl<B: Buffer> FloatLit<B> {
     pub fn parse(s: B) -> Result<Self, Error> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => Self::parse_impl(s),
-            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithDigit)),
+            _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
 
@@ -113,7 +113,7 @@ impl<B: Buffer> FloatLit<B> {
         let end_fractional_part = if rest.as_bytes().get(0) == Some(&b'.') {
             // The fractional part must not start with `_`.
             if rest.as_bytes().get(1) == Some(&b'_') {
-                return Err(Error::single(end_integer_part + 1, ErrorKind::UnexpectedChar));
+                return Err(perr(end_integer_part + 1, UnexpectedChar));
             }
 
             end_dec_digits(&rest[1..]) + 1 + end_integer_part
@@ -125,7 +125,7 @@ impl<B: Buffer> FloatLit<B> {
         // If we have a period that is not followed by decimal digits, the
         // literal must end now.
         if end_integer_part + 1 == end_fractional_part && !rest.is_empty() {
-            return Err(Error::single(end_integer_part + 1, ErrorKind::UnexpectedChar));
+            return Err(perr(end_integer_part + 1, UnexpectedChar));
         }
 
 
@@ -140,9 +140,9 @@ impl<B: Buffer> FloatLit<B> {
             // Find end of exponent and make sure there is at least one digit.
             let end_exponent = end_dec_digits(&rest[exp_number_start..]) + exp_number_start;
             if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
-                return Err(Error::new(
+                return Err(perr(
                     end_fractional_part..end_fractional_part + end_exponent,
-                    ErrorKind::NoExponentDigits
+                    NoExponentDigits,
                 ));
             }
 
@@ -157,10 +157,7 @@ impl<B: Buffer> FloatLit<B> {
             "" => None,
             "f32" => Some(FloatType::F32),
             "f64" => Some(FloatType::F64),
-            _ => return Err(Error::new(
-                end_number_part..input.len(),
-                ErrorKind::InvalidFloatTypeSuffix,
-            )),
+            _ => return Err(perr(end_number_part..input.len(), InvalidFloatTypeSuffix)),
         };
 
         Ok(Self {

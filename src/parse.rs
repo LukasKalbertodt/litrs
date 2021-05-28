@@ -5,11 +5,12 @@ use crate::{
     ByteStringLit,
     CharLit,
     Error,
-    ErrorKind,
     FloatLit,
     IntegerLit,
     Literal,
     StringLit,
+    err::perr,
+    ErrorKind::*,
 };
 
 
@@ -42,7 +43,7 @@ impl<B: Buffer> Literal<B> {
                     Some(b'.') | Some(b'e') | Some(b'E') | Some(b'f')
                         => FloatLit::parse_impl(input).map(Literal::Float),
 
-                    _ => Err(Error::single(end, ErrorKind::UnexpectedChar)),
+                    _ => Err(perr(end, UnexpectedChar)),
                 }
             },
 
@@ -53,14 +54,14 @@ impl<B: Buffer> Literal<B> {
             b'b' if second == Some(b'r') || second == Some(b'"')
                 => ByteStringLit::parse_impl(input).map(Literal::ByteString),
 
-            _ => Err(Error::spanless(ErrorKind::InvalidLiteral)),
+            _ => Err(perr(None, InvalidLiteral)),
         }
     }
 }
 
 
 pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, Error> {
-    s.as_bytes().get(0).copied().ok_or(Error::spanless(ErrorKind::Empty))
+    s.as_bytes().get(0).copied().ok_or(perr(None, Empty))
 }
 
 /// Returns the index of the first non-underscore, non-decimal digit in `input`,

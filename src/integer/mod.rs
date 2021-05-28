@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Buffer, Error, ErrorKind, parse::{first_byte_or_empty, hex_digit_value}};
+use crate::{Buffer, Error, ErrorKind::*, err::perr, parse::{first_byte_or_empty, hex_digit_value}};
 
 
 /// An integer literal, e.g. `27`, `0x7F`, `0b101010u8` or `5_000_000i64`.
@@ -71,7 +71,7 @@ impl<B: Buffer> IntegerLit<B> {
     pub fn parse(input: B) -> Result<Self, Error> {
         match first_byte_or_empty(&input)? {
             digit @ b'0'..=b'9' => Self::parse_impl(input, digit),
-            _ => Err(Error::single(0, ErrorKind::DoesNotStartWithDigit)),
+            _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
 
@@ -158,11 +158,11 @@ impl<B: Buffer> IntegerLit<B> {
         };
 
         if let Some(pos) = invalid_digit_pos {
-            return Err(Error::single(end_prefix + pos, ErrorKind::InvalidDigit));
+            return Err(perr(end_prefix + pos, InvalidDigit));
         }
 
         if main_part.bytes().filter(|&b| b != b'_').count() == 0 {
-            return Err(Error::new(end_prefix..end_prefix + end_main, ErrorKind::NoDigits));
+            return Err(perr(end_prefix..end_prefix + end_main, NoDigits));
         }
 
 
@@ -181,10 +181,7 @@ impl<B: Buffer> IntegerLit<B> {
             "i64" => Some(IntegerType::I64),
             "i128" => Some(IntegerType::I128),
             "isize" => Some(IntegerType::Isize),
-            _ => return Err(Error::new(
-                end_main + end_prefix..input.len(),
-                ErrorKind::InvalidIntegerTypeSuffix,
-            )),
+            _ => return Err(perr(end_main + end_prefix..input.len(), InvalidIntegerTypeSuffix)),
         };
 
         Ok(Self {

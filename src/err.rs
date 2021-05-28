@@ -42,27 +42,38 @@ impl Error {
         self.span.clone()
     }
 
-    pub(crate) fn new(span: Range<usize>, kind: ErrorKind) -> Self {
-        Self {
-            span: Some(span),
-            kind,
-        }
-    }
+}
 
-    pub(crate) fn single(at: usize, kind: ErrorKind) -> Self {
-        Self {
-            span: Some(at..at + 1),
-            kind,
-        }
-    }
-
-    pub(crate) fn spanless(kind: ErrorKind) -> Self {
-        Self {
-            span: None,
-            kind,
-        }
+/// This is a free standing function instead of an associated one to reduce
+/// noise around parsing code. There are lots of places that create errors, we
+/// I wanna keep them as short as possible.
+pub(crate) fn perr(span: impl SpanLike, kind: ErrorKind) -> Error {
+    Error {
+        span: span.into_span(),
+        kind,
     }
 }
+
+pub(crate) trait SpanLike {
+    fn into_span(self) -> Option<Range<usize>>;
+}
+
+impl SpanLike for Option<Range<usize>> {
+    fn into_span(self) -> Option<Range<usize>> {
+        self
+    }
+}
+impl SpanLike for Range<usize> {
+    fn into_span(self) -> Option<Range<usize>> {
+        Some(self)
+    }
+}
+impl SpanLike for usize {
+    fn into_span(self) -> Option<Range<usize>> {
+        Some(self..self + 1)
+    }
+}
+
 
 /// Kinds of errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
