@@ -39,6 +39,10 @@
 //! enabled (which it is by default), all these `From` and `TryFrom` impls also
 //! exist for the corresponding `proc_macro2` types.
 //!
+//! **Note**: `true` and `false` are `Ident`s when passed to your proc macro.
+//! The `TryFrom<TokenTree>` impls check for those two special idents and
+//! return a `BoolLit` appropriately.
+//!
 //!
 //! # Examples
 //!
