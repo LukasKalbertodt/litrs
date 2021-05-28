@@ -1,5 +1,6 @@
+use std::convert::TryFrom;
 use proc_macro::{Spacing, TokenStream, TokenTree};
-use litrs::Literal;
+use litrs::{Literal, IntegerLit, StringLit};
 
 
 /// Concatinates all input string and char literals into a single output string
@@ -9,10 +10,9 @@ pub fn concat(input: TokenStream) -> TokenStream {
     let mut out = String::new();
 
     for tt in input {
-        let lit = match tt {
-            // Here we use the `From` impl of `Literal`.
-            TokenTree::Literal(lit) => Literal::from(lit),
-            _ => panic!("only literals allowed as input"),
+        let lit = match Literal::try_from(tt) {
+            Ok(lit) => lit,
+            Err(e) => return e.to_compile_error(),
         };
 
         // Here we can match over the literal to inspect it. All literal kinds
@@ -39,13 +39,13 @@ pub fn repeat(input: TokenStream) -> TokenStream {
                 panic!("second token has to be a single `*`");
             }
 
-            let int = match Literal::from(int) {
-                Literal::Integer(i) => i,
-                _ => panic!("first token has to be an integer"),
+            let int = match IntegerLit::try_from(int) {
+                Ok(i) => i,
+                Err(e) => return e.to_compile_error(),
             };
-            let string = match Literal::from(string) {
-                Literal::String(s) => s,
-                _ => panic!("third token has to be a string!"),
+            let string = match StringLit::try_from(string) {
+                Ok(s) => s,
+                Err(e) => return e.to_compile_error(),
             };
 
             (int, string)
