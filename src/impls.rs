@@ -1,3 +1,31 @@
+//! `From` and `TryFrom` impls for various conversions.
+//!
+//! # Tests
+//!
+//! ```no_run
+//! #[cfg(not(feature = "proc-macro2"))]
+//! compile_error!("Run tests with feature `proc-macro2` enabled!");
+//!
+//! extern crate proc_macro;
+//!
+//! use std::convert::TryFrom;
+//! use litrs::Literal;
+//!
+//! fn give<T>() -> T {
+//!     panic!()
+//! }
+//!
+//! let _ = litrs::Literal::from(give::<proc_macro::Literal>());
+//! let _ = litrs::Literal::from(give::<&proc_macro::Literal>());
+//! let _ = litrs::Literal::from(give::<proc_macro2::Literal>());
+//! let _ = litrs::Literal::from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::Literal::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::Literal::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::Literal::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::Literal::try_from(give::<&proc_macro2::TokenTree>());
+//! ```
+
 use std::convert::TryFrom;
 
 use crate::{Literal, err::{InvalidToken, TokenKind}};
