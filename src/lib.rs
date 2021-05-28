@@ -37,8 +37,6 @@
 //!
 //! # Crate features
 //!
-//! - `proc-macro` (**default**): adds `From<proc_macro::Literal>` and
-//!   `From<&proc_macro::Literal>` for [`Literal`].
 //! - `proc-macro2` (**default**): adds the dependency `proc_macro2` and the
 //!    impls `From<proc_macro2::Literal>` and `From<&proc_macro2::Literal>` for
 //!    [`Literal`].
@@ -144,7 +142,6 @@ impl<B: Buffer> fmt::Display for Literal<B> {
 // We call `expect` in all these impls: this library aims to implement exactly
 // the Rust grammar, so if we have a valid Rust literal, we should always be
 // able to parse it.
-#[cfg(feature = "proc-macro")]
 impl From<proc_macro::Literal> for Literal<String> {
     fn from(src: proc_macro::Literal) -> Self {
         Self::parse(src.to_string())
@@ -152,7 +149,6 @@ impl From<proc_macro::Literal> for Literal<String> {
     }
 }
 
-#[cfg(feature = "proc-macro")]
 impl From<&proc_macro::Literal> for Literal<String> {
     fn from(src: &proc_macro::Literal) -> Self {
         Self::parse(src.to_string())

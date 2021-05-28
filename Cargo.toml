@@ -24,8 +24,7 @@ exclude = [".github"]
 
 
 [features]
-default = ["proc-macro", "proc-macro2"]
-proc-macro = []
+default = ["proc-macro2"]
 
 [dependencies]
 proc-macro2 = { version = "1", optional = true }

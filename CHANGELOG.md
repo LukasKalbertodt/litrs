@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 - **Breaking**: rename `Error` to `ParseError`. That describes its purpose more
     closely and is particular useful now that other error types exist in the library.
 
+### Removed
+- **Breaking**: remove `proc-macro` feature and instead offer the corresponding
+    `impl`s unconditionally. Since the feature didn't enable/disable a
+    dependency (`proc-macro` is a compiler provided crate) and since apparently
+    it works fine in `no_std` environments, I dropped this feature. I don't
+    currently see a reason why the corresponding impls should be conditional.
+
 ## [0.1.1] - 2021-05-25
 ### Added
 - `From` impls to create a `Literal` from references to proc-macro literal types:
