@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
     it works fine in `no_std` environments, I dropped this feature. I don't
     currently see a reason why the corresponding impls should be conditional.
 
+### Added
+- `TryFrom<TokenTree> for litrs::Literal` impls
+
+
 ## [0.1.1] - 2021-05-25
 ### Added
 - `From` impls to create a `Literal` from references to proc-macro literal types:

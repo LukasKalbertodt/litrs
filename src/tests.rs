@@ -1,4 +1,6 @@
-use crate::{ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit};
+use std::convert::TryFrom;
+
+use crate::{ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::TokenKind};
 
 #[test]
 fn empty() {
@@ -98,32 +100,61 @@ fn never_panic_len_4() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn proc_macro() {
+    use proc_macro2::{
+        self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
+    };
+
     assert_eq!(
-        Literal::from(proc_macro2::Literal::u16_suffixed(2700)),
+        Literal::from(pm2::Literal::u16_suffixed(2700)),
         Literal::Integer(IntegerLit::parse("2700u16".to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::i16_unsuffixed(3912)),
+        Literal::from(pm2::Literal::i16_unsuffixed(3912)),
         Literal::Integer(IntegerLit::parse("3912".to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::f32_unsuffixed(3.14)),
+        Literal::from(pm2::Literal::f32_unsuffixed(3.14)),
         Literal::Float(FloatLit::parse("3.14".to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::f64_suffixed(99.3)),
+        Literal::from(pm2::Literal::f64_suffixed(99.3)),
         Literal::Float(FloatLit::parse("99.3f64".to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::string("hello 🦊")),
+        Literal::from(pm2::Literal::string("hello 🦊")),
         Literal::String(StringLit::parse(r#""hello 🦊""#.to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::byte_string(b"hello \nfoxxo")),
+        Literal::from(pm2::Literal::byte_string(b"hello \nfoxxo")),
         Literal::ByteString(ByteStringLit::parse(r#"b"hello \nfoxxo""#.to_string()).unwrap()),
     );
     assert_eq!(
-        Literal::from(proc_macro2::Literal::character('🦀')),
+        Literal::from(pm2::Literal::character('🦀')),
         Literal::Char(CharLit::parse("'🦀'".to_string()).unwrap()),
+    );
+
+
+    let group = TokenTree::from(Group::new(Delimiter::Brace, TokenStream::new()));
+    let punct = TokenTree::from(Punct::new(':', Spacing::Alone));
+    let ident = TokenTree::from(Ident::new("peter", Span::call_site()));
+
+    assert_eq!(
+        Literal::try_from(TokenTree::Literal(pm2::Literal::string("hello 🦊"))).unwrap(),
+        Literal::String(StringLit::parse(r#""hello 🦊""#.to_string()).unwrap()),
+    );
+    assert_invalid_token!(
+        Literal::try_from(punct),
+        expected: TokenKind::Literal,
+        actual: TokenKind::Punct,
+    );
+    assert_invalid_token!(
+        Literal::try_from(group),
+        expected: TokenKind::Literal,
+        actual: TokenKind::Group,
+    );
+    assert_invalid_token!(
+        Literal::try_from(ident),
+        expected: TokenKind::Literal,
+        actual: TokenKind::Ident,
     );
 }

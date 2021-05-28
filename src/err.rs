@@ -1,5 +1,42 @@
 use std::{fmt, ops::Range};
 
+
+#[derive(Debug, Clone, Copy)]
+pub struct InvalidToken {
+    pub(crate) expected: TokenKind,
+    pub(crate) actual: TokenKind,
+    pub(crate) span: Span,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum TokenKind {
+    Punct,
+    Ident,
+    Group,
+    Literal,
+}
+
+/// Unfortunately, we have to deal with both cases.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Span {
+    One(proc_macro::Span),
+    #[cfg(feature = "proc-macro2")]
+    Two(proc_macro2::Span),
+}
+
+impl From<proc_macro::Span> for Span {
+    fn from(src: proc_macro::Span) -> Self {
+        Self::One(src)
+    }
+}
+
+#[cfg(feature = "proc-macro2")]
+impl From<proc_macro2::Span> for Span {
+    fn from(src: proc_macro2::Span) -> Self {
+        Self::Two(src)
+    }
+}
+
 /// Errors during parsing.
 ///
 /// This type should be seen primarily for error reporting and not for catching
