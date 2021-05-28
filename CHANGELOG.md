@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - `TryFrom<TokenTree> for litrs::Literal` impls
+- `From<*Lit> for litrs::Literal` impls (e.g. `From<StringLit> for Literal`)
 
 
 ## [0.1.1] - 2021-05-25

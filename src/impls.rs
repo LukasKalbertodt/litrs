@@ -15,6 +15,23 @@
 //!     panic!()
 //! }
 //!
+//! let _ = litrs::Literal::<String>::from(give::<litrs::BoolLit>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::IntegerLit<String>>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::FloatLit<String>>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::CharLit<String>>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::StringLit<String>>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::ByteLit<String>>());
+//! let _ = litrs::Literal::<String>::from(give::<litrs::ByteStringLit<String>>());
+//!
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::BoolLit>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::IntegerLit<&'static str>>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::FloatLit<&'static str>>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::CharLit<&'static str>>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::StringLit<&'static str>>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteLit<&'static str>>());
+//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteStringLit<&'static str>>());
+//!
+//!
 //! let _ = litrs::Literal::from(give::<proc_macro::Literal>());
 //! let _ = litrs::Literal::from(give::<&proc_macro::Literal>());
 //! let _ = litrs::Literal::from(give::<proc_macro2::Literal>());
@@ -32,10 +49,32 @@ use crate::{Literal, err::{InvalidToken, TokenKind}};
 
 
 // ==============================================================================================
-// ===== `From<pm::Literal> for Literal`
+// ===== `From<*Lit> for Literal`
 // ==============================================================================================
 
+macro_rules! impl_specific_lit_to_lit {
+    ($ty:ty, $variant:ident) => {
+        impl<B: crate::Buffer> From<$ty> for Literal<B> {
+            fn from(src: $ty) -> Self {
+                Literal::$variant(src)
+            }
+        }
+    };
+}
 
+impl_specific_lit_to_lit!(crate::BoolLit, Bool);
+impl_specific_lit_to_lit!(crate::IntegerLit<B>, Integer);
+impl_specific_lit_to_lit!(crate::FloatLit<B>, Float);
+impl_specific_lit_to_lit!(crate::CharLit<B>, Char);
+impl_specific_lit_to_lit!(crate::StringLit<B>, String);
+impl_specific_lit_to_lit!(crate::ByteLit<B>, Byte);
+impl_specific_lit_to_lit!(crate::ByteStringLit<B>, ByteString);
+
+
+
+// ==============================================================================================
+// ===== `From<pm::Literal> for Literal`
+// ==============================================================================================
 
 // We call `expect` in all these impls: this library aims to implement exactly
 // the Rust grammar, so if we have a valid Rust literal, we should always be
