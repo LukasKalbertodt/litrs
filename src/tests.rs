@@ -156,17 +156,17 @@ fn proc_macro() {
         Literal::String(StringLit::parse(r#""hello 🦊""#.to_string()).unwrap()),
     );
     assert_invalid_token!(
-        Literal::try_from(punct),
+        Literal::try_from(punct.clone()),
         expected: TokenKind::Literal,
         actual: TokenKind::Punct,
     );
     assert_invalid_token!(
-        Literal::try_from(group),
+        Literal::try_from(group.clone()),
         expected: TokenKind::Literal,
         actual: TokenKind::Group,
     );
     assert_invalid_token!(
-        Literal::try_from(ident),
+        Literal::try_from(ident.clone()),
         expected: TokenKind::Literal,
         actual: TokenKind::Ident,
     );
@@ -270,6 +270,22 @@ fn proc_macro() {
         IntegerLit::try_from(TokenTree::from(pm_char_lit.clone())),
         expected: TokenKind::IntegerLit,
         actual: TokenKind::CharLit,
+    );
+
+    assert_invalid_token!(
+        StringLit::try_from(TokenTree::from(group)),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::Group,
+    );
+    assert_invalid_token!(
+        BoolLit::try_from(TokenTree::from(punct)),
+        expected: TokenKind::BoolLit,
+        actual: TokenKind::Punct,
+    );
+    assert_invalid_token!(
+        FloatLit::try_from(TokenTree::from(ident)),
+        expected: TokenKind::FloatLit,
+        actual: TokenKind::Ident,
     );
 }
 

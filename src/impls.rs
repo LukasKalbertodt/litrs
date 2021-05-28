@@ -149,7 +149,7 @@ macro_rules! impl_for_specific_lit {
                     Ok(lit) => <$ty>::try_from(lit),
                     Err(actual) => Err(InvalidToken {
                         actual,
-                        expected: TokenKind::Literal,
+                        expected: TokenKind::$kind,
                         span: span.into(),
                     }),
                 }
