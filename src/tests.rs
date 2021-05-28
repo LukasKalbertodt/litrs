@@ -163,32 +163,93 @@ fn proc_macro() {
     assert_eq!(Literal::from(CharLit::try_from(pm_char_lit.clone()).unwrap()), char_lit);
 
     assert_invalid_token!(
-        StringLit::try_from(pm_u16_lit),
+        StringLit::try_from(pm_u16_lit.clone()),
         expected: TokenKind::StringLit,
         actual: TokenKind::IntegerLit,
     );
     assert_invalid_token!(
-        StringLit::try_from(pm_f32_lit),
+        StringLit::try_from(pm_f32_lit.clone()),
         expected: TokenKind::StringLit,
         actual: TokenKind::FloatLit,
     );
     assert_invalid_token!(
-        BoolLit::try_from(pm_bytestr_lit),
+        BoolLit::try_from(pm_bytestr_lit.clone()),
         expected: TokenKind::BoolLit,
         actual: TokenKind::ByteStringLit,
     );
     assert_invalid_token!(
-        BoolLit::try_from(pm_i16_lit),
+        BoolLit::try_from(pm_i16_lit.clone()),
         expected: TokenKind::BoolLit,
         actual: TokenKind::IntegerLit,
     );
     assert_invalid_token!(
-        IntegerLit::try_from(pm_string_lit),
+        IntegerLit::try_from(pm_string_lit.clone()),
         expected: TokenKind::IntegerLit,
         actual: TokenKind::StringLit,
     );
     assert_invalid_token!(
-        IntegerLit::try_from(pm_char_lit),
+        IntegerLit::try_from(pm_char_lit.clone()),
+        expected: TokenKind::IntegerLit,
+        actual: TokenKind::CharLit,
+    );
+
+
+    assert_eq!(
+        Literal::from(IntegerLit::try_from(TokenTree::from(pm_u16_lit.clone())).unwrap()),
+        u16_lit,
+    );
+    assert_eq!(
+        Literal::from(IntegerLit::try_from(TokenTree::from(pm_i16_lit.clone())).unwrap()),
+        i16_lit,
+    );
+    assert_eq!(
+        Literal::from(FloatLit::try_from(TokenTree::from(pm_f32_lit.clone())).unwrap()),
+        f32_lit,
+    );
+    assert_eq!(
+        Literal::from(FloatLit::try_from(TokenTree::from(pm_f64_lit.clone())).unwrap()),
+        f64_lit,
+    );
+    assert_eq!(
+        Literal::from(StringLit::try_from(TokenTree::from(pm_string_lit.clone())).unwrap()),
+        string_lit,
+    );
+    assert_eq!(
+        Literal::from(ByteStringLit::try_from(TokenTree::from(pm_bytestr_lit.clone())).unwrap()),
+        bytestr_lit,
+    );
+    assert_eq!(
+        Literal::from(CharLit::try_from(TokenTree::from(pm_char_lit.clone())).unwrap()),
+        char_lit,
+    );
+
+    assert_invalid_token!(
+        StringLit::try_from(TokenTree::from(pm_u16_lit.clone())),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::IntegerLit,
+    );
+    assert_invalid_token!(
+        StringLit::try_from(TokenTree::from(pm_f32_lit.clone())),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::FloatLit,
+    );
+    assert_invalid_token!(
+        BoolLit::try_from(TokenTree::from(pm_bytestr_lit.clone())),
+        expected: TokenKind::BoolLit,
+        actual: TokenKind::ByteStringLit,
+    );
+    assert_invalid_token!(
+        BoolLit::try_from(TokenTree::from(pm_i16_lit.clone())),
+        expected: TokenKind::BoolLit,
+        actual: TokenKind::IntegerLit,
+    );
+    assert_invalid_token!(
+        IntegerLit::try_from(TokenTree::from(pm_string_lit.clone())),
+        expected: TokenKind::IntegerLit,
+        actual: TokenKind::StringLit,
+    );
+    assert_invalid_token!(
+        IntegerLit::try_from(TokenTree::from(pm_char_lit.clone())),
         expected: TokenKind::IntegerLit,
         actual: TokenKind::CharLit,
     );

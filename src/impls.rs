@@ -77,6 +77,42 @@
 //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::Literal>());
 //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::Literal>());
 //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//!
+//! let _ = litrs::BoolLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::BoolLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::BoolLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::IntegerLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::FloatLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::FloatLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::FloatLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::CharLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::CharLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::CharLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::CharLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::StringLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::StringLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::StringLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::StringLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::ByteLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::ByteLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::ByteLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::TokenTree>());
+//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::TokenTree>());
+//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::TokenTree>());
+//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::TokenTree>());
 //! ```
 
 use std::convert::TryFrom;
@@ -178,7 +214,7 @@ helper!(impl_tt_to_lit, );
 
 
 // ==============================================================================================
-// ===== `TryFrom<pm::Literal> for *Lit`
+// ===== `TryFrom<pm::Literal> for *Lit` and `TryFrom<pm::TokenTree> for *Lit`
 // ==============================================================================================
 
 fn kind_of(lit: &Literal<String>) -> TokenKind {
@@ -205,6 +241,28 @@ macro_rules! impl_for_specific_lit {
                     other => Err(InvalidToken {
                         expected: TokenKind::$kind,
                         actual: kind_of(&other),
+                        span: span.into(),
+                    }),
+                }
+            }
+        }
+
+        impl TryFrom<$($prefix)* TokenTree> for $ty {
+            type Error = InvalidToken;
+            fn try_from(tt: $($prefix)* TokenTree) -> Result<Self, Self::Error> {
+                let span = tt.span();
+                let res = match tt {
+                    $($prefix)* TokenTree::Group(_) => Err(TokenKind::Group),
+                    $($prefix)* TokenTree::Ident(_) => Err(TokenKind::Ident),
+                    $($prefix)* TokenTree::Punct(_) => Err(TokenKind::Punct),
+                    $($prefix)* TokenTree::Literal(ref lit) => Ok(lit),
+                };
+
+                match res {
+                    Ok(lit) => <$ty>::try_from(lit),
+                    Err(actual) => Err(InvalidToken {
+                        actual,
+                        expected: TokenKind::Literal,
                         span: span.into(),
                     }),
                 }

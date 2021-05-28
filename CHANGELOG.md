@@ -18,8 +18,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - `TryFrom<TokenTree> for litrs::Literal` impls
-- `From<*Lit> for litrs::Literal` impls (e.g. `From<StringLit> for Literal`)
-- `TryFrom<proc_macro[2]::Literal> for *Lit` (e.g. `for IntegerLit`)
+- `From<*Lit> for litrs::Literal` impls
+- `TryFrom<proc_macro[2]::Literal> for *Lit`
+- `TryFrom<TokenTree> for *Lit`
 
 
 ## [0.1.1] - 2021-05-25
