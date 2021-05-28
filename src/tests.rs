@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{Literal, StringLit, err::TokenKind};
+use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::TokenKind};
 
 #[test]
 fn empty() {
@@ -151,5 +151,45 @@ fn proc_macro() {
         Literal::try_from(ident),
         expected: TokenKind::Literal,
         actual: TokenKind::Ident,
+    );
+
+
+    assert_eq!(Literal::from(IntegerLit::try_from(pm_u16_lit.clone()).unwrap()), u16_lit);
+    assert_eq!(Literal::from(IntegerLit::try_from(pm_i16_lit.clone()).unwrap()), i16_lit);
+    assert_eq!(Literal::from(FloatLit::try_from(pm_f32_lit.clone()).unwrap()), f32_lit);
+    assert_eq!(Literal::from(FloatLit::try_from(pm_f64_lit.clone()).unwrap()), f64_lit);
+    assert_eq!(Literal::from(StringLit::try_from(pm_string_lit.clone()).unwrap()), string_lit);
+    assert_eq!(Literal::from(ByteStringLit::try_from(pm_bytestr_lit.clone()).unwrap()), bytestr_lit);
+    assert_eq!(Literal::from(CharLit::try_from(pm_char_lit.clone()).unwrap()), char_lit);
+
+    assert_invalid_token!(
+        StringLit::try_from(pm_u16_lit),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::IntegerLit,
+    );
+    assert_invalid_token!(
+        StringLit::try_from(pm_f32_lit),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::FloatLit,
+    );
+    assert_invalid_token!(
+        BoolLit::try_from(pm_bytestr_lit),
+        expected: TokenKind::BoolLit,
+        actual: TokenKind::ByteStringLit,
+    );
+    assert_invalid_token!(
+        BoolLit::try_from(pm_i16_lit),
+        expected: TokenKind::BoolLit,
+        actual: TokenKind::IntegerLit,
+    );
+    assert_invalid_token!(
+        IntegerLit::try_from(pm_string_lit),
+        expected: TokenKind::IntegerLit,
+        actual: TokenKind::StringLit,
+    );
+    assert_invalid_token!(
+        IntegerLit::try_from(pm_char_lit),
+        expected: TokenKind::IntegerLit,
+        actual: TokenKind::CharLit,
     );
 }

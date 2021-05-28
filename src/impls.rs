@@ -41,6 +41,42 @@
 //! let _ = litrs::Literal::try_from(give::<&proc_macro::TokenTree>());
 //! let _ = litrs::Literal::try_from(give::<proc_macro2::TokenTree>());
 //! let _ = litrs::Literal::try_from(give::<&proc_macro2::TokenTree>());
+//!
+//!
+//! let _ = litrs::BoolLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::BoolLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::BoolLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::IntegerLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::FloatLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::FloatLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::FloatLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::CharLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::CharLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::CharLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::CharLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::StringLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::StringLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::StringLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::StringLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::ByteLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::ByteLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::ByteLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::Literal>());
+//!
+//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::Literal>());
+//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::Literal>());
+//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::Literal>());
+//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::Literal>());
 //! ```
 
 use std::convert::TryFrom;
@@ -178,3 +214,58 @@ impl TryFrom<&proc_macro2::TokenTree> for Literal<String> {
             .map(From::from)
     }
 }
+
+
+// ==============================================================================================
+// ===== `TryFrom<pm::Literal> for *Lit`
+// ==============================================================================================
+
+fn kind_of(lit: &Literal<String>) -> TokenKind {
+    match lit {
+        Literal::String(_) => TokenKind::StringLit,
+        Literal::Bool(_) => TokenKind::BoolLit,
+        Literal::Integer(_) => TokenKind::IntegerLit,
+        Literal::Float(_) => TokenKind::FloatLit,
+        Literal::Char(_) => TokenKind::CharLit,
+        Literal::Byte(_) => TokenKind::ByteLit,
+        Literal::ByteString(_) => TokenKind::ByteStringLit,
+    }
+}
+
+macro_rules! helper {
+    ($callback:ident, $($input:tt)*) => {
+        $callback!([] [proc_macro::] => $($input)*);
+        $callback!([] [&proc_macro::] => $($input)*);
+        $callback!([#[cfg(feature = "proc-macro2")]] [proc_macro2::] => $($input)*);
+        $callback!([#[cfg(feature = "proc-macro2")]] [&proc_macro2::] => $($input)*);
+    };
+}
+
+macro_rules! impl_for_specific_lit {
+    ([$($cfg:tt)*] [$($prefix:tt)*] => $ty:ty, $variant:ident, $kind:ident) => {
+        $($cfg)*
+        impl TryFrom<$($prefix)* Literal> for $ty {
+            type Error = InvalidToken;
+            fn try_from(src: $($prefix)* Literal) -> Result<Self, Self::Error> {
+                let span = src.span();
+                let lit: Literal<String> = src.into();
+                match lit {
+                    Literal::$variant(s) => Ok(s),
+                    other => Err(InvalidToken {
+                        expected: TokenKind::$kind,
+                        actual: kind_of(&other),
+                        span: span.into(),
+                    }),
+                }
+            }
+        }
+    }
+}
+
+helper!(impl_for_specific_lit, crate::BoolLit, Bool, BoolLit);
+helper!(impl_for_specific_lit, crate::IntegerLit<String>, Integer, IntegerLit);
+helper!(impl_for_specific_lit, crate::FloatLit<String>, Float, FloatLit);
+helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
+helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
+helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
+helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);

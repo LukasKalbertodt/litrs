@@ -14,6 +14,13 @@ pub(crate) enum TokenKind {
     Ident,
     Group,
     Literal,
+    BoolLit,
+    ByteLit,
+    ByteStringLit,
+    CharLit,
+    FloatLit,
+    IntegerLit,
+    StringLit,
 }
 
 /// Unfortunately, we have to deal with both cases.
