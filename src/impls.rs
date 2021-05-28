@@ -1,120 +1,3 @@
-//! `From` and `TryFrom` impls for various conversions.
-//!
-//! # Tests
-//!
-//! ```no_run
-//! #[cfg(not(feature = "proc-macro2"))]
-//! compile_error!("Run tests with feature `proc-macro2` enabled!");
-//!
-//! extern crate proc_macro;
-//!
-//! use std::convert::TryFrom;
-//! use litrs::Literal;
-//!
-//! fn give<T>() -> T {
-//!     panic!()
-//! }
-//!
-//! let _ = litrs::Literal::<String>::from(give::<litrs::BoolLit>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::IntegerLit<String>>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::FloatLit<String>>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::CharLit<String>>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::StringLit<String>>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::ByteLit<String>>());
-//! let _ = litrs::Literal::<String>::from(give::<litrs::ByteStringLit<String>>());
-//!
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::BoolLit>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::IntegerLit<&'static str>>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::FloatLit<&'static str>>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::CharLit<&'static str>>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::StringLit<&'static str>>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteLit<&'static str>>());
-//! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteStringLit<&'static str>>());
-//!
-//!
-//! let _ = litrs::Literal::from(give::<proc_macro::Literal>());
-//! let _ = litrs::Literal::from(give::<&proc_macro::Literal>());
-//! let _ = litrs::Literal::from(give::<proc_macro2::Literal>());
-//! let _ = litrs::Literal::from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::Literal::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::Literal::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::Literal::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::Literal::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//!
-//! let _ = litrs::BoolLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::BoolLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::BoolLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::IntegerLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::FloatLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::FloatLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::FloatLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::CharLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::CharLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::CharLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::CharLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::StringLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::StringLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::StringLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::StringLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::ByteLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::ByteLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::ByteLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::Literal>());
-//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::Literal>());
-//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::Literal>());
-//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::Literal>());
-//!
-//!
-//! let _ = litrs::BoolLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::BoolLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::BoolLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::IntegerLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::FloatLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::FloatLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::FloatLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::CharLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::CharLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::CharLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::CharLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::StringLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::StringLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::StringLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::StringLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::ByteLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::ByteLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::ByteLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::TokenTree>());
-//!
-//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::TokenTree>());
-//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::TokenTree>());
-//! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::TokenTree>());
-//! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::TokenTree>());
-//! ```
-
 use std::convert::TryFrom;
 
 use crate::{Literal, err::{InvalidToken, TokenKind}};
@@ -299,3 +182,153 @@ helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
 helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
 helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
 helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);
+
+
+
+mod tests {
+    //! # Tests
+    //!
+    //! ```no_run
+    //! extern crate proc_macro;
+    //!
+    //! use std::convert::TryFrom;
+    //! use litrs::Literal;
+    //!
+    //! fn give<T>() -> T {
+    //!     panic!()
+    //! }
+    //!
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::BoolLit>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::IntegerLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::FloatLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::CharLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::StringLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::ByteLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::ByteStringLit<String>>());
+    //!
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::BoolLit>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::IntegerLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::FloatLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::CharLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::StringLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteStringLit<&'static str>>());
+    //!
+    //!
+    //! let _ = litrs::Literal::from(give::<proc_macro::Literal>());
+    //! let _ = litrs::Literal::from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::Literal::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::Literal::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //!
+    //! let _ = litrs::BoolLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::IntegerLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::FloatLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::FloatLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::CharLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::CharLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::StringLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::StringLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::ByteLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::ByteLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::Literal>());
+    //!
+    //!
+    //! let _ = litrs::BoolLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::IntegerLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::FloatLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::FloatLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::CharLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::CharLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::StringLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::StringLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::ByteLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::ByteLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::TokenTree>());
+    //! ```
+}
+
+#[cfg(feature = "proc-macro2")]
+mod tests_proc_macro2 {
+    //! # Tests
+    //!
+    //! ```no_run
+    //! extern crate proc_macro;
+    //!
+    //! use std::convert::TryFrom;
+    //! use litrs::Literal;
+    //!
+    //! fn give<T>() -> T {
+    //!     panic!()
+    //! }
+    //!
+    //! let _ = litrs::Literal::from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::Literal::from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::Literal::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::Literal::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //!
+    //! let _ = litrs::BoolLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::FloatLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::CharLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::CharLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::StringLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::StringLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::ByteLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::Literal>());
+    //!
+    //!
+    //! let _ = litrs::BoolLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::IntegerLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::IntegerLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::FloatLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::FloatLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::CharLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::CharLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::StringLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::StringLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::ByteLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::ByteLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::TokenTree>());
+    //! ```
+}

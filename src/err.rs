@@ -19,6 +19,7 @@ impl InvalidToken {
 
         let span = match self.span {
             Span::One(s) => s,
+            #[cfg(feature = "proc-macro2")]
             Span::Two(s) => s.unwrap(),
         };
         let msg = self.to_string();
@@ -38,6 +39,7 @@ impl InvalidToken {
     /// Like [`to_compile_error`][Self::to_compile_error], but returns a token
     /// stream from `proc_macro2` and does not panic outside of a proc-macro
     /// context.
+    #[cfg(feature = "proc-macro2")]
     pub fn to_compile_error2(&self) -> proc_macro2::TokenStream {
         use proc_macro2::{Delimiter, Ident, Group, Punct, Spacing, TokenTree};
 

@@ -79,15 +79,3 @@ macro_rules! assert_err_single {
     (@span $at:literal) => { Some($at.. $at + 1) };
     (@span None) => { None };
 }
-
-macro_rules! assert_invalid_token {
-    ($input:expr, expected: $expected:path, actual: $actual:path $(,)?) => {
-        let err = $input.unwrap_err();
-        if err.expected != $expected {
-            panic!("err.expected was expected to be {:?}, but is {:?}", $expected, err.expected);
-        }
-        if err.actual != $actual {
-            panic!("err.actual was expected to be {:?}, but is {:?}", $actual, err.actual);
-        }
-    };
-}

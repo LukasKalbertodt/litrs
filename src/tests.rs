@@ -1,6 +1,5 @@
-use std::convert::TryFrom;
+use crate::Literal;
 
-use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::{InvalidToken, TokenKind}};
 
 #[test]
 fn empty() {
@@ -70,6 +69,7 @@ macro_rules! assert_no_panic {
 }
 
 #[test]
+#[ignore]
 fn never_panic_up_to_3() {
     for a in 0..128 {
         assert_no_panic!([a]);
@@ -100,9 +100,25 @@ fn never_panic_len_4() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn proc_macro() {
+    use std::convert::TryFrom;
     use proc_macro2::{
         self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
     };
+    use crate::{BoolLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit, err::TokenKind};
+
+
+    macro_rules! assert_invalid_token {
+        ($input:expr, expected: $expected:path, actual: $actual:path $(,)?) => {
+            let err = $input.unwrap_err();
+            if err.expected != $expected {
+                panic!("err.expected was expected to be {:?}, but is {:?}", $expected, err.expected);
+            }
+            if err.actual != $actual {
+                panic!("err.actual was expected to be {:?}, but is {:?}", $actual, err.actual);
+            }
+        };
+    }
+
 
     let pm_u16_lit = pm2::Literal::u16_suffixed(2700);
     let pm_i16_lit = pm2::Literal::i16_unsuffixed(3912);
@@ -258,7 +274,10 @@ fn proc_macro() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn bool_try_from_tt() {
+    use std::convert::TryFrom;
     use proc_macro2::{Ident, Span, TokenTree};
+    use crate::BoolLit;
+
 
     let ident = |s: &str| Ident::new(s, Span::call_site());
 
@@ -291,6 +310,8 @@ fn bool_try_from_tt() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn invalid_token_display() {
+    use crate::{InvalidToken, err::TokenKind};
+
     let span = crate::err::Span::Two(proc_macro2::Span::call_site());
     assert_eq!(
         InvalidToken {
