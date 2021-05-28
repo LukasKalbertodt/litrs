@@ -9,19 +9,83 @@
 //! built. This crate also offers a bit more flexibility compared to `syn`
 //! (only regarding literals, of course).
 //!
-//! The main type of this library is [`Literal`]. You can obtain it via
-//! [`Literal::parse`] or by using the `From<proc_macro[2]::Literal>` impls.
+//! ---
+//!
+//! The main types of this library are [`Literal`], representing any kind of
+//! literal, and `*Lit`, like [`StringLit`] or [`FloatLit`], representing a
+//! specific kind of literal.
+//!
+//! There are different ways to obtain such a literal type:
+//!
+//! - **`parse`**: parses a `&str` or `String` and returns `Result<_,
+//!     ParseError>`. For example: [`Literal::parse`] and
+//!     [`IntegerLit::parse`].
+//!
+//! - **`From<proc_macro::Literal> for Literal`**: turns a `Literal` value from
+//!     the `proc_macro` crate into a `Literal` from this crate.
+//!
+//! - **`TryFrom<proc_macro::Literal> for *Lit`**: tries to turn a
+//!     `proc_macro::Literal` into a specific literal type of this crate. If
+//!     the input is a literal of a different kind, `Err(InvalidToken)` is
+//!     returned.
+//!
+//! - **`TryFrom<proc_macro::TokenTree>`**: attempts to turn a token tree into a
+//!     literal type of this crate. An error is returned if the token tree is
+//!     not a literal, or if you are trying to turn it into a specific kind of
+//!     literal and the token tree is a different kind of literal.
+//!
+//! All of the `From` and `TryFrom` conversions also work for reference to
+//! `proc_macro` types. Additionally, if the crate feature `proc-macro2` is
+//! enabled (which it is by default), all these `From` and `TryFrom` impls also
+//! exist for the corresponding `proc_macro2` types.
+//!
+//!
+//! # Examples
+//!
+//! In a proc-macro:
+//!
+//! ```ignore
+//! use std::convert::TryFrom;
+//! use proc_macro::TokenStream;
+//! use litrs::FloatLit;
+//!
+//! #[proc_macro]
+//! pub fn foo(input: TokenStream) -> TokenStream {
+//!      let mut input = input.into_iter().collect::<Vec<_>>();
+//!      if input.len() != 1 {
+//!          // Please do proper error handling in your real code!
+//!          panic!("expected exactly one token as input");
+//!      }
+//!      let token = input.remove(0);
+//!
+//!      match FloatLit::try_from(token) {
+//!          Ok(float_lit) => { /* do something */ }
+//!          Err(e) => return e.to_compile_error(),
+//!      }
+//!
+//!      // Dummy output
+//!      TokenStream::new()
+//! }
+//! ```
+//!
+//! Parsing from string:
 //!
 //! ```
-//! use litrs::Literal;
+//! use litrs::{FloatLit, Literal};
 //!
-//! let lit = Literal::parse("3.14f32").expect("failed to parse literal");
+//! // Parse a specific kind of literal (float in this case):
+//! let float_lit = FloatLit::parse("3.14f32");
+//! assert!(float_lit.is_ok());
+//! assert_eq!(float_lit.unwrap().type_suffix(), Some(litrs::FloatType::F32));
+//! assert!(FloatLit::parse("'c'").is_err());
+//!
+//! // Parse any kind of literal. After parsing, you can inspect the literal
+//! // and decide what to do in each case.
+//! let lit = Literal::parse("0xff80").expect("failed to parse literal");
 //! match lit {
-//!     Literal::Float(lit) => {
-//!         println!("{:?}", lit.type_suffix());
-//!     }
-//!     Literal::Bool(lit) => { /* ... */ }
 //!     Literal::Integer(lit) => { /* ... */ }
+//!     Literal::Float(lit) => { /* ... */ }
+//!     Literal::Bool(lit) => { /* ... */ }
 //!     Literal::Char(lit) => { /* ... */ }
 //!     Literal::String(lit) => { /* ... */ }
 //!     Literal::Byte(lit) => { /* ... */ }
@@ -29,20 +93,15 @@
 //! }
 //! ```
 //!
-//! If you know what kind of literal your input represents, or if you want to
-//! allow only one specific literal kind, you can also parse into specific
-//! literal types (e.g. [`IntegerLit`]) directly. All literal types have a
-//! `parse` method for that purpose.
 //!
 //!
 //! # Crate features
 //!
-//! - `proc-macro2` (**default**): adds the dependency `proc_macro2` and the
-//!    impls `From<proc_macro2::Literal>` and `From<&proc_macro2::Literal>` for
-//!    [`Literal`].
+//! - `proc-macro2` (**default**): adds the dependency `proc_macro2`, a bunch of
+//!   `From` and `TryFrom` impls, and [`InvalidToken::to_compile_error2`].
 //!
 //!
-//! [ref]: https://doc.rust-lang.org/reference/tokens.html
+//! [ref]: https://doc.rust-lang.org/reference/tokens.html#literals
 //!
 
 #![deny(missing_debug_implementations)]
