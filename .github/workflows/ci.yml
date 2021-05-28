@@ -16,9 +16,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    # We build and test in release mode as one test would take a long time
-    # otherwise.
+    # We test in release mode as two tests would take a long time otherwise.
     - name: Build
-      run: cargo build --release
+      run: cargo build
     - name: Run tests
-      run: cargo test --release -- --include-ignored
+      run: |
+        cargo test --release --lib -- --include-ignored
+        cargo test --doc
+
+    - name: Build without default features
+      run: cargo build --no-default-features
+    - name: Run tests without default features
+      run: |
+        cargo test --release --no-default-features --lib -- --include-ignored
+        cargo test --doc --no-default-features
