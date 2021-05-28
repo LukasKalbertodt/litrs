@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, StringLit, err::TokenKind};
+use crate::{Literal, StringLit, err::TokenKind};
 
 #[test]
 fn empty() {
@@ -104,34 +104,29 @@ fn proc_macro() {
         self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
     };
 
-    assert_eq!(
-        Literal::from(pm2::Literal::u16_suffixed(2700)),
-        Literal::Integer(IntegerLit::parse("2700u16".to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::i16_unsuffixed(3912)),
-        Literal::Integer(IntegerLit::parse("3912".to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::f32_unsuffixed(3.14)),
-        Literal::Float(FloatLit::parse("3.14".to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::f64_suffixed(99.3)),
-        Literal::Float(FloatLit::parse("99.3f64".to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::string("hello 🦊")),
-        Literal::String(StringLit::parse(r#""hello 🦊""#.to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::byte_string(b"hello \nfoxxo")),
-        Literal::ByteString(ByteStringLit::parse(r#"b"hello \nfoxxo""#.to_string()).unwrap()),
-    );
-    assert_eq!(
-        Literal::from(pm2::Literal::character('🦀')),
-        Literal::Char(CharLit::parse("'🦀'".to_string()).unwrap()),
-    );
+    let pm_u16_lit = pm2::Literal::u16_suffixed(2700);
+    let pm_i16_lit = pm2::Literal::i16_unsuffixed(3912);
+    let pm_f32_lit = pm2::Literal::f32_unsuffixed(3.14);
+    let pm_f64_lit = pm2::Literal::f64_suffixed(99.3);
+    let pm_string_lit = pm2::Literal::string("hello 🦊");
+    let pm_bytestr_lit = pm2::Literal::byte_string(b"hello \nfoxxo");
+    let pm_char_lit = pm2::Literal::character('🦀');
+
+    let u16_lit = Literal::parse("2700u16".to_string()).unwrap();
+    let i16_lit = Literal::parse("3912".to_string()).unwrap();
+    let f32_lit = Literal::parse("3.14".to_string()).unwrap();
+    let f64_lit = Literal::parse("99.3f64".to_string()).unwrap();
+    let string_lit = Literal::parse(r#""hello 🦊""#.to_string()).unwrap();
+    let bytestr_lit = Literal::parse(r#"b"hello \nfoxxo""#.to_string()).unwrap();
+    let char_lit = Literal::parse("'🦀'".to_string()).unwrap();
+
+    assert_eq!(Literal::from(&pm_u16_lit), u16_lit);
+    assert_eq!(Literal::from(&pm_i16_lit), i16_lit);
+    assert_eq!(Literal::from(&pm_f32_lit), f32_lit);
+    assert_eq!(Literal::from(&pm_f64_lit), f64_lit);
+    assert_eq!(Literal::from(&pm_string_lit), string_lit);
+    assert_eq!(Literal::from(&pm_bytestr_lit), bytestr_lit);
+    assert_eq!(Literal::from(&pm_char_lit), char_lit);
 
 
     let group = TokenTree::from(Group::new(Delimiter::Brace, TokenStream::new()));
