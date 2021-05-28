@@ -63,6 +63,7 @@ mod char;
 mod err;
 mod escape;
 mod float;
+mod impls;
 mod integer;
 mod parse;
 mod string;
@@ -81,6 +82,10 @@ pub use self::{
     string::StringLit,
 };
 
+
+// ==============================================================================================
+// ===== `Literal` and type defs
+// ==============================================================================================
 
 /// A literal which owns the underlying buffer.
 pub type OwnedLiteral = Literal<String>;
@@ -139,40 +144,10 @@ impl<B: Buffer> fmt::Display for Literal<B> {
     }
 }
 
-// We call `expect` in all these impls: this library aims to implement exactly
-// the Rust grammar, so if we have a valid Rust literal, we should always be
-// able to parse it.
-impl From<proc_macro::Literal> for Literal<String> {
-    fn from(src: proc_macro::Literal) -> Self {
-        Self::parse(src.to_string())
-            .expect("bug: failed to parse output of `Literal::to_string`")
-    }
-}
 
-impl From<&proc_macro::Literal> for Literal<String> {
-    fn from(src: &proc_macro::Literal) -> Self {
-        Self::parse(src.to_string())
-            .expect("bug: failed to parse output of `Literal::to_string`")
-    }
-}
-
-#[cfg(feature = "proc-macro2")]
-impl From<proc_macro2::Literal> for Literal<String> {
-    fn from(src: proc_macro2::Literal) -> Self {
-        Self::parse(src.to_string())
-            .expect("bug: failed to parse output of `Literal::to_string`")
-    }
-}
-
-#[cfg(feature = "proc-macro2")]
-impl From<&proc_macro2::Literal> for Literal<String> {
-    fn from(src: &proc_macro2::Literal) -> Self {
-        Self::parse(src.to_string())
-            .expect("bug: failed to parse output of `Literal::to_string`")
-    }
-}
-
-
+// ==============================================================================================
+// ===== Buffer
+// ==============================================================================================
 
 /// A shared or owned string buffer. Implemented for `String` and `&str`. *Implementation detail*.
 ///

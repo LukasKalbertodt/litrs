@@ -35,13 +35,12 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    /// Returns a span of this error, if available. **Note**: this is not
-    /// stable. See [the documentation of this type][Error] for more
-    /// information.
+    /// Returns a span of this error, if available. **Note**: the returned span
+    /// might change in future versions of this library. See [the documentation
+    /// of this type][Error] for more information.
     pub fn span(&self) -> Option<Range<usize>> {
         self.span.clone()
     }
-
 }
 
 /// This is a free standing function instead of an associated one to reduce
