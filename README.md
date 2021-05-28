@@ -13,7 +13,7 @@ There are mainly two libraries for this purpose:
 [`syn`](https://github.com/dtolnay/syn) and [`literalext`](https://github.com/mystor/literalext).
 The latter is deprecated.
 And `syn` is oftentimes overkill for the task at hand, especially when developing function like proc-macros (e.g. `foo!(..)`).
-This crate is a lightweight alternative (it compiles very quickly).
+This crate is a lightweight alternative.
 Also, when it comes to literals, `litrs` offers a bit more flexibility and a few more features compared to `syn`.
 
 While this library is fairly young, it is extensively tested and I think the number of parsing bugs should already be very low.
@@ -25,54 +25,54 @@ If you consider using this, please speak your mind [in this issue](https://githu
 ### In proc macro
 
 ```rust
-use proc_macro::{TokenStream, TokenTree};
+use std::convert::TryFrom;
+use proc_macro::TokenStream;
 use litrs::Literal;
 
 #[proc_macro]
 pub fn foo(input: TokenStream) -> TokenStream {
-    let lit = match input.into_iter().next() {
-        // Use `From` impl to get a `litrs::Literal` from `proc_macro::Literal`
-        Some(TokenTree::Literal(lit)) => Literal::from(lit),
-        _ => panic!("invalid input"),
-    };
+    // Please do proper error handling in your real code!
+    let first_token = input.into_iter().next().expect("no input");
 
-    // You can now inspect the literal!
-    match lit {
-        Literal::Integer(i) => {
+    // `try_from` will return an error if the token is not a literal.
+    match Literal::try_from(first_token) {
+        // Convenient methods to produce decent errors via `compile_error!`.
+        Err(e) => return e.to_compile_error(),
+
+        // You can now inspect your literal!
+        Ok(Literal::Integer(i)) => {
             println!("Got an integer specified in base {:?}", i.base());
 
             let value = i.value::<u64>().expect("integer literal too large");
-            println!(
-                "Is your integer even? {}",
-                if value % 2 == 0 { "yes" } else { "no" },
-            );
+            println!("Is your integer even? {}", value % 2 == 0);
         }
-        Literal::String(s) if s.is_raw_string() => println!("A raw string literal!"),
-        _ => println!("Got some other literal kind"),
+        Ok(other) => {
+            println!("Got a non-integer literal");
+        }
     }
 
     TokenStream::new() // dummy output
 }
 ```
 
-### Parsing from a `&str`
+If you are expecting a specific kind of literal, you can also use this, which will return an error if the token is not a float literal.
 
 ```rust
-use litrs::Literal;
-
-let lit = Literal::parse("3.14f32").expect("failed to parse literal");
-match lit {
-    Literal::Float(lit) => println!("{:?}", lit.type_suffix()),
-    Literal::Integer(lit) => println!("{:?}", lit.base()),
-    Literal::Bool(lit) => { /* ... */ }
-    Literal::Char(lit) => { /* ... */ }
-    Literal::String(lit) => { /* ... */ }
-    Literal::Byte(lit) => { /* ... */ }
-    Literal::ByteString(lit) => { /* ... */ }
-}
+FloatLit::try_from(first_token)
 ```
 
-See [**the documentation**](https://docs.rs/litrs) or the `examples/` directory for more information.
+### Parsing from a `&str`
+
+Outside of a proc macro context you might want to parse a string directly.
+
+```rust
+use litrs::{FloatLit, Literal};
+
+let lit = Literal::parse("'🦀'").expect("failed to parse literal");
+let float_lit = FloatLit::parse("2.7e3").expect("failed to parse as float literal");
+```
+
+See [**the documentation**](https://docs.rs/litrs) or the `examples/` directory for more examples and information.
 
 
 <br />

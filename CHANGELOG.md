@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - `From<*Lit> for litrs::Literal` impls
 - `TryFrom<proc_macro[2]::Literal> for *Lit`
 - `TryFrom<TokenTree> for *Lit`
+- `InvalidToken` error type for all new `TryFrom` impls
 
 
 ## [0.1.1] - 2021-05-25
