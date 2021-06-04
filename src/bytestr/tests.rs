@@ -32,7 +32,7 @@ fn simple() {
 
 #[test]
 fn special_whitespace() {
-    let strings = ["\n", "\t", "foo\tbar", "baz\n", "\r\n"];
+    let strings = ["\n", "\t", "foo\tbar", "baz\n"];
 
     for &s in &strings {
         let input = format!(r#"b"{}""#, s);
@@ -95,6 +95,18 @@ bar", true, None);
     // Raw strings do not handle "string continues"
     check!(br"foo\
         bar", false, Some(0));
+}
+
+#[test]
+fn crlf_newlines() {
+    let lit = ByteStringLit::parse("b\"foo\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), b"foo\nbar");
+
+    let lit = ByteStringLit::parse("b\"\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), b"\nbar");
+
+    let lit = ByteStringLit::parse("b\"foo\r\n\"").expect("failed to parse");
+    assert_eq!(lit.value(), b"foo\n");
 }
 
 #[test]

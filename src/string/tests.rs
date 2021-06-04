@@ -36,7 +36,7 @@ fn simple() {
 
 #[test]
 fn special_whitespace() {
-    let strings = ["\n", "\t", "foo\tbar", "🦊\n", "\r\n"];
+    let strings = ["\n", "\t", "foo\tbar", "🦊\n"];
 
     for &s in &strings {
         let input = format!(r#""{}""#, s);
@@ -129,6 +129,18 @@ fn string_continue() {
     // Raw strings do not handle "string continues"
     check!(r"foo\
         bar", false, Some(0));
+}
+
+#[test]
+fn crlf_newlines() {
+    let lit = StringLit::parse("\"foo\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "foo\nbar");
+
+    let lit = StringLit::parse("\"\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "\nbar");
+
+    let lit = StringLit::parse("\"лиса\r\n\"").expect("failed to parse");
+    assert_eq!(lit.value(), "лиса\n");
 }
 
 #[test]

@@ -141,8 +141,16 @@ pub(crate) fn unescape_string<E: Escapee>(
                 i += len;
                 end_last_escape = i;
             }
-            b'\r' if input.as_bytes()[i + 1] != b'\n'
-                => return Err(perr(i, IsolatedCr)),
+            b'\r' => {
+                if input.as_bytes()[i + 1] == b'\n' {
+                    value.push_str(&input[end_last_escape..i]);
+                    value.push('\n');
+                    i += 2;
+                    end_last_escape = i;
+                } else {
+                    return Err(perr(i, IsolatedCr))
+                }
+            }
             b'"' => return Err(perr(i + 1..input.len(), UnexpectedChar)),
             b if !E::SUPPORTS_UNICODE && !b.is_ascii()
                 => return Err(perr(i, NonAsciiInByteLiteral)),
