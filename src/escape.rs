@@ -80,7 +80,7 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
     Ok(out)
 }
 
-pub(crate) trait Escapee {
+pub(crate) trait Escapee: Into<char> {
     const SUPPORTS_UNICODE: bool;
     fn from_byte(b: u8) -> Self;
     fn from_char(c: char) -> Self;
@@ -110,4 +110,61 @@ impl Escapee for char {
 /// (unescaped backlash followed by `\n`).
 pub(crate) fn is_string_continue_skipable_whitespace(b: u8) -> bool {
     b == b' ' || b == b'\t' || b == b'\n' || b == b'\r'
+}
+
+/// Unescapes a whole string or byte string.
+pub(crate) fn unescape_string<E: Escapee>(
+    input: &str,
+    offset: usize,
+) -> Result<Option<String>, ParseError> {
+    let mut i = offset;
+    let mut end_last_escape = offset;
+    let mut value = String::new();
+    while i < input.len() - 1 {
+        match input.as_bytes()[i] {
+            // Handle "string continue".
+            b'\\' if input.as_bytes()[i + 1] == b'\n' => {
+                value.push_str(&input[end_last_escape..i]);
+
+                // Find the first non-whitespace character.
+                let end_escape = input[i + 2..].bytes()
+                    .position(|b| !is_string_continue_skipable_whitespace(b))
+                    .ok_or(perr(None, UnterminatedString))?;
+
+                i += 2 + end_escape;
+                end_last_escape = i;
+            }
+            b'\\' => {
+                let (c, len) = unescape::<E>(&input[i..input.len() - 1], i)?;
+                value.push_str(&input[end_last_escape..i]);
+                value.push(c.into());
+                i += len;
+                end_last_escape = i;
+            }
+            b'\r' if input.as_bytes()[i + 1] != b'\n'
+                => return Err(perr(i, IsolatedCr)),
+            b'"' => return Err(perr(i + 1..input.len(), UnexpectedChar)),
+            b if !E::SUPPORTS_UNICODE && !b.is_ascii()
+                => return Err(perr(i, NonAsciiInByteLiteral)),
+            _ => i += 1,
+        }
+    }
+
+    if input.as_bytes()[input.len() - 1] != b'"' || input.len() == offset {
+        return Err(perr(None, UnterminatedString));
+    }
+
+    // `value` is only empty there was no escape in the input string
+    // (with the special case of the input being empty). This means the
+    // string value basically equals the input, so we store `None`.
+    let value = if value.is_empty() {
+        None
+    } else {
+        // There was an escape in the string, so we need to push the
+        // remaining unescaped part of the string still.
+        value.push_str(&input[end_last_escape..input.len() - 1]);
+        Some(value)
+    };
+
+    Ok(value)
 }
