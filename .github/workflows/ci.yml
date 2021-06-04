@@ -23,6 +23,9 @@ jobs:
       run: |
         cargo test --release --lib -- --include-ignored
         cargo test --doc
+    - name: Test procmacro example
+      working-directory: examples/procmacro
+      run: cargo test
 
     - name: Build without default features
       run: cargo build --no-default-features
