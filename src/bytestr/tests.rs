@@ -78,6 +78,26 @@ fn simple_escapes() {
 }
 
 #[test]
+fn string_continue() {
+    check!(b"foo\
+        bar", true, None);
+    check!(b"foo\
+bar", true, None);
+
+    check!(b"foo\
+
+        banana", true, None);
+
+    // Weird whitespace characters
+    let lit = ByteStringLit::parse("b\"foo\\\n\r\t\n \n\tbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), b"foobar");
+
+    // Raw strings do not handle "string continues"
+    check!(br"foo\
+        bar", false, Some(0));
+}
+
+#[test]
 fn raw_byte_string() {
     check!(br"", false, Some(0));
     check!(br"a", false, Some(0));

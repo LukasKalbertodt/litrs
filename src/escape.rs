@@ -105,3 +105,9 @@ impl Escapee for char {
         c
     }
 }
+
+/// Checks whether the character is skipped after a string continue start
+/// (unescaped backlash followed by `\n`).
+pub(crate) fn is_string_continue_skipable_whitespace(b: u8) -> bool {
+    b == b' ' || b == b'\t' || b == b'\n' || b == b'\r'
+}

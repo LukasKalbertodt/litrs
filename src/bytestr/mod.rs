@@ -3,7 +3,7 @@ use std::{fmt, ops::Range};
 use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    escape::unescape,
+    escape::{is_string_continue_skipable_whitespace, unescape},
 };
 
 
@@ -112,6 +112,18 @@ impl<B: Buffer> ByteStringLit<B> {
             let mut value = Vec::new();
             while i < input.len() - 1 {
                 match input.as_bytes()[i] {
+                    // Handle "string continue".
+                    b'\\' if input.as_bytes()[i + 1] == b'\n' => {
+                        value.extend_from_slice(&input.as_bytes()[end_last_escape..i]);
+
+                        // Find the first non-whitespace character.
+                        let end_escape = input[i + 2..].bytes()
+                            .position(|b| !is_string_continue_skipable_whitespace(b))
+                            .ok_or(perr(None, UnterminatedString))?;
+
+                        i += 2 + end_escape;
+                        end_last_escape = i;
+                    }
                     b'\\' => {
                         let (b, len) = unescape::<u8>(&input[i..input.len() - 1], i)?;
                         value.extend_from_slice(&input.as_bytes()[end_last_escape..i]);

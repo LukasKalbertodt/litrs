@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
+### Chaned
+- Fixed string parsing by correctly handling "string continue" sequences
+
 
 ## [0.2.1] - 2021-06-04
 ### Changed

@@ -108,6 +108,30 @@ fn unicode_escapes() {
 }
 
 #[test]
+fn string_continue() {
+    check!("నక్క\
+        bar", true, None);
+    check!("foo\
+🦊", true, None);
+
+    check!("foo\
+
+        banana", true, None);
+
+    // Weird whitespace characters
+    let lit = StringLit::parse("\"foo\\\n\r\t\n \n\tbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "foobar");
+    let lit = StringLit::parse("\"foo\\\n\u{85}bar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "foo\u{85}bar");
+    let lit = StringLit::parse("\"foo\\\n\u{a0}bar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "foo\u{a0}bar");
+
+    // Raw strings do not handle "string continues"
+    check!(r"foo\
+        bar", false, Some(0));
+}
+
+#[test]
 fn raw_string() {
     check!(r"", false, Some(0));
     check!(r"a", false, Some(0));
