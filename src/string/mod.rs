@@ -3,7 +3,7 @@ use std::{fmt, ops::Range};
 use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    escape::unescape_string,
+    escape::{scan_raw_string, unescape_string},
     parse::first_byte_or_empty,
 };
 
@@ -70,38 +70,11 @@ impl<B: Buffer> StringLit<B> {
     /// Precondition: input has to start with either `"` or `r`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.starts_with('r') {
-            // Raw string literal
-            let num_hashes = input[1..].bytes().position(|b| b != b'#')
-                .ok_or(perr(None, InvalidLiteral))?;
-
-            if input.as_bytes().get(1 + num_hashes) != Some(&b'"') {
-                return Err(perr(None, InvalidLiteral));
-            }
-            let start_inner = 1 + num_hashes + 1;
-            let hashes = &input[1..num_hashes + 1];
-
-            let mut closing_quote_pos = None;
-            for (i, b) in input[start_inner..].bytes().enumerate() {
-                if b == b'"' && input[start_inner + i + 1..].starts_with(hashes) {
-                    closing_quote_pos = Some(i + start_inner);
-                    break;
-                }
-
-                if b == b'\r' && input.as_bytes().get(start_inner + i + 1) != Some(&b'\n') {
-                    return Err(perr(i + start_inner, IsolatedCr));
-                }
-            }
-            let closing_quote_pos = closing_quote_pos
-                .ok_or(perr(None, UnterminatedRawString))?;
-
-            if closing_quote_pos + num_hashes != input.len() - 1 {
-                return Err(perr(closing_quote_pos + num_hashes + 1..input.len(), UnexpectedChar));
-            }
-
+            let num_hashes = scan_raw_string::<char>(&input, 1)?;
             Ok(Self {
                 raw: input,
                 value: None,
-                num_hashes: Some(num_hashes as u32),
+                num_hashes: Some(num_hashes),
             })
         } else {
             let value = unescape_string::<char>(&input, 1)?;

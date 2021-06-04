@@ -168,3 +168,46 @@ pub(crate) fn unescape_string<E: Escapee>(
 
     Ok(value)
 }
+
+/// Reads and checks a raw (byte) string literal. Returns the number of hashes
+/// used by the literal.
+pub(crate) fn scan_raw_string<E: Escapee>(
+    input: &str,
+    offset: usize,
+) -> Result<u32, ParseError> {
+    // Raw string literal
+    let num_hashes = input[offset..].bytes().position(|b| b != b'#')
+        .ok_or(perr(None, InvalidLiteral))?;
+
+    if input.as_bytes().get(offset + num_hashes) != Some(&b'"') {
+        return Err(perr(None, InvalidLiteral));
+    }
+    let start_inner = offset + num_hashes + 1;
+    let hashes = &input[offset..num_hashes + offset];
+
+    let mut closing_quote_pos = None;
+    for (i, b) in input[start_inner..].bytes().enumerate() {
+        if b == b'"' && input[start_inner + i + 1..].starts_with(hashes) {
+            closing_quote_pos = Some(i + start_inner);
+            break;
+        }
+
+        if E::SUPPORTS_UNICODE {
+            if b == b'\r' && input.as_bytes().get(start_inner + i + 1) != Some(&b'\n') {
+                return Err(perr(i + start_inner, IsolatedCr));
+            }
+        } else {
+            if !b.is_ascii() {
+                return Err(perr(i + start_inner, NonAsciiInByteLiteral));
+            }
+        }
+    }
+    let closing_quote_pos = closing_quote_pos
+        .ok_or(perr(None, UnterminatedRawString))?;
+
+    if closing_quote_pos + num_hashes != input.len() - 1 {
+        return Err(perr(closing_quote_pos + num_hashes + 1..input.len(), UnexpectedChar));
+    }
+
+    Ok(num_hashes as u32)
+}
