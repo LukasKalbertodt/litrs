@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2021-06-04
+### Changed
+- Fixed the `expected` value of the error returned from `TryFrom<TokenTree>` impls in some cases
+
 ## [0.2.0] - 2021-05-28
 ### Changed
 - **Breaking**: rename `Error` to `ParseError`. That describes its purpose more
@@ -37,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.1.0...v0.1.1
