@@ -4,7 +4,8 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
-
+### Changed
+- Minor internal code change to bring MSRV from 1.52 to 1.42
 
 ## [0.2.2] - 2021-06-09
 ### Changed
