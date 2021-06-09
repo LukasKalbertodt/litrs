@@ -70,10 +70,10 @@ impl<B: Buffer> StringLit<B> {
     /// Precondition: input has to start with either `"` or `r`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.starts_with('r') {
-            let num_hashes = scan_raw_string::<char>(&input, 1)?;
+            let (value, num_hashes) = scan_raw_string::<char>(&input, 1)?;
             Ok(Self {
                 raw: input,
-                value: None,
+                value,
                 num_hashes: Some(num_hashes),
             })
         } else {

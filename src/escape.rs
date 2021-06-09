@@ -162,7 +162,7 @@ pub(crate) fn unescape_string<E: Escapee>(
         return Err(perr(None, UnterminatedString));
     }
 
-    // `value` is only empty there was no escape in the input string
+    // `value` is only empty if there was no escape in the input string
     // (with the special case of the input being empty). This means the
     // string value basically equals the input, so we store `None`.
     let value = if value.is_empty() {
@@ -177,12 +177,13 @@ pub(crate) fn unescape_string<E: Escapee>(
     Ok(value)
 }
 
-/// Reads and checks a raw (byte) string literal. Returns the number of hashes
-/// used by the literal.
+/// Reads and checks a raw (byte) string literal, converting `\r\n` sequences to
+/// just `\n` sequences. Returns an optional new string (if the input contained
+/// any `\r\n`) and the number of hashes used by the literal.
 pub(crate) fn scan_raw_string<E: Escapee>(
     input: &str,
     offset: usize,
-) -> Result<u32, ParseError> {
+) -> Result<(Option<String>, u32), ParseError> {
     // Raw string literal
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
@@ -194,22 +195,43 @@ pub(crate) fn scan_raw_string<E: Escapee>(
     let hashes = &input[offset..num_hashes + offset];
 
     let mut closing_quote_pos = None;
-    for (i, b) in input[start_inner..].bytes().enumerate() {
-        if b == b'"' && input[start_inner + i + 1..].starts_with(hashes) {
-            closing_quote_pos = Some(i + start_inner);
+    let mut i = start_inner;
+    let mut end_last_escape = start_inner;
+    let mut value = String::new();
+    while i < input.len() {
+        let b = input.as_bytes()[i];
+        if b == b'"' && input[i + 1..].starts_with(hashes) {
+            closing_quote_pos = Some(i);
             break;
         }
 
-        if E::SUPPORTS_UNICODE {
-            if b == b'\r' && input.as_bytes().get(start_inner + i + 1) != Some(&b'\n') {
-                return Err(perr(i + start_inner, IsolatedCr));
-            }
-        } else {
-            if !b.is_ascii() {
-                return Err(perr(i + start_inner, NonAsciiInByteLiteral));
+        if b == b'\r' {
+            // Convert `\r\n` into `\n`. This is currently not well documented
+            // in the Rust reference, but is done even for raw strings. That's
+            // because rustc simply converts all line endings when reading
+            // source files.
+            if input.as_bytes().get(i + 1) == Some(&b'\n') {
+                value.push_str(&input[end_last_escape..i]);
+                value.push('\n');
+                i += 2;
+                end_last_escape = i;
+                continue;
+            } else if E::SUPPORTS_UNICODE {
+                // If no \n follows the \r and we are scanning a raw string
+                // (not raw byte string), we error.
+                return Err(perr(i, IsolatedCr))
             }
         }
+
+        if !E::SUPPORTS_UNICODE {
+            if !b.is_ascii() {
+                return Err(perr(i, NonAsciiInByteLiteral));
+            }
+        }
+
+        i += 1;
     }
+
     let closing_quote_pos = closing_quote_pos
         .ok_or(perr(None, UnterminatedRawString))?;
 
@@ -217,5 +239,17 @@ pub(crate) fn scan_raw_string<E: Escapee>(
         return Err(perr(closing_quote_pos + num_hashes + 1..input.len(), UnexpectedChar));
     }
 
-    Ok(num_hashes as u32)
+    // `value` is only empty if there was no \r\n in the input string (with the
+    // special case of the input being empty). This means the string value
+    // equals the input, so we store `None`.
+    let value = if value.is_empty() {
+        None
+    } else {
+        // There was an \r\n in the string, so we need to push the remaining
+        // unescaped part of the string still.
+        value.push_str(&input[end_last_escape..closing_quote_pos]);
+        Some(value)
+    };
+
+    Ok((value, num_hashes as u32))
 }

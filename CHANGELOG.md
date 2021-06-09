@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
-### Chaned
+### Changed
 - Fixed (byte) string literal parsing by:
     - Correctly handling "string continue" sequences
     - Correctly converting `\n\r` into `\n`

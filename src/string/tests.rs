@@ -141,6 +141,15 @@ fn crlf_newlines() {
 
     let lit = StringLit::parse("\"лиса\r\n\"").expect("failed to parse");
     assert_eq!(lit.value(), "лиса\n");
+
+    let lit = StringLit::parse("r\"foo\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), "foo\nbar");
+
+    let lit = StringLit::parse("r#\"\r\nbar\"#").expect("failed to parse");
+    assert_eq!(lit.value(), "\nbar");
+
+    let lit = StringLit::parse("r##\"лиса\r\n\"##").expect("failed to parse");
+    assert_eq!(lit.value(), "лиса\n");
 }
 
 #[test]

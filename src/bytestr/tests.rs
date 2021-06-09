@@ -107,6 +107,15 @@ fn crlf_newlines() {
 
     let lit = ByteStringLit::parse("b\"foo\r\n\"").expect("failed to parse");
     assert_eq!(lit.value(), b"foo\n");
+
+    let lit = ByteStringLit::parse("br\"foo\r\nbar\"").expect("failed to parse");
+    assert_eq!(lit.value(), b"foo\nbar");
+
+    let lit = ByteStringLit::parse("br#\"\r\nbar\"#").expect("failed to parse");
+    assert_eq!(lit.value(), b"\nbar");
+
+    let lit = ByteStringLit::parse("br##\"foo\r\n\"##").expect("failed to parse");
+    assert_eq!(lit.value(), b"foo\n");
 }
 
 #[test]

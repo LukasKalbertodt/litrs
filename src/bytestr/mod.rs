@@ -73,10 +73,10 @@ impl<B: Buffer> ByteStringLit<B> {
     /// Precondition: input has to start with either `b"` or `br`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.starts_with(r"br") {
-            let num_hashes = scan_raw_string::<u8>(&input, 2)?;
+            let (value, num_hashes) = scan_raw_string::<u8>(&input, 2)?;
             Ok(Self {
                 raw: input,
-                value: None,
+                value: value.map(|s| s.into_bytes()),
                 num_hashes: Some(num_hashes),
             })
         } else {
