@@ -1,6 +1,6 @@
 use crate::{
     Literal, ParseError,
-    test_util::assert_parse_ok_eq,
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
 };
 use super::{FloatLit, FloatType};
 
@@ -27,7 +27,7 @@ macro_rules! check {
             input, FloatLit::parse(input), expected_float.clone(), "FloatLit::parse");
         assert_parse_ok_eq(
             input, Literal::parse(input), Literal::Float(expected_float), "Literal::parse");
-
+        assert_roundtrip(expected_float.to_owned(), input);
     };
     (@ty f32) => { Some(FloatType::F32) };
     (@ty f64) => { Some(FloatType::F64) };

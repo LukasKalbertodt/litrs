@@ -16,6 +16,15 @@ macro_rules! helper {
     };
 }
 
+/// Like `helper!` but without reference types.
+macro_rules! helper_no_refs {
+    ($callback:ident, $($input:tt)*) => {
+        $callback!([proc_macro::] => $($input)*);
+        #[cfg(feature = "proc-macro2")]
+        $callback!([proc_macro2::] => $($input)*);
+    };
+}
+
 
 // ==============================================================================================
 // ===== `From<*Lit> for Literal`
@@ -101,7 +110,7 @@ helper!(impl_tt_to_lit, );
 
 
 // ==============================================================================================
-// ===== `TryFrom<pm::Literal> for *Lit` and `TryFrom<pm::TokenTree> for *Lit`
+// ===== `TryFrom<pm::Literal>`, `TryFrom<pm::TokenTree>` for non-bool `*Lit`
 // ==============================================================================================
 
 fn kind_of(lit: &Literal<String>) -> TokenKind {
@@ -164,6 +173,43 @@ helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
 helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
 helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
 helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);
+
+
+// ==============================================================================================
+// ===== `From<*Lit> for pm::Literal`
+// ==============================================================================================
+
+macro_rules! impl_specific_lit_to_pm_lit {
+    ([$($prefix:tt)*] => $ty:ident, $variant:ident, $kind:ident) => {
+        impl<B: crate::Buffer> From<crate::$ty<B>> for $($prefix)* Literal {
+            fn from(l: crate::$ty<B>) -> Self {
+                // This should never fail: an input that is parsed successfuly
+                // as one of our literal types should always parse as a
+                // proc_macro literal as well!
+                l.raw_input().parse().unwrap_or_else(|e| {
+                    panic!(
+                        "failed to parse `{}` as `{}`: {}",
+                        l.raw_input(),
+                        std::any::type_name::<Self>(),
+                        e,
+                    )
+                })
+            }
+        }
+    };
+}
+
+helper_no_refs!(impl_specific_lit_to_pm_lit, IntegerLit, Integer, IntegerLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, FloatLit, Float, FloatLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, CharLit, Char, CharLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, StringLit, String, StringLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, ByteLit, Byte, ByteLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, ByteStringLit, ByteString, ByteStringLit);
+
+
+// ==============================================================================================
+// ===== `TryFrom<pm::TokenTree> for BoolLit`
+// ==============================================================================================
 
 macro_rules! impl_from_tt_for_bool {
     ([$($prefix:tt)*] => ) => {

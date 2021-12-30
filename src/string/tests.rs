@@ -1,4 +1,4 @@
-use crate::{Literal, StringLit, test_util::assert_parse_ok_eq};
+use crate::{Literal, StringLit, test_util::{assert_parse_ok_eq, assert_roundtrip}};
 
 // ===== Utility functions =======================================================================
 
@@ -13,9 +13,10 @@ macro_rules! check {
 
         assert_parse_ok_eq(input, StringLit::parse(input), expected.clone(), "StringLit::parse");
         assert_parse_ok_eq(
-            input, Literal::parse(input), Literal::String(expected), "Literal::parse");
+            input, Literal::parse(input), Literal::String(expected.clone()), "Literal::parse");
         assert_eq!(StringLit::parse(input).unwrap().value(), $lit);
         assert_eq!(StringLit::parse(input).unwrap().into_value(), $lit);
+        assert_roundtrip(expected.into_owned(), input);
     };
 }
 
