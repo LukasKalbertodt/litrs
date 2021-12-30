@@ -16,9 +16,10 @@ macro_rules! check {
     ($intpart:literal $fracpart:literal $exppart:literal $suffix:tt) => {
         let input = concat!($intpart, $fracpart, $exppart, check!(@stringify_suffix $suffix));
         let expected_float = FloatLit {
-            number_part: concat!($intpart, $fracpart, $exppart),
+            raw: input,
             end_integer_part: $intpart.len(),
             end_fractional_part: $intpart.len() + $fracpart.len(),
+            end_number_part: $intpart.len() + $fracpart.len() + $exppart.len(),
             type_suffix: check!(@ty $suffix),
         };
 

@@ -21,27 +21,27 @@ use crate::{
 /// [ref]: https://doc.rust-lang.org/reference/tokens.html#floating-point-literals
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FloatLit<B: Buffer> {
-    /// Basically the whole literal, but without the type suffix. Other `usize`
-    /// fields in this struct partition this string. `end_integer_part` is
-    /// always <= `end_fractional_part`.
+    /// The whole raw input. The `usize` fields in this struct partition this
+    /// string. Always true: `end_integer_part <= end_fractional_part`.
     ///
     /// ```text
-    ///    12_3.4_56e789
-    ///        ╷    ╷
+    ///    12_3.4_56e789f32
+    ///        ╷    ╷   ╷
+    ///        |    |   └ end_number_part = 13
     ///        |    └ end_fractional_part = 9
     ///        └ end_integer_part = 4
     ///
     ///    246.
     ///       ╷╷
-    ///       |└ end_fractional_part = 4
+    ///       |└ end_fractional_part = end_number_part = 4
     ///       └ end_integer_part = 3
     ///
     ///    1234e89
-    ///        ╷
-    ///        |
+    ///        ╷  ╷
+    ///        |  └ end_number_part = 7
     ///        └ end_integer_part = end_fractional_part = 4
     /// ```
-    number_part: B,
+    raw: B,
 
     /// The first index not part of the integer part anymore. Since the integer
     /// part is at the start, this is also the length of that part.
@@ -49,6 +49,9 @@ pub struct FloatLit<B: Buffer> {
 
     /// The first index after the fractional part.
     end_fractional_part: usize,
+
+    /// The first index after the whole number part (everything except type suffix).
+    end_number_part: usize,
 
     /// Optional type suffix.
     type_suffix: Option<FloatType>,
@@ -76,12 +79,12 @@ impl<B: Buffer> FloatLit<B> {
     /// floating point value, you need to parse this string, e.g. with
     /// `f32::from_str` or an external crate.
     pub fn number_part(&self) -> &str {
-        &self.number_part
+        &(*self.raw)[..self.end_number_part]
     }
 
     /// Returns the non-empty integer part of this literal.
     pub fn integer_part(&self) -> &str {
-        &(*self.number_part)[..self.end_integer_part]
+        &(*self.raw)[..self.end_integer_part]
     }
 
     /// Returns the optional fractional part of this literal. Does not include
@@ -91,14 +94,14 @@ impl<B: Buffer> FloatLit<B> {
         if self.end_integer_part == self.end_fractional_part {
             None
         } else {
-            Some(&(*self.number_part)[self.end_integer_part + 1..self.end_fractional_part])
+            Some(&(*self.raw)[self.end_integer_part + 1..self.end_fractional_part])
         }
     }
 
     /// Optional exponent part. Might be empty if there was no exponent part in
     /// the input. Includes the `e` or `E` at the beginning.
     pub fn exponent_part(&self) -> &str {
-        &(*self.number_part)[self.end_fractional_part..]
+        &(*self.raw)[self.end_fractional_part..self.end_number_part]
     }
 
     /// The optional type suffix.
@@ -165,9 +168,10 @@ impl<B: Buffer> FloatLit<B> {
         };
 
         Ok(Self {
-            number_part: input.cut(0..end_number_part),
+            raw: input,
             end_integer_part,
             end_fractional_part,
+            end_number_part,
             type_suffix,
         })
     }
@@ -178,9 +182,10 @@ impl FloatLit<&str> {
     /// `Self`.
     pub fn to_owned(&self) -> FloatLit<String> {
         FloatLit {
-            number_part: self.number_part.to_owned(),
+            raw: self.raw.to_owned(),
             end_integer_part: self.end_integer_part,
             end_fractional_part: self.end_fractional_part,
+            end_number_part: self.end_number_part,
             type_suffix: self.type_suffix,
         }
     }
@@ -188,12 +193,7 @@ impl FloatLit<&str> {
 
 impl<B: Buffer> fmt::Display for FloatLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let suffix = match self.type_suffix {
-            None => "",
-            Some(FloatType::F32) => "f32",
-            Some(FloatType::F64) => "f64",
-        };
-        write!(f, "{}{}", self.number_part(), suffix)
+        write!(f, "{}", &*self.raw)
     }
 }
 
