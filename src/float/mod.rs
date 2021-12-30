@@ -109,6 +109,16 @@ impl<B: Buffer> FloatLit<B> {
         self.type_suffix
     }
 
+    /// Returns the raw input that was passed to `parse`.
+    pub fn raw_input(&self) -> &str {
+        &self.raw
+    }
+
+    /// Returns the raw input that was passed to `parse`, potentially owned.
+    pub fn into_raw_input(self) -> B {
+        self.raw
+    }
+
     /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         // Integer part.

@@ -34,6 +34,16 @@ impl<B: Buffer> CharLit<B> {
         self.value
     }
 
+    /// Returns the raw input that was passed to `parse`.
+    pub fn raw_input(&self) -> &str {
+        &self.raw
+    }
+
+    /// Returns the raw input that was passed to `parse`, potentially owned.
+    pub fn into_raw_input(self) -> B {
+        self.raw
+    }
+
     /// Precondition: first character in input must be `'`.
     pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
         if input.len() == 1 {

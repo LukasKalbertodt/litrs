@@ -59,6 +59,16 @@ impl<B: Buffer> StringLit<B> {
         self.num_hashes.is_some()
     }
 
+    /// Returns the raw input that was passed to `parse`.
+    pub fn raw_input(&self) -> &str {
+        &self.raw
+    }
+
+    /// Returns the raw input that was passed to `parse`, potentially owned.
+    pub fn into_raw_input(self) -> B {
+        self.raw
+    }
+
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
     fn inner_range(&self) -> Range<usize> {
         match self.num_hashes {
