@@ -241,6 +241,22 @@ macro_rules! impl_from_tt_for_bool {
 
 helper!(impl_from_tt_for_bool, );
 
+// ==============================================================================================
+// ===== `From<BoolLit> for pm::Ident`
+// ==============================================================================================
+
+macro_rules! impl_bool_lit_to_pm_lit {
+    ([$($prefix:tt)*] => ) => {
+        impl From<crate::BoolLit> for $($prefix)* Ident {
+            fn from(l: crate::BoolLit) -> Self {
+                Self::new(l.as_str(), $($prefix)* Span::call_site())
+            }
+        }
+    };
+}
+
+helper_no_refs!(impl_bool_lit_to_pm_lit, );
+
 
 mod tests {
     //! # Tests
