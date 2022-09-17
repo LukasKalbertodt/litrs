@@ -5,7 +5,11 @@ use crate::{ParseError, err::{perr, ParseErrorKind::*}};
 
 /// A bool literal: `true` or `false`. Also see [the reference][ref].
 ///
-/// [ref]: https://doc.rust-lang.org/reference/tokens.html#boolean-literals
+/// Notice that, strictly speaking, from Rust point of view "boolean literals" are not
+/// actual literals but [keywords].
+///
+/// [ref]: https://doc.rust-lang.org/reference/expressions/literal-expr.html#boolean-literal-expressions
+/// [keywords]: https://doc.rust-lang.org/reference/keywords.html#strict-keywords
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BoolLit {
     False,
