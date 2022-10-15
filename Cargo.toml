@@ -20,7 +20,7 @@ categories = [
     "parser-implementations",
     "development-tools::build-utils",
 ]
-exclude = [".github"]
+exclude = [".github", "SPECS/"]
 
 
 [features]
