@@ -5,6 +5,7 @@
 [<img alt="docs.rs" src="https://img.shields.io/crates/v/litrs?color=blue&label=docs&style=for-the-badge" height="23">](https://docs.rs/litrs)
 
 `litrs` offers functionality to parse Rust literals, i.e. tokens in the Rust programming language that represent fixed values.
+For example: `27`, `"crab"`, `bool`.
 This is particularly useful for proc macros, but can also be used outside of a proc-macro context.
 
 **Why this library?**
@@ -12,11 +13,10 @@ Unfortunately, the `proc_macro` API shipped with the compiler offers no easy way
 There are mainly two libraries for this purpose:
 [`syn`](https://github.com/dtolnay/syn) and [`literalext`](https://github.com/mystor/literalext).
 The latter is deprecated.
-And `syn` is oftentimes overkill for the task at hand, especially when developing function like proc-macros (e.g. `foo!(..)`).
+And `syn` is oftentimes overkill for the task at hand, especially when developing function-like proc-macros (e.g. `foo!(..)`).
 This crate is a lightweight alternative.
 Also, when it comes to literals, `litrs` offers a bit more flexibility and a few more features compared to `syn`.
 
-While this library is fairly young, it is extensively tested and I think the number of parsing bugs should already be very low.
 I'm interested in community feedback!
 If you consider using this, please speak your mind [in this issue](https://github.com/LukasKalbertodt/litrs/issues/1).
 
