@@ -108,11 +108,12 @@ impl Escapee for char {
 
 /// Checks whether the character is skipped after a string continue start
 /// (unescaped backlash followed by `\n`).
-pub(crate) fn is_string_continue_skipable_whitespace(b: u8) -> bool {
+fn is_string_continue_skipable_whitespace(b: u8) -> bool {
     b == b' ' || b == b'\t' || b == b'\n' || b == b'\r'
 }
 
 /// Unescapes a whole string or byte string.
+#[inline(never)]
 pub(crate) fn unescape_string<E: Escapee>(
     input: &str,
     offset: usize,
@@ -180,6 +181,7 @@ pub(crate) fn unescape_string<E: Escapee>(
 /// Reads and checks a raw (byte) string literal, converting `\r\n` sequences to
 /// just `\n` sequences. Returns an optional new string (if the input contained
 /// any `\r\n`) and the number of hashes used by the literal.
+#[inline(never)]
 pub(crate) fn scan_raw_string<E: Escapee>(
     input: &str,
     offset: usize,

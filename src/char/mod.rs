@@ -24,7 +24,10 @@ impl<B: Buffer> CharLit<B> {
     /// is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
-            b'\'' => Self::parse_impl(input),
+            b'\'' => {
+                let value = parse_impl(&input)?;
+                Ok(Self { raw: input, value })
+            },
             _ => Err(perr(0, DoesNotStartWithQuote)),
         }
     }
@@ -44,36 +47,6 @@ impl<B: Buffer> CharLit<B> {
         self.raw
     }
 
-    /// Precondition: first character in input must be `'`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        if input.len() == 1 {
-            return Err(perr(None, UnterminatedCharLiteral));
-        }
-        if *input.as_bytes().last().unwrap() != b'\'' {
-            return Err(perr(None, UnterminatedCharLiteral));
-        }
-
-        let inner = &input[1..input.len() - 1];
-        let first = inner.chars().nth(0).ok_or(perr(None, EmptyCharLiteral))?;
-        let (c, len) = match first {
-            '\'' => return Err(perr(1, UnescapedSingleQuote)),
-            '\n' | '\t' | '\r'
-                => return Err(perr(1, UnescapedSpecialWhitespace)),
-
-            '\\' => unescape::<char>(inner, 1)?,
-            other => (other, other.len_utf8()),
-        };
-        let rest = &inner[len..];
-
-        if !rest.is_empty() {
-            return Err(perr(len + 1..input.len() - 1, OverlongCharLiteral));
-        }
-
-        Ok(Self {
-            raw: input,
-            value: c,
-        })
-    }
 }
 
 impl CharLit<&str> {
@@ -93,6 +66,34 @@ impl<B: Buffer> fmt::Display for CharLit<B> {
     }
 }
 
+/// Precondition: first character in input must be `'`.
+#[inline(never)]
+pub(crate) fn parse_impl(input: &str) -> Result<char, ParseError> {
+    if input.len() == 1 {
+        return Err(perr(None, UnterminatedCharLiteral));
+    }
+    if *input.as_bytes().last().unwrap() != b'\'' {
+        return Err(perr(None, UnterminatedCharLiteral));
+    }
+
+    let inner = &input[1..input.len() - 1];
+    let first = inner.chars().nth(0).ok_or(perr(None, EmptyCharLiteral))?;
+    let (c, len) = match first {
+        '\'' => return Err(perr(1, UnescapedSingleQuote)),
+        '\n' | '\t' | '\r'
+            => return Err(perr(1, UnescapedSpecialWhitespace)),
+
+        '\\' => unescape::<char>(inner, 1)?,
+        other => (other, other.len_utf8()),
+    };
+    let rest = &inner[len..];
+
+    if !rest.is_empty() {
+        return Err(perr(len + 1..input.len() - 1, OverlongCharLiteral));
+    }
+
+    Ok(c)
+}
 
 #[cfg(test)]
 mod tests;

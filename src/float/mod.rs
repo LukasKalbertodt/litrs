@@ -69,7 +69,24 @@ impl<B: Buffer> FloatLit<B> {
     /// input is invalid or represents a different kind of literal.
     pub fn parse(s: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&s)? {
-            b'0'..=b'9' => Self::parse_impl(s),
+            b'0'..=b'9' => {
+                // TODO: simplify once RFC 2528 is stabilized
+                let FloatLit {
+                    end_integer_part,
+                    end_fractional_part,
+                    end_number_part,
+                    type_suffix,
+                    ..
+                } = parse_impl(&s)?;
+
+                Ok(Self {
+                    raw: s,
+                    end_integer_part,
+                    end_fractional_part,
+                    end_number_part,
+                    type_suffix,
+                })
+            },
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
@@ -118,73 +135,6 @@ impl<B: Buffer> FloatLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
-    /// Precondition: first byte of string has to be in `b'0'..=b'9'`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        // Integer part.
-        let end_integer_part = end_dec_digits(&input);
-        let rest = &input[end_integer_part..];
-
-
-        // Fractional part.
-        let end_fractional_part = if rest.as_bytes().get(0) == Some(&b'.') {
-            // The fractional part must not start with `_`.
-            if rest.as_bytes().get(1) == Some(&b'_') {
-                return Err(perr(end_integer_part + 1, UnexpectedChar));
-            }
-
-            end_dec_digits(&rest[1..]) + 1 + end_integer_part
-        } else {
-            end_integer_part
-        };
-        let rest = &input[end_fractional_part..];
-
-        // If we have a period that is not followed by decimal digits, the
-        // literal must end now.
-        if end_integer_part + 1 == end_fractional_part && !rest.is_empty() {
-            return Err(perr(end_integer_part + 1, UnexpectedChar));
-        }
-
-
-        // Optional exponent.
-        let end_number_part = if rest.starts_with('e') || rest.starts_with('E') {
-            // Strip single - or + sign at the beginning.
-            let exp_number_start = match rest.as_bytes().get(1) {
-                Some(b'-') | Some(b'+') => 2,
-                _ => 1,
-            };
-
-            // Find end of exponent and make sure there is at least one digit.
-            let end_exponent = end_dec_digits(&rest[exp_number_start..]) + exp_number_start;
-            if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
-                return Err(perr(
-                    end_fractional_part..end_fractional_part + end_exponent,
-                    NoExponentDigits,
-                ));
-            }
-
-            end_exponent + end_fractional_part
-        } else {
-            end_fractional_part
-        };
-
-
-        // Type suffix
-        let type_suffix = match &input[end_number_part..] {
-            "" => None,
-            "f32" => Some(FloatType::F32),
-            "f64" => Some(FloatType::F64),
-            _ => return Err(perr(end_number_part..input.len(), InvalidFloatTypeSuffix)),
-        };
-
-        Ok(Self {
-            raw: input,
-            end_integer_part,
-            end_fractional_part,
-            end_number_part,
-            type_suffix,
-        })
-    }
 }
 
 impl FloatLit<&str> {
@@ -207,6 +157,73 @@ impl<B: Buffer> fmt::Display for FloatLit<B> {
     }
 }
 
+/// Precondition: first byte of string has to be in `b'0'..=b'9'`.
+#[inline(never)]
+pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
+    // Integer part.
+    let end_integer_part = end_dec_digits(input.as_bytes());
+    let rest = &input[end_integer_part..];
+
+
+    // Fractional part.
+    let end_fractional_part = if rest.as_bytes().get(0) == Some(&b'.') {
+        // The fractional part must not start with `_`.
+        if rest.as_bytes().get(1) == Some(&b'_') {
+            return Err(perr(end_integer_part + 1, UnexpectedChar));
+        }
+
+        end_dec_digits(rest[1..].as_bytes()) + 1 + end_integer_part
+    } else {
+        end_integer_part
+    };
+    let rest = &input[end_fractional_part..];
+
+    // If we have a period that is not followed by decimal digits, the
+    // literal must end now.
+    if end_integer_part + 1 == end_fractional_part && !rest.is_empty() {
+        return Err(perr(end_integer_part + 1, UnexpectedChar));
+    }
+
+
+    // Optional exponent.
+    let end_number_part = if rest.starts_with('e') || rest.starts_with('E') {
+        // Strip single - or + sign at the beginning.
+        let exp_number_start = match rest.as_bytes().get(1) {
+            Some(b'-') | Some(b'+') => 2,
+            _ => 1,
+        };
+
+        // Find end of exponent and make sure there is at least one digit.
+        let end_exponent = end_dec_digits(rest[exp_number_start..].as_bytes()) + exp_number_start;
+        if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
+            return Err(perr(
+                end_fractional_part..end_fractional_part + end_exponent,
+                NoExponentDigits,
+            ));
+        }
+
+        end_exponent + end_fractional_part
+    } else {
+        end_fractional_part
+    };
+
+
+    // Type suffix
+    let type_suffix = match &input[end_number_part..] {
+        "" => None,
+        "f32" => Some(FloatType::F32),
+        "f64" => Some(FloatType::F64),
+        _ => return Err(perr(end_number_part..input.len(), InvalidFloatTypeSuffix)),
+    };
+
+    Ok(FloatLit {
+        raw: input,
+        end_integer_part,
+        end_fractional_part,
+        end_number_part,
+        type_suffix,
+    })
+}
 
 #[cfg(test)]
 mod tests;
