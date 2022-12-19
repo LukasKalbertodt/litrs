@@ -1,5 +1,5 @@
 use crate::*;
-use std::{fmt::{Debug, Display}, convert::TryFrom};
+use std::fmt::{Debug, Display};
 
 
 #[track_caller]
@@ -39,12 +39,18 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
     }
 }
 
+// This is not ideal, but to perform this check we need `proc-macro2`. So we
+// just don't do anything if that feature is not enabled.
+#[cfg(not(feature = "proc-macro2"))]
+pub(crate) fn assert_roundtrip<T>(_: T, _: &str) {}
+
+#[cfg(feature = "proc-macro2")]
 #[track_caller]
 pub(crate) fn assert_roundtrip<T>(ours: T, input: &str)
 where
-    T: TryFrom<proc_macro2::Literal> + fmt::Debug + PartialEq + Clone,
+    T: std::convert::TryFrom<proc_macro2::Literal> + fmt::Debug + PartialEq + Clone,
     proc_macro2::Literal: From<T>,
-    <T as TryFrom<proc_macro2::Literal>>::Error: std::fmt::Display,
+    <T as std::convert::TryFrom<proc_macro2::Literal>>::Error: std::fmt::Display,
 {
     let pm_lit = input.parse::<proc_macro2::Literal>()
         .expect("failed to parse input as proc_macro2::Literal");
