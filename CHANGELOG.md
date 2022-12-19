@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-12-19
+### Breaking
+- Bump MSRV (minimal supported Rust version) to 1.54
+
+### Added
+- Add `raw_input` and `into_raw_input` to non-bool `*Lit` types
+- Add `impl From<*Lit> for pm::Literal` (for non-bool literals)
+- Add `impl From<BoolLit> for pm::Ident`
+
+### Fixed
+- Fix link to reference and clarify bool literals ([#7](https://github.com/LukasKalbertodt/litrs/pull/7))
+
+### Internals
+- Move lots of parsing code into non-generic functions (this hopefully reduces compile times)
+- To implement `[into_]raw_input` for integer and float literals, their
+  internals were changed a bit so that they store the full input string now.
+
 ## [0.2.3] - 2021-06-09
 ### Changed
 - Minor internal code change to bring MSRV from 1.52 to 1.42
@@ -51,7 +68,8 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.0...v0.2.1
