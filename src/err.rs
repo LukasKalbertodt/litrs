@@ -180,16 +180,19 @@ pub(crate) trait SpanLike {
 }
 
 impl SpanLike for Option<Range<usize>> {
+    #[inline(always)]
     fn into_span(self) -> Option<Range<usize>> {
         self
     }
 }
 impl SpanLike for Range<usize> {
+    #[inline(always)]
     fn into_span(self) -> Option<Range<usize>> {
         Some(self)
     }
 }
 impl SpanLike for usize {
+    #[inline(always)]
     fn into_span(self) -> Option<Range<usize>> {
         Some(self..self + 1)
     }
