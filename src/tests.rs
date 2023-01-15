@@ -113,7 +113,11 @@ fn proc_macro() {
         ($input:expr, expected: $expected:path, actual: $actual:path $(,)?) => {
             let err = $input.unwrap_err();
             if err.expected != $expected {
-                panic!("err.expected was expected to be {:?}, but is {:?}", $expected, err.expected);
+                panic!(
+                    "err.expected was expected to be {:?}, but is {:?}",
+                    $expected,
+                    err.expected,
+                );
             }
             if err.actual != $actual {
                 panic!("err.actual was expected to be {:?}, but is {:?}", $actual, err.actual);
@@ -177,7 +181,10 @@ fn proc_macro() {
     assert_eq!(Literal::from(FloatLit::try_from(pm_f32_lit.clone()).unwrap()), f32_lit);
     assert_eq!(Literal::from(FloatLit::try_from(pm_f64_lit.clone()).unwrap()), f64_lit);
     assert_eq!(Literal::from(StringLit::try_from(pm_string_lit.clone()).unwrap()), string_lit);
-    assert_eq!(Literal::from(ByteStringLit::try_from(pm_bytestr_lit.clone()).unwrap()), bytestr_lit);
+    assert_eq!(
+        Literal::from(ByteStringLit::try_from(pm_bytestr_lit.clone()).unwrap()),
+        bytestr_lit,
+    );
     assert_eq!(Literal::from(CharLit::try_from(pm_char_lit.clone()).unwrap()), char_lit);
 
     assert_invalid_token!(
