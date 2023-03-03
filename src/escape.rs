@@ -1,4 +1,4 @@
-use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::hex_digit_value};
+use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::{hex_digit_value, check_suffix}};
 
 
 /// Must start with `\`
@@ -117,14 +117,15 @@ fn is_string_continue_skipable_whitespace(b: u8) -> bool {
 pub(crate) fn unescape_string<E: Escapee>(
     input: &str,
     offset: usize,
-) -> Result<Option<String>, ParseError> {
+) -> Result<(Option<String>, usize), ParseError> {
+    let mut closing_quote_pos = None;
     let mut i = offset;
     let mut end_last_escape = offset;
     let mut value = String::new();
-    while i < input.len() - 1 {
+    while i < input.len() {
         match input.as_bytes()[i] {
             // Handle "string continue".
-            b'\\' if input.as_bytes()[i + 1] == b'\n' => {
+            b'\\' if input.as_bytes().get(i + 1) == Some(&b'\n') => {
                 value.push_str(&input[end_last_escape..i]);
 
                 // Find the first non-whitespace character.
@@ -143,7 +144,7 @@ pub(crate) fn unescape_string<E: Escapee>(
                 end_last_escape = i;
             }
             b'\r' => {
-                if input.as_bytes()[i + 1] == b'\n' {
+                if input.as_bytes().get(i + 1) == Some(&b'\n') {
                     value.push_str(&input[end_last_escape..i]);
                     value.push('\n');
                     i += 2;
@@ -152,16 +153,21 @@ pub(crate) fn unescape_string<E: Escapee>(
                     return Err(perr(i, IsolatedCr))
                 }
             }
-            b'"' => return Err(perr(i + 1..input.len(), UnexpectedChar)),
+            b'"' => {
+                closing_quote_pos = Some(i);
+                break;
+            },
             b if !E::SUPPORTS_UNICODE && !b.is_ascii()
                 => return Err(perr(i, NonAsciiInByteLiteral)),
             _ => i += 1,
         }
     }
 
-    if input.as_bytes()[input.len() - 1] != b'"' || input.len() == offset {
-        return Err(perr(None, UnterminatedString));
-    }
+    let closing_quote_pos = closing_quote_pos.ok_or(perr(None, UnterminatedString))?;
+
+    let start_suffix = closing_quote_pos + 1;
+    let suffix = &input[start_suffix..];
+    check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
 
     // `value` is only empty if there was no escape in the input string
     // (with the special case of the input being empty). This means the
@@ -171,11 +177,11 @@ pub(crate) fn unescape_string<E: Escapee>(
     } else {
         // There was an escape in the string, so we need to push the
         // remaining unescaped part of the string still.
-        value.push_str(&input[end_last_escape..input.len() - 1]);
+        value.push_str(&input[end_last_escape..closing_quote_pos]);
         Some(value)
     };
 
-    Ok(value)
+    Ok((value, start_suffix))
 }
 
 /// Reads and checks a raw (byte) string literal, converting `\r\n` sequences to
@@ -185,7 +191,7 @@ pub(crate) fn unescape_string<E: Escapee>(
 pub(crate) fn scan_raw_string<E: Escapee>(
     input: &str,
     offset: usize,
-) -> Result<(Option<String>, u32), ParseError> {
+) -> Result<(Option<String>, u32, usize), ParseError> {
     // Raw string literal
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
@@ -234,12 +240,11 @@ pub(crate) fn scan_raw_string<E: Escapee>(
         i += 1;
     }
 
-    let closing_quote_pos = closing_quote_pos
-        .ok_or(perr(None, UnterminatedRawString))?;
+    let closing_quote_pos = closing_quote_pos.ok_or(perr(None, UnterminatedRawString))?;
 
-    if closing_quote_pos + num_hashes != input.len() - 1 {
-        return Err(perr(closing_quote_pos + num_hashes + 1..input.len(), UnexpectedChar));
-    }
+    let start_suffix = closing_quote_pos + num_hashes + 1;
+    let suffix = &input[start_suffix..];
+    check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
 
     // `value` is only empty if there was no \r\n in the input string (with the
     // special case of the input being empty). This means the string value
@@ -253,5 +258,5 @@ pub(crate) fn scan_raw_string<E: Escapee>(
         Some(value)
     };
 
-    Ok((value, num_hashes as u32))
+    Ok((value, num_hashes as u32, start_suffix))
 }

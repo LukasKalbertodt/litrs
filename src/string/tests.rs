@@ -4,18 +4,24 @@ use crate::{Literal, StringLit, test_util::{assert_parse_ok_eq, assert_roundtrip
 
 macro_rules! check {
     ($lit:literal, $has_escapes:expr, $num_hashes:expr) => {
-        let input = stringify!($lit);
+        check!($lit, stringify!($lit), $has_escapes, $num_hashes, "")
+    };
+    ($lit:literal, $input:expr, $has_escapes:expr, $num_hashes:expr, $suffix:literal) => {
+        let input = $input;
         let expected = StringLit {
             raw: input,
             value: if $has_escapes { Some($lit.to_string()) } else { None },
             num_hashes: $num_hashes,
+            start_suffix: input.len() - $suffix.len(),
         };
 
         assert_parse_ok_eq(input, StringLit::parse(input), expected.clone(), "StringLit::parse");
         assert_parse_ok_eq(
             input, Literal::parse(input), Literal::String(expected.clone()), "Literal::parse");
-        assert_eq!(StringLit::parse(input).unwrap().value(), $lit);
-        assert_eq!(StringLit::parse(input).unwrap().into_value(), $lit);
+        let lit = StringLit::parse(input).unwrap();
+        assert_eq!(lit.value(), $lit);
+        assert_eq!(lit.suffix(), $suffix);
+        assert_eq!(lit.into_value(), $lit);
         assert_roundtrip(expected.into_owned(), input);
     };
 }
@@ -47,6 +53,7 @@ fn special_whitespace() {
                 raw: &*input,
                 value: None,
                 num_hashes,
+                start_suffix: input.len(),
             };
             assert_parse_ok_eq(
                 &input, StringLit::parse(&*input), expected.clone(), "StringLit::parse");
@@ -186,16 +193,23 @@ fn raw_string() {
 }
 
 #[test]
+fn suffixes() {
+    check!("hello", r###""hello"suffix"###, false, None, "suffix");
+    check!(r"お前はもう死んでいる", r###"r"お前はもう死んでいる"_banana"###, false, Some(0), "_banana");
+    check!("fox", r#""fox"peter"#, false, None, "peter");
+    check!("🦊", r#""🦊"peter"#, false, None, "peter");
+    check!("నక్క\\\\u{0b10}", r###""నక్క\\\\u{0b10}"jü_rgen"###, true, None, "jü_rgen");
+}
+
+#[test]
 fn parse_err() {
     assert_err!(StringLit, r#"""#, UnterminatedString, None);
     assert_err!(StringLit, r#""犬"#, UnterminatedString, None);
     assert_err!(StringLit, r#""Jürgen"#, UnterminatedString, None);
     assert_err!(StringLit, r#""foo bar baz"#, UnterminatedString, None);
 
-    assert_err!(StringLit, r#""fox"peter"#, UnexpectedChar, 5..10);
-    assert_err!(StringLit, r#""fox"peter""#, UnexpectedChar, 5..11);
-    assert_err!(StringLit, r#""fox"🦊"#, UnexpectedChar, 5..9);
-    assert_err!(StringLit, r###"r#"foo "# bar"#"###, UnexpectedChar, 9..15);
+    assert_err!(StringLit, r#""fox"peter""#, InvalidSuffix, 5);
+    assert_err!(StringLit, r###"r#"foo "# bar"#"###, UnexpectedChar, 9);
 
     assert_err!(StringLit, "\"\r\"", IsolatedCr, 1);
     assert_err!(StringLit, "\"fo\rx\"", IsolatedCr, 3);
@@ -225,10 +239,10 @@ fn invald_ascii_escapes() {
 }
 
 #[test]
-fn invald_escapes() {
+fn invalid_escapes() {
     assert_err!(StringLit, r#""\a""#, UnknownEscape, 1..3);
     assert_err!(StringLit, r#""foo\y""#, UnknownEscape, 4..6);
-    assert_err!(StringLit, r#""\"#, UnterminatedString, None);
+    assert_err!(StringLit, r#""\"#, UnterminatedEscape, 1);
     assert_err!(StringLit, r#""\x""#, UnterminatedEscape, 1..3);
     assert_err!(StringLit, r#""🦊\x1""#, UnterminatedEscape, 5..8);
     assert_err!(StringLit, r#"" \xaj""#, InvalidXEscape, 2..6);
