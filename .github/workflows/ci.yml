@@ -40,3 +40,10 @@ jobs:
       run: |
         cargo test --release --no-default-features --lib -- --include-ignored
         cargo test --doc --no-default-features
+
+    - name: Build with check_suffix
+      run: cargo build --features=check_suffix
+    - name: Run tests with check_suffix
+      run: |
+        cargo test --release --features=check_suffix --lib -- --include-ignored
+        cargo test --doc --features=check_suffix
