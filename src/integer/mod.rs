@@ -34,14 +34,6 @@ pub struct IntegerLit<B: Buffer> {
     type_suffix: Option<IntegerType>,
 }
 
-/// The bases in which an integer can be specified.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntegerBase {
-    Binary,
-    Octal,
-    Decimal,
-    Hexadecimal,
-}
 impl<B: Buffer> IntegerLit<B> {
     /// Parses the input as an integer literal. Returns an error if the input is
     /// invalid or represents a different kind of literal.
@@ -75,12 +67,7 @@ impl<B: Buffer> IntegerLit<B> {
     ///
     /// Returns `None` if the literal overflows `N`.
     pub fn value<N: FromIntegerLiteral>(&self) -> Option<N> {
-        let base = match self.base {
-            IntegerBase::Binary => N::from_small_number(2),
-            IntegerBase::Octal => N::from_small_number(8),
-            IntegerBase::Decimal => N::from_small_number(10),
-            IntegerBase::Hexadecimal => N::from_small_number(16),
-        };
+        let base = N::from_small_number(self.base.value());
 
         let mut acc = N::from_small_number(0);
         for digit in self.raw_main_part().bytes() {
@@ -271,6 +258,37 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
 }
 
 
+/// The bases in which an integer can be specified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerBase {
+    Binary,
+    Octal,
+    Decimal,
+    Hexadecimal,
+}
+
+impl IntegerBase {
+    /// Returns the literal prefix that indicates this base, i.e. `"0b"`,
+    /// `"0o"`, `""` and `"0x"`.
+    pub fn prefix(self) -> &'static str {
+        match self {
+            Self::Binary => "0b",
+            Self::Octal => "0o",
+            Self::Decimal => "",
+            Self::Hexadecimal => "0x",
+        }
+    }
+
+    /// Returns the base value, i.e. 2, 8, 10 or 16.
+    pub fn value(self) -> u8 {
+        match self {
+            Self::Binary => 2,
+            Self::Octal => 8,
+            Self::Decimal => 10,
+            Self::Hexadecimal => 16,
+        }
+    }
+}
 
 /// All possible integer type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
