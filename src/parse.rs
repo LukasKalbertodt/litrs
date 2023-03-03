@@ -13,43 +13,40 @@ use crate::{
 };
 
 
-impl<B: Buffer> Literal<B> {
-    /// Parses the given input as a Rust literal.
-    pub fn parse(input: B) -> Result<Self, ParseError> {
-        let (first, rest) = input.as_bytes().split_first().ok_or(perr(None, Empty))?;
-        let second = input.as_bytes().get(1).copied();
+pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
+    let (first, rest) = input.as_bytes().split_first().ok_or(perr(None, Empty))?;
+    let second = input.as_bytes().get(1).copied();
 
-        match first {
-            b'f' if &*input == "false" => Ok(Self::Bool(BoolLit::False)),
-            b't' if &*input == "true" => Ok(Self::Bool(BoolLit::True)),
+    match first {
+        b'f' if &*input == "false" => Ok(Literal::Bool(BoolLit::False)),
+        b't' if &*input == "true" => Ok(Literal::Bool(BoolLit::True)),
 
-            // A number literal (integer or float).
-            b'0'..=b'9' => {
-                // To figure out whether this is a float or integer, we do some
-                // quick inspection here. Yes, this is technically duplicate
-                // work with what is happening in the integer/float parse
-                // methods, but it makes the code way easier for now and won't
-                // be a huge performance loss.
-                //
-                // The first non-decimal char in a float literal must
-                // be '.', 'e' or 'E'.
-                match input.as_bytes().get(1 + end_dec_digits(rest)) {
-                    Some(b'.') | Some(b'e') | Some(b'E')
-                        => FloatLit::parse(input).map(Literal::Float),
+        // A number literal (integer or float).
+        b'0'..=b'9' => {
+            // To figure out whether this is a float or integer, we do some
+            // quick inspection here. Yes, this is technically duplicate
+            // work with what is happening in the integer/float parse
+            // methods, but it makes the code way easier for now and won't
+            // be a huge performance loss.
+            //
+            // The first non-decimal char in a float literal must
+            // be '.', 'e' or 'E'.
+            match input.as_bytes().get(1 + end_dec_digits(rest)) {
+                Some(b'.') | Some(b'e') | Some(b'E')
+                    => FloatLit::parse(input).map(Literal::Float),
 
-                    _ => IntegerLit::parse(input).map(Literal::Integer),
-                }
-            },
+                _ => IntegerLit::parse(input).map(Literal::Integer),
+            }
+        },
 
-            b'\'' => CharLit::parse(input).map(Literal::Char),
-            b'"' | b'r' => StringLit::parse(input).map(Literal::String),
+        b'\'' => CharLit::parse(input).map(Literal::Char),
+        b'"' | b'r' => StringLit::parse(input).map(Literal::String),
 
-            b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
-            b'b' if second == Some(b'r') || second == Some(b'"')
-                => ByteStringLit::parse(input).map(Literal::ByteString),
+        b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
+        b'b' if second == Some(b'r') || second == Some(b'"')
+            => ByteStringLit::parse(input).map(Literal::ByteString),
 
-            _ => Err(perr(None, InvalidLiteral)),
-        }
+        _ => Err(perr(None, InvalidLiteral)),
     }
 }
 

@@ -185,6 +185,11 @@ pub enum Literal<B: Buffer> {
 }
 
 impl<B: Buffer> Literal<B> {
+    /// Parses the given input as a Rust literal.
+    pub fn parse(input: B) -> Result<Self, ParseError> {
+        parse::parse(input)
+    }
+
     /// Returns the suffix of this literal or `""` if it doesn't have one.
     ///
     /// Rust token grammar actually allows suffixes for all kinds of tokens.
