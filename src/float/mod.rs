@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use crate::{
     Buffer, ParseError,
@@ -55,13 +55,6 @@ pub struct FloatLit<B: Buffer> {
 
     /// Optional type suffix.
     type_suffix: Option<FloatType>,
-}
-
-/// All possible float type suffixes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FloatType {
-    F32,
-    F64,
 }
 
 impl<B: Buffer> FloatLit<B> {
@@ -224,6 +217,49 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
         type_suffix,
     })
 }
+
+
+/// All possible float type suffixes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatType {
+    F32,
+    F64,
+}
+
+impl FloatType {
+    /// Returns the type corresponding to the given suffix (e.g. `"f32"` is
+    /// mapped to `Self::F32`). If the suffix is not a valid float type, `None`
+    /// is returned.
+    pub fn from_suffix(suffix: &str) -> Option<Self> {
+        match suffix {
+            "f32" => Some(FloatType::F32),
+            "f64" => Some(FloatType::F64),
+            _ => None,
+        }
+    }
+
+    /// Returns the suffix for this type, e.g. `"f32"` for `Self::F32`.
+    pub fn suffix(self) -> &'static str {
+        match self {
+            Self::F32 => "f32",
+            Self::F64 => "f64",
+        }
+    }
+}
+
+impl FromStr for FloatType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_suffix(s).ok_or(())
+    }
+}
+
+impl fmt::Display for FloatType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.suffix().fmt(f)
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use crate::{
     Buffer, ParseError,
@@ -42,37 +42,6 @@ pub enum IntegerBase {
     Decimal,
     Hexadecimal,
 }
-
-/// All possible integer type suffixes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntegerType {
-    U8,
-    U16,
-    U32,
-    U64,
-    U128,
-    Usize,
-    I8,
-    I16,
-    I32,
-    I64,
-    I128,
-    Isize,
-}
-
-impl IntegerBase {
-    /// Returns the literal prefix that indicates this base, i.e. `"0b"`,
-    /// `"0o"`, `""` and `"0x"`.
-    pub fn prefix(self) -> &'static str {
-        match self {
-            Self::Binary => "0b",
-            Self::Octal => "0o",
-            Self::Decimal => "",
-            Self::Hexadecimal => "0x",
-        }
-    }
-}
-
 impl<B: Buffer> IntegerLit<B> {
     /// Parses the input as an integer literal. Returns an error if the input is
     /// invalid or represents a different kind of literal.
@@ -299,6 +268,79 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
         base,
         type_suffix,
     })
+}
+
+
+
+/// All possible integer type suffixes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerType {
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    Usize,
+    I8,
+    I16,
+    I32,
+    I64,
+    I128,
+    Isize,
+}
+
+impl IntegerType {
+    /// Returns the type corresponding to the given suffix (e.g. `"u8"` is
+    /// mapped to `Self::U8`). If the suffix is not a valid integer type,
+    /// `None` is returned.
+    pub fn from_suffix(suffix: &str) -> Option<Self> {
+        match suffix {
+            "u8" => Some(Self::U8),
+            "u16" => Some(Self::U16),
+            "u32" => Some(Self::U32),
+            "u64" => Some(Self::U64),
+            "u128" => Some(Self::U128),
+            "usize" => Some(Self::Usize),
+            "i8" => Some(Self::I8),
+            "i16" => Some(Self::I16),
+            "i32" => Some(Self::I32),
+            "i64" => Some(Self::I64),
+            "i128" => Some(Self::I128),
+            "isize" => Some(Self::Isize),
+            _ => None,
+        }
+    }
+
+    /// Returns the suffix for this type, e.g. `"u8"` for `Self::U8`.
+    pub fn suffix(self) -> &'static str {
+        match self {
+            Self::U8 => "u8",
+            Self::U16 => "u16",
+            Self::U32 => "u32",
+            Self::U64 => "u64",
+            Self::U128 => "u128",
+            Self::Usize => "usize",
+            Self::I8 => "i8",
+            Self::I16 => "i16",
+            Self::I32 => "i32",
+            Self::I64 => "i64",
+            Self::I128 => "i128",
+            Self::Isize => "isize",
+        }
+    }
+}
+
+impl FromStr for IntegerType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_suffix(s).ok_or(())
+    }
+}
+
+impl fmt::Display for IntegerType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.suffix().fmt(f)
+    }
 }
 
 
