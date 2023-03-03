@@ -20,13 +20,13 @@ fn check<T: FromIntegerLiteral + PartialEq + Debug + Display>(
         start_main_part: base.prefix().len(),
         end_main_part: base.prefix().len() + main_part.len(),
         base,
-        type_suffix
     };
     assert_parse_ok_eq(
         input, IntegerLit::parse(input), expected_integer.clone(), "IntegerLit::parse");
     assert_parse_ok_eq(
         input, Literal::parse(input), Literal::Integer(expected_integer), "Literal::parse");
     assert_roundtrip(expected_integer.to_owned(), input);
+    assert_eq!(Ty::from_suffix(IntegerLit::parse(input).unwrap().suffix()), type_suffix);
 
     let actual_value = IntegerLit::parse(input)
         .unwrap()
@@ -101,7 +101,7 @@ fn parse_binary() {
     check("0b10010u8", 0b10010u8, Binary, "10010", Some(Ty::U8));
     check("0b10010i8", 0b10010u8, Binary, "10010", Some(Ty::I8));
     check("0b10010u64", 0b10010u64, Binary, "10010", Some(Ty::U64));
-    check("0b10010i64", 0b10010u64, Binary, "10010", Some(Ty::I64));
+    check("0b10010i64", 0b10010i64, Binary, "10010", Some(Ty::I64));
     check(
         "0b1011001_00110000_00101000_10100101u32",
         0b1011001_00110000_00101000_10100101u32,
@@ -197,7 +197,7 @@ fn suffixes() {
         ("123u64", Ty::U64),
         ("123u128", Ty::U128),
     ].iter().for_each(|&(s, ty)| {
-        assert_eq!(IntegerLit::parse(s).unwrap().type_suffix(), Some(ty));
+        assert_eq!(Ty::from_suffix(IntegerLit::parse(s).unwrap().suffix()), Some(ty));
     });
 }
 
@@ -249,17 +249,15 @@ fn parse_err() {
     assert_err!(IntegerLit, "", Empty, None);
     assert_err_single!(IntegerLit::parse("a"), DoesNotStartWithDigit, 0);
     assert_err_single!(IntegerLit::parse(";"), DoesNotStartWithDigit, 0);
-    assert_err_single!(IntegerLit::parse("0;"), InvalidIntegerTypeSuffix, 1..2);
-    assert_err_single!(IntegerLit::parse("0a"), InvalidDigit, 1);
+    assert_err_single!(IntegerLit::parse("0;"), UnexpectedChar, 1..2);
     assert_err!(IntegerLit, "0b", NoDigits, 2..2);
-    assert_err_single!(IntegerLit::parse("0z"), InvalidIntegerTypeSuffix, 1..2);
     assert_err_single!(IntegerLit::parse(" 0"), DoesNotStartWithDigit, 0);
-    assert_err_single!(IntegerLit::parse("0 "), InvalidIntegerTypeSuffix, 1);
-    assert_err_single!(IntegerLit::parse("0a3"), InvalidDigit, 1);
+    assert_err_single!(IntegerLit::parse("0 "), UnexpectedChar, 1);
     assert_err!(IntegerLit, "0b3", InvalidDigit, 2);
-    assert_err_single!(IntegerLit::parse("0z3"), InvalidIntegerTypeSuffix, 1..3);
     assert_err_single!(IntegerLit::parse("_"), DoesNotStartWithDigit, 0);
     assert_err_single!(IntegerLit::parse("_3"), DoesNotStartWithDigit, 0);
+    assert_err!(IntegerLit, "0x44.5", UnexpectedChar, 4..6);
+    assert_err_single!(IntegerLit::parse("123em"), IntegerSuffixStartingWithE, 3);
 }
 
 #[test]
@@ -267,30 +265,12 @@ fn invalid_digits() {
     assert_err!(IntegerLit, "0b10201", InvalidDigit, 4);
     assert_err!(IntegerLit, "0b9", InvalidDigit, 2);
     assert_err!(IntegerLit, "0b07", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0b0a", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0b0A", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0b01f", InvalidDigit, 4);
-    assert_err!(IntegerLit, "0b01F", InvalidDigit, 4);
 
     assert_err!(IntegerLit, "0o12380", InvalidDigit, 5);
     assert_err!(IntegerLit, "0o192", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0o7a_", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0o7A_", InvalidDigit, 3);
-    assert_err!(IntegerLit, "0o72f_0", InvalidDigit, 4);
-    assert_err!(IntegerLit, "0o72F_0", InvalidDigit, 4);
 
-    assert_err_single!(IntegerLit::parse("12a3"), InvalidDigit, 2);
-    assert_err_single!(IntegerLit::parse("12f3"), InvalidDigit, 2);
-    assert_err_single!(IntegerLit::parse("12f_"), InvalidDigit, 2);
-    assert_err_single!(IntegerLit::parse("12F_"), InvalidDigit, 2);
     assert_err_single!(IntegerLit::parse("a_123"), DoesNotStartWithDigit, 0);
     assert_err_single!(IntegerLit::parse("B_123"), DoesNotStartWithDigit, 0);
-
-    assert_err!(IntegerLit, "0x8cg", InvalidIntegerTypeSuffix, 4..5);
-    assert_err!(IntegerLit, "0x8cG", InvalidIntegerTypeSuffix, 4..5);
-    assert_err!(IntegerLit, "0x8c1h_", InvalidIntegerTypeSuffix, 5..7);
-    assert_err!(IntegerLit, "0x8c1H_", InvalidIntegerTypeSuffix, 5..7);
-    assert_err!(IntegerLit, "0x8czu16", InvalidIntegerTypeSuffix, 4..8);
 }
 
 #[test]
@@ -317,27 +297,61 @@ fn no_valid_digits() {
 }
 
 #[test]
-fn invalid_suffix() {
-    assert_err!(IntegerLit, "5u7", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "5u9", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "5u0", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "33u12", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "84u17", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "99u80", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "1234uu16", InvalidIntegerTypeSuffix, 4..8);
+fn non_standard_suffixes() {
+    #[track_caller]
+    fn check_suffix<T: FromIntegerLiteral + PartialEq + Debug + Display>(
+        input: &str,
+        value: T,
+        base: IntegerBase,
+        main_part: &str,
+        suffix: &str,
+    ) {
+        check(input, value, base, main_part, None);
+        assert_eq!(IntegerLit::parse(input).unwrap().suffix(), suffix);
+    }
 
-    assert_err!(IntegerLit, "5i7", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "5i9", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "5i0", InvalidIntegerTypeSuffix, 1..3);
-    assert_err!(IntegerLit, "33i12", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "84i17", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "99i80", InvalidIntegerTypeSuffix, 2..5);
-    assert_err!(IntegerLit, "1234ii16", InvalidIntegerTypeSuffix, 4..8);
+    check_suffix("5u7", 5, Decimal, "5", "u7");
+    check_suffix("5u7", 5, Decimal, "5", "u7");
+    check_suffix("5u9", 5, Decimal, "5", "u9");
+    check_suffix("5u0", 5, Decimal, "5", "u0");
+    check_suffix("33u12", 33, Decimal, "33", "u12");
+    check_suffix("84u17", 84, Decimal, "84", "u17");
+    check_suffix("99u80", 99, Decimal, "99", "u80");
+    check_suffix("1234uu16", 1234, Decimal, "1234", "uu16");
 
-    assert_err!(IntegerLit, "0ui32", InvalidIntegerTypeSuffix, 1..5);
-    assert_err!(IntegerLit, "1iu32", InvalidIntegerTypeSuffix, 1..5);
-    assert_err_single!(IntegerLit::parse("54321a64"), InvalidDigit, 5);
-    assert_err!(IntegerLit, "54321b64", InvalidDigit, 5);
-    assert_err!(IntegerLit, "54321x64", InvalidIntegerTypeSuffix, 5..8);
-    assert_err!(IntegerLit, "54321o64", InvalidIntegerTypeSuffix, 5..8);
+    check_suffix("5i7", 5, Decimal, "5", "i7");
+    check_suffix("5i9", 5, Decimal, "5", "i9");
+    check_suffix("5i0", 5, Decimal, "5", "i0");
+    check_suffix("33i12", 33, Decimal, "33", "i12");
+    check_suffix("84i17", 84, Decimal, "84", "i17");
+    check_suffix("99i80", 99, Decimal, "99", "i80");
+    check_suffix("1234ii16", 1234, Decimal, "1234", "ii16");
+
+    check_suffix("0ui32", 0, Decimal, "0", "ui32");
+    check_suffix("1iu32", 1, Decimal, "1", "iu32");
+    check_suffix("54321a64", 54321, Decimal, "54321", "a64");
+    check_suffix("54321b64", 54321, Decimal, "54321", "b64");
+    check_suffix("54321x64", 54321, Decimal, "54321", "x64");
+    check_suffix("54321o64", 54321, Decimal, "54321", "o64");
+
+    check_suffix("0a", 0, Decimal, "0", "a");
+    check_suffix("0a3", 0, Decimal, "0", "a3");
+    check_suffix("0z", 0, Decimal, "0", "z");
+    check_suffix("0z3", 0, Decimal, "0", "z3");
+    check_suffix("0b0a", 0, Binary, "0", "a");
+    check_suffix("0b0A", 0, Binary, "0", "A");
+    check_suffix("0b01f", 1, Binary, "01", "f");
+    check_suffix("0b01F", 1, Binary, "01", "F");
+    check_suffix("0o7a_", 7, Octal, "7", "a_");
+    check_suffix("0o7A_", 7, Octal, "7", "A_");
+    check_suffix("0o72f_0", 0o72, Octal, "72", "f_0");
+    check_suffix("0o72F_0", 0o72, Octal, "72", "F_0");
+
+    check_suffix("0x8cg", 0x8c, Hexadecimal, "8c", "g");
+    check_suffix("0x8cG", 0x8c, Hexadecimal, "8c", "G");
+    check_suffix("0x8c1h_", 0x8c1, Hexadecimal, "8c1", "h_");
+    check_suffix("0x8c1H_", 0x8c1, Hexadecimal, "8c1", "H_");
+    check_suffix("0x8czu16", 0x8c, Hexadecimal, "8c", "zu16");
+
+    check_suffix("123_foo", 123, Decimal, "123_", "foo");
 }
