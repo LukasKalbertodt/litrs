@@ -37,7 +37,8 @@ impl<B: Buffer> ByteStringLit<B> {
             return Err(perr(None, InvalidByteStringLiteralStart));
         }
 
-        Self::parse_impl(input)
+        let (value, num_hashes) = parse_impl(&input)?;
+        Ok(Self { raw: input, value, num_hashes })
     }
 
     /// Returns the string value this literal represents (where all escapes have
@@ -79,25 +80,6 @@ impl<B: Buffer> ByteStringLit<B> {
             Some(n) => 2 + n as usize + 1..self.raw.len() - n as usize - 1,
         }
     }
-
-    /// Precondition: input has to start with either `b"` or `br`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        if input.starts_with(r"br") {
-            let (value, num_hashes) = scan_raw_string::<u8>(&input, 2)?;
-            Ok(Self {
-                raw: input,
-                value: value.map(|s| s.into_bytes()),
-                num_hashes: Some(num_hashes),
-            })
-        } else {
-            let value = unescape_string::<u8>(&input, 2)?.map(|s| s.into_bytes());
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: None,
-            })
-        }
-    }
 }
 
 impl ByteStringLit<&str> {
@@ -118,6 +100,18 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
     }
 }
 
+
+/// Precondition: input has to start with either `b"` or `br`.
+#[inline(never)]
+fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>), ParseError> {
+    if input.starts_with("br") {
+        scan_raw_string::<u8>(&input, 2)
+            .map(|(v, hashes)| (v.map(String::into_bytes), Some(hashes)))
+    } else {
+        unescape_string::<u8>(&input, 2)
+            .map(|v| (v.map(String::into_bytes), None))
+    }
+}
 
 #[cfg(test)]
 mod tests;

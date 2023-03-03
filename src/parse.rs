@@ -42,11 +42,11 @@ impl<B: Buffer> Literal<B> {
             },
 
             b'\'' => CharLit::parse(input).map(Literal::Char),
-            b'"' | b'r' => StringLit::parse_impl(input).map(Literal::String),
+            b'"' | b'r' => StringLit::parse(input).map(Literal::String),
 
             b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
             b'b' if second == Some(b'r') || second == Some(b'"')
-                => ByteStringLit::parse_impl(input).map(Literal::ByteString),
+                => ByteStringLit::parse(input).map(Literal::ByteString),
 
             _ => Err(perr(None, InvalidLiteral)),
         }

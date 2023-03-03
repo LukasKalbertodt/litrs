@@ -18,8 +18,8 @@ pub struct StringLit<B: Buffer> {
     /// The raw input.
     raw: B,
 
-    /// The string value (with all escaped unescaped), or `None` if there were
-    /// no escapes. In the latter case, `input` is the string value.
+    /// The string value (with all escapes unescaped), or `None` if there were
+    /// no escapes. In the latter case, the string value is in `raw`.
     value: Option<String>,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
@@ -32,7 +32,10 @@ impl<B: Buffer> StringLit<B> {
     /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
-            b'r' | b'"' => Self::parse_impl(input),
+            b'r' | b'"' => {
+                let (value, num_hashes) = parse_impl(&input)?;
+                Ok(Self { raw: input, value, num_hashes })
+            }
             _ => Err(perr(0, InvalidStringLiteralStart)),
         }
     }
@@ -76,25 +79,6 @@ impl<B: Buffer> StringLit<B> {
             Some(n) => 1 + n as usize + 1..self.raw.len() - n as usize - 1,
         }
     }
-
-    /// Precondition: input has to start with either `"` or `r`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        if input.starts_with('r') {
-            let (value, num_hashes) = scan_raw_string::<char>(&input, 1)?;
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: Some(num_hashes),
-            })
-        } else {
-            let value = unescape_string::<char>(&input, 1)?;
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: None,
-            })
-        }
-    }
 }
 
 impl StringLit<&str> {
@@ -112,6 +96,16 @@ impl StringLit<&str> {
 impl<B: Buffer> fmt::Display for StringLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.pad(&self.raw)
+    }
+}
+
+/// Precondition: input has to start with either `"` or `r`.
+#[inline(never)]
+pub(crate) fn parse_impl(input: &str) -> Result<(Option<String>, Option<u32>), ParseError> {
+    if input.starts_with('r') {
+        scan_raw_string::<char>(&input, 1).map(|(v, hashes)| (v, Some(hashes)))
+    } else {
+        unescape_string::<char>(&input, 1).map(|v| (v, None))
     }
 }
 
