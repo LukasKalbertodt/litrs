@@ -4,6 +4,7 @@ use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
+    parse::check_suffix,
 };
 
 
@@ -15,6 +16,8 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ByteLit<B: Buffer> {
     raw: B,
+    /// Start index of the suffix or `raw.len()` if there is no suffix.
+    start_suffix: usize,
     value: u8,
 }
 
@@ -29,13 +32,18 @@ impl<B: Buffer> ByteLit<B> {
             return Err(perr(None, InvalidByteLiteralStart));
         }
 
-        let value = parse_impl(&input)?;
-        Ok(Self { raw: input, value })
+        let (value, start_suffix) = parse_impl(&input)?;
+        Ok(Self { raw: input, value, start_suffix })
     }
 
     /// Returns the byte value that this literal represents.
     pub fn value(&self) -> u8 {
         self.value
+    }
+
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.start_suffix..]
     }
 
     /// Returns the raw input that was passed to `parse`.
@@ -56,6 +64,7 @@ impl ByteLit<&str> {
     pub fn to_owned(&self) -> ByteLit<String> {
         ByteLit {
             raw: self.raw.to_owned(),
+            start_suffix: self.start_suffix,
             value: self.value,
         }
     }
@@ -69,32 +78,29 @@ impl<B: Buffer> fmt::Display for ByteLit<B> {
 
 /// Precondition: must start with `b'`.
 #[inline(never)]
-pub(crate) fn parse_impl(input: &str) -> Result<u8, ParseError> {
-    if input.len() == 2 {
-        return Err(perr(None, UnterminatedByteLiteral));
-    }
-    if *input.as_bytes().last().unwrap() != b'\'' {
-        return Err(perr(None, UnterminatedByteLiteral));
-    }
-
-    let inner = &input[2..input.len() - 1];
-    let first = inner.as_bytes().get(0).ok_or(perr(None, EmptyByteLiteral))?;
+pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
+    let input_bytes = input.as_bytes();
+    let first = input_bytes.get(2).ok_or(perr(None, UnterminatedByteLiteral))?;
     let (c, len) = match first {
-        b'\'' => return Err(perr(2, UnescapedSingleQuote)),
-        b'\n' | b'\t' | b'\r'
-            => return Err(perr(2, UnescapedSpecialWhitespace)),
-
-        b'\\' => unescape::<u8>(inner, 2)?,
+        b'\'' if input_bytes.get(3) == Some(&b'\'') => return Err(perr(2, UnescapedSingleQuote)),
+        b'\'' => return Err(perr(None, EmptyByteLiteral)),
+        b'\n' | b'\t' | b'\r' => return Err(perr(2, UnescapedSpecialWhitespace)),
+        b'\\' => unescape::<u8>(&input[2..], 2)?,
         other if other.is_ascii() => (*other, 1),
         _ => return Err(perr(2, NonAsciiInByteLiteral)),
     };
-    let rest = &inner[len..];
 
-    if !rest.is_empty() {
-        return Err(perr(len + 2..input.len() - 1, OverlongByteLiteral));
+    match input[2 + len..].find('\'') {
+        Some(0) => {}
+        Some(_) => return Err(perr(None, OverlongByteLiteral)),
+        None => return Err(perr(None, UnterminatedByteLiteral)),
     }
 
-    Ok(c)
+    let start_suffix = 2 + len + 1;
+    let suffix = &input[start_suffix..];
+    check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
+
+    Ok((c, start_suffix))
 }
 
 #[cfg(test)]

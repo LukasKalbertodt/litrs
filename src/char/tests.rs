@@ -4,16 +4,20 @@ use super::CharLit;
 // ===== Utility functions =======================================================================
 
 macro_rules! check {
-    ($lit:literal) => {
-        let input = stringify!($lit);
+    ($lit:literal) => { check!($lit, stringify!($lit), "") };
+    ($lit:literal, $input:expr, $suffix:literal) => {
+        let input = $input;
         let expected = CharLit {
             raw: input,
+            start_suffix: input.len() - $suffix.len(),
             value: $lit,
         };
 
         assert_parse_ok_eq(input, CharLit::parse(input), expected.clone(), "CharLit::parse");
         assert_parse_ok_eq(input, Literal::parse(input), Literal::Char(expected), "Literal::parse");
-        assert_eq!(CharLit::parse(input).unwrap().value(), $lit);
+        let lit = CharLit::parse(input).unwrap();
+        assert_eq!(lit.value(), $lit);
+        assert_eq!(lit.suffix(), $suffix);
         assert_roundtrip(expected.to_owned(), input);
     };
 }
@@ -135,6 +139,15 @@ fn unicode_escapes() {
 }
 
 #[test]
+fn suffixes() {
+    check!('a', r##"'a'peter"##, "peter");
+    check!('#', r##"'#'peter"##, "peter");
+    check!('\n', r##"'\n'peter"##, "peter");
+    check!('\'', r##"'\''peter"##, "peter");
+    check!('\"', r##"'\"'peter"##, "peter");
+}
+
+#[test]
 fn invald_ascii_escapes() {
     assert_err!(CharLit, r"'\x80'", NonAsciiXEscape, 1..5);
     assert_err!(CharLit, r"'\x81'", NonAsciiXEscape, 1..5);
@@ -151,12 +164,12 @@ fn invald_ascii_escapes() {
 }
 
 #[test]
-fn invald_escapes() {
+fn invalid_escapes() {
     assert_err!(CharLit, r"'\a'", UnknownEscape, 1..3);
     assert_err!(CharLit, r"'\y'", UnknownEscape, 1..3);
-    assert_err!(CharLit, r"'\", UnterminatedCharLiteral, None);
-    assert_err!(CharLit, r"'\x'", UnterminatedEscape, 1..3);
-    assert_err!(CharLit, r"'\x1'", UnterminatedEscape, 1..4);
+    assert_err!(CharLit, r"'\", UnterminatedEscape, 1);
+    assert_err!(CharLit, r"'\x'", UnterminatedEscape, 1..4);
+    assert_err!(CharLit, r"'\x1'", InvalidXEscape, 1..5);
     assert_err!(CharLit, r"'\xaj'", InvalidXEscape, 1..5);
     assert_err!(CharLit, r"'\xjb'", InvalidXEscape, 1..5);
 }
@@ -167,10 +180,10 @@ fn invalid_unicode_escapes() {
     assert_err!(CharLit, r"'\u '", UnicodeEscapeWithoutBrace, 1..3);
     assert_err!(CharLit, r"'\u3'", UnicodeEscapeWithoutBrace, 1..3);
 
-    assert_err!(CharLit, r"'\u{'", UnterminatedUnicodeEscape, 1..4);
-    assert_err!(CharLit, r"'\u{12'", UnterminatedUnicodeEscape, 1..6);
-    assert_err!(CharLit, r"'\u{a0b'", UnterminatedUnicodeEscape, 1..7);
-    assert_err!(CharLit, r"'\u{a0_b  '", UnterminatedUnicodeEscape, 1..10);
+    assert_err!(CharLit, r"'\u{'", UnterminatedUnicodeEscape, 1..5);
+    assert_err!(CharLit, r"'\u{12'", UnterminatedUnicodeEscape, 1..7);
+    assert_err!(CharLit, r"'\u{a0b'", UnterminatedUnicodeEscape, 1..8);
+    assert_err!(CharLit, r"'\u{a0_b  '", UnterminatedUnicodeEscape, 1..11);
 
     assert_err!(CharLit, r"'\u{_}'", InvalidStartOfUnicodeEscape, 4);
     assert_err!(CharLit, r"'\u{_5f}'", InvalidStartOfUnicodeEscape, 4);
@@ -192,16 +205,16 @@ fn invalid_unicode_escapes() {
 #[test]
 fn parse_err() {
     assert_err!(CharLit, r"''", EmptyCharLiteral, None);
-    assert_err!(CharLit, r"' ''", OverlongCharLiteral, 2..3);
+    assert_err!(CharLit, r"' ''", UnexpectedChar, 3);
 
     assert_err!(CharLit, r"'", UnterminatedCharLiteral, None);
     assert_err!(CharLit, r"'a", UnterminatedCharLiteral, None);
     assert_err!(CharLit, r"'\n", UnterminatedCharLiteral, None);
     assert_err!(CharLit, r"'\x35", UnterminatedCharLiteral, None);
 
-    assert_err!(CharLit, r"'ab'", OverlongCharLiteral, 2..3);
-    assert_err!(CharLit, r"'a _'", OverlongCharLiteral, 2..4);
-    assert_err!(CharLit, r"'\n3'", OverlongCharLiteral, 3..4);
+    assert_err!(CharLit, r"'ab'", OverlongCharLiteral, None);
+    assert_err!(CharLit, r"'a _'", OverlongCharLiteral, None);
+    assert_err!(CharLit, r"'\n3'", OverlongCharLiteral, None);
 
     assert_err!(CharLit, r"", Empty, None);
 

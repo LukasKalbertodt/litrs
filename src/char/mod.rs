@@ -4,7 +4,7 @@ use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
-    parse::first_byte_or_empty,
+    parse::{first_byte_or_empty, check_suffix},
 };
 
 
@@ -16,6 +16,8 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CharLit<B: Buffer> {
     raw: B,
+    /// Start index of the suffix or `raw.len()` if there is no suffix.
+    start_suffix: usize,
     value: char,
 }
 
@@ -25,8 +27,8 @@ impl<B: Buffer> CharLit<B> {
     pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
             b'\'' => {
-                let value = parse_impl(&input)?;
-                Ok(Self { raw: input, value })
+                let (value, start_suffix) = parse_impl(&input)?;
+                Ok(Self { raw: input, value, start_suffix })
             },
             _ => Err(perr(0, DoesNotStartWithQuote)),
         }
@@ -35,6 +37,11 @@ impl<B: Buffer> CharLit<B> {
     /// Returns the character value that this literal represents.
     pub fn value(&self) -> char {
         self.value
+    }
+
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.start_suffix..]
     }
 
     /// Returns the raw input that was passed to `parse`.
@@ -55,6 +62,7 @@ impl CharLit<&str> {
     pub fn to_owned(&self) -> CharLit<String> {
         CharLit {
             raw: self.raw.to_owned(),
+            start_suffix: self.start_suffix,
             value: self.value,
         }
     }
@@ -68,31 +76,29 @@ impl<B: Buffer> fmt::Display for CharLit<B> {
 
 /// Precondition: first character in input must be `'`.
 #[inline(never)]
-pub(crate) fn parse_impl(input: &str) -> Result<char, ParseError> {
-    if input.len() == 1 {
-        return Err(perr(None, UnterminatedCharLiteral));
-    }
-    if *input.as_bytes().last().unwrap() != b'\'' {
-        return Err(perr(None, UnterminatedCharLiteral));
-    }
-
-    let inner = &input[1..input.len() - 1];
-    let first = inner.chars().nth(0).ok_or(perr(None, EmptyCharLiteral))?;
+pub(crate) fn parse_impl(input: &str) -> Result<(char, usize), ParseError> {
+    let first = input.chars().nth(1).ok_or(perr(None, UnterminatedCharLiteral))?;
     let (c, len) = match first {
-        '\'' => return Err(perr(1, UnescapedSingleQuote)),
+        '\'' if input.chars().nth(2) == Some('\'') => return Err(perr(1, UnescapedSingleQuote)),
+        '\'' => return Err(perr(None, EmptyCharLiteral)),
         '\n' | '\t' | '\r'
             => return Err(perr(1, UnescapedSpecialWhitespace)),
 
-        '\\' => unescape::<char>(inner, 1)?,
+        '\\' => unescape::<char>(&input[1..], 1)?,
         other => (other, other.len_utf8()),
     };
-    let rest = &inner[len..];
 
-    if !rest.is_empty() {
-        return Err(perr(len + 1..input.len() - 1, OverlongCharLiteral));
+    match input[1 + len..].find('\'') {
+        Some(0) => {}
+        Some(_) => return Err(perr(None, OverlongCharLiteral)),
+        None => return Err(perr(None, UnterminatedCharLiteral)),
     }
 
-    Ok(c)
+    let start_suffix = 1 + len + 1;
+    let suffix = &input[start_suffix..];
+    check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
+
+    Ok((c, start_suffix))
 }
 
 #[cfg(test)]
