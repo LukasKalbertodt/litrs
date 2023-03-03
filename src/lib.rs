@@ -184,6 +184,57 @@ pub enum Literal<B: Buffer> {
     ByteString(ByteStringLit<B>),
 }
 
+impl<B: Buffer> Literal<B> {
+    /// Returns the suffix of this literal or `""` if it doesn't have one.
+    ///
+    /// Rust token grammar actually allows suffixes for all kinds of tokens.
+    /// Most Rust programmer only know the type suffixes for integer and
+    /// floats, e.g. `0u32`. And in normal Rust code, everything else causes an
+    /// error. But it is possible to pass literals with arbitrary suffixes to
+    /// proc macros, for example:
+    ///
+    /// ```ignore
+    /// some_macro!(3.14f33  16px  '🦊'good_boy  "toph"beifong);
+    /// ```
+    ///
+    /// Boolean literals, not actually being literals, but idents, cannot have
+    /// suffixes and this method always returns `""` for those.
+    ///
+    /// There are some edge cases to be aware of:
+    /// - Integer suffixes must not start with `e` or `E` as that conflicts with
+    ///   the exponent grammar for floats. `0e1` is a float; `0eel` is also
+    ///   parsed as a float and results in an error.
+    /// - Hexadecimal integers eagerly parse digits, so `0x5abcdefgh` has a
+    ///   suffix von `gh`.
+    /// - Suffixes can contain and start with `_`, but for integer and number
+    ///   literals, `_` is eagerly parsed as part of the number, so `1_x` has
+    ///   the suffix `x`.
+    /// - The input `55f32` is regarded as integer literal with suffix `f32`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use litrs::Literal;
+    ///
+    /// assert_eq!(Literal::parse(r##"3.14f33"##).unwrap().suffix(), "f33");
+    /// assert_eq!(Literal::parse(r##"123hackerman"##).unwrap().suffix(), "hackerman");
+    /// assert_eq!(Literal::parse(r##"0x0fuck"##).unwrap().suffix(), "uck");
+    /// assert_eq!(Literal::parse(r##"'🦊'good_boy"##).unwrap().suffix(), "good_boy");
+    /// assert_eq!(Literal::parse(r##""toph"beifong"##).unwrap().suffix(), "beifong");
+    /// ```
+    pub fn suffix(&self) -> &str {
+        match self {
+            Literal::Bool(_) => "",
+            Literal::Integer(l) => l.suffix(),
+            Literal::Float(l) => l.suffix(),
+            Literal::Char(l) => l.suffix(),
+            Literal::String(l) => l.suffix(),
+            Literal::Byte(l) => l.suffix(),
+            Literal::ByteString(l) => l.suffix(),
+        }
+    }
+}
+
 impl Literal<&str> {
     /// Makes a copy of the underlying buffer and returns the owned version of
     /// `Self`.
