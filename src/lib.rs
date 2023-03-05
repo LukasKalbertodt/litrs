@@ -279,7 +279,7 @@ impl<B: Buffer> fmt::Display for Literal<B> {
 ///
 /// This is trait is implementation detail of this library, cannot be
 /// implemented in other crates and is not subject to semantic versioning.
-/// `litrs` only gurantees that this trait is implemented for `String` and
+/// `litrs` only guarantees that this trait is implemented for `String` and
 /// `for<'a> &'a str`.
 pub trait Buffer: sealed::Sealed + Deref<Target = str> {
     /// This is `Cow<'static, str>` for `String`, and `Cow<'a, str>` for `&'a str`.
