@@ -274,6 +274,7 @@ impl IntegerBase {
 
 /// All possible integer type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum IntegerType {
     U8,
     U16,

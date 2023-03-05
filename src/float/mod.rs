@@ -211,6 +211,7 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
 
 /// All possible float type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum FloatType {
     F32,
     F64,
