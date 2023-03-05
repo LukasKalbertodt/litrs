@@ -157,17 +157,10 @@ pub use self::{
 // ===== `Literal` and type defs
 // ==============================================================================================
 
-/// A literal which owns the underlying buffer.
-pub type OwnedLiteral = Literal<String>;
-
-/// A literal whose underlying buffer is borrowed.
-pub type SharedLiteral<'a> = Literal<&'a str>;
-
 /// A literal. This is the main type of this library.
 ///
 /// This type is generic over the underlying buffer `B`, which can be `&str` or
-/// `String`. There are two useful type aliases: [`OwnedLiteral`] and
-/// [`SharedLiteral`].
+/// `String`.
 ///
 /// To create this type, you have to either call [`Literal::parse`] with an
 /// input string or use the `From<_>` impls of this type. The impls are only
@@ -243,7 +236,7 @@ impl<B: Buffer> Literal<B> {
 impl Literal<&str> {
     /// Makes a copy of the underlying buffer and returns the owned version of
     /// `Self`.
-    pub fn into_owned(self) -> OwnedLiteral {
+    pub fn into_owned(self) -> Literal<String> {
         match self {
             Literal::Bool(l) => Literal::Bool(l.to_owned()),
             Literal::Integer(l) => Literal::Integer(l.to_owned()),
