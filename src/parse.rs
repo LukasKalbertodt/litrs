@@ -123,4 +123,3 @@ pub(crate) fn check_suffix(s: &str) -> Result<(), ParseErrorKind> {
         Err(InvalidSuffix)
     }
 }
-
