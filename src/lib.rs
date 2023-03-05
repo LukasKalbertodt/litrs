@@ -9,7 +9,35 @@
 //! built. This crate also offers a bit more flexibility compared to `syn`
 //! (only regarding literals, of course).
 //!
-//! ---
+//!
+//! # Quick start
+//!
+//! | **`StringLit::try_from(tt)?.value()`** |
+//! | - |
+//!
+//! ... where `tt` is a `proc_macro::TokenTree` and where [`StringLit`] can be
+//! replaced with [`Literal`] or other types of literals (e.g. [`FloatLit`]).
+//! Calling `value()` returns the value that is represented by the literal.
+//!
+//! **Mini Example**
+//!
+//! ```ignore
+//! use proc_macro::TokenStream;
+//!
+//! #[proc_macro]
+//! pub fn foo(input: TokenStream) -> TokenStream {
+//!      let first_token = input.into_iter().next().unwrap(); // Do proper error handling!
+//!      let string_value = match litrs::StringLit::try_from(first_token) {
+//!          Ok(string_lit) => string_lit.value(),
+//!          Err(e) => return e.to_compile_error(),
+//!      };
+//!
+//!      // `string_value` is the string value with all escapes resolved.
+//!      todo!()
+//! }
+//! ```
+//!
+//! # Overview
 //!
 //! The main types of this library are [`Literal`], representing any kind of
 //! literal, and `*Lit`, like [`StringLit`] or [`FloatLit`], representing a
@@ -41,8 +69,8 @@
 //!
 //! **Note**: `true` and `false` are `Ident`s when passed to your proc macro.
 //! The `TryFrom<TokenTree>` impls check for those two special idents and
-//! return a `BoolLit` appropriately. For that reason, there is also no
-//! `TryFrom<proc_macro::Literal>` impl for `BoolLit`. The `proc_macro::Literal`
+//! return a [`BoolLit`] appropriately. For that reason, there is also no
+//! `TryFrom<proc_macro::Literal>` impl for [`BoolLit`]. The `proc_macro::Literal`
 //! simply cannot represent bool literals.
 //!
 //!
