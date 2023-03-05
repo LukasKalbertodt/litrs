@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2023-03-05
+### Added
+- Add ability to parse literals with arbitrary suffixes (e.g. `"foo"bla` or `23px`)
+- Add `suffix()` method to all literal types except `BoolLit`
+- Add `IntegerBase::value`
+- Add `from_suffix` and `suffix` methods to `FloatType` and `IntegerType`
+- Add `FromStr` and `Display` impls to `FloatType` and `IntegerType`
+
+### Changed
+- **Breaking**: Mark `FloatType` and `IntegerType` as `#[non_exhaustive]`
+- **Breaking**: Fix integer parsing for cases like `27f32`. `Literal::parse`
+  and `IntegerLit::parse` will both identify this as an integer literal.
+- **Breaking**: Fix float parsing by correctly rejecting inputs like `27f32`. A
+  float literal must have a period OR an exponent part, according to the spec.
+  Previously decimal integers were accepted in `FloatLit::parse`.
+- Improved some parts of the docs
+
+### Removed
+- **Breaking**: Remove `OwnedLiteral` and `SharedLiteral`
+
 ## [0.3.0] - 2022-12-19
 ### Breaking
 - Bump MSRV (minimal supported Rust version) to 1.54
@@ -68,7 +88,8 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.1...v0.2.2
