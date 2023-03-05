@@ -26,6 +26,8 @@ exclude = [".github"]
 
 [features]
 default = ["proc-macro2"]
+check_suffix = ["unicode-xid"]
 
 [dependencies]
 proc-macro2 = { version = "1", optional = true }
+unicode-xid = { version = "0.2.4", optional = true }

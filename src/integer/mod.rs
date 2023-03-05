@@ -1,9 +1,9 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{first_byte_or_empty, hex_digit_value},
+    parse::{first_byte_or_empty, hex_digit_value, check_suffix},
 };
 
 
@@ -25,52 +25,14 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IntegerLit<B: Buffer> {
+    /// The raw literal. Grammar: `<prefix?><main part><suffix?>`.
     raw: B,
-    // First index of the main number part (after the base prefix).
+    /// First index of the main number part (after the base prefix).
     start_main_part: usize,
-    // First index not part of the main number part.
+    /// First index not part of the main number part.
     end_main_part: usize,
+    /// Parsed `raw[..start_main_part]`.
     base: IntegerBase,
-    type_suffix: Option<IntegerType>,
-}
-
-/// The bases in which an integer can be specified.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntegerBase {
-    Binary,
-    Octal,
-    Decimal,
-    Hexadecimal,
-}
-
-/// All possible integer type suffixes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntegerType {
-    U8,
-    U16,
-    U32,
-    U64,
-    U128,
-    Usize,
-    I8,
-    I16,
-    I32,
-    I64,
-    I128,
-    Isize,
-}
-
-impl IntegerBase {
-    /// Returns the literal prefix that indicates this base, i.e. `"0b"`,
-    /// `"0o"`, `""` and `"0x"`.
-    pub fn prefix(self) -> &'static str {
-        match self {
-            Self::Binary => "0b",
-            Self::Octal => "0o",
-            Self::Decimal => "",
-            Self::Hexadecimal => "0x",
-        }
-    }
 }
 
 impl<B: Buffer> IntegerLit<B> {
@@ -84,17 +46,10 @@ impl<B: Buffer> IntegerLit<B> {
                     start_main_part,
                     end_main_part,
                     base,
-                    type_suffix,
                     ..
                 } =  parse_impl(&input, digit)?;
 
-                Ok(Self {
-                    raw: input,
-                    start_main_part,
-                    end_main_part,
-                    base,
-                    type_suffix,
-                })
+                Ok(Self { raw: input, start_main_part, end_main_part, base })
             },
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
@@ -106,12 +61,7 @@ impl<B: Buffer> IntegerLit<B> {
     ///
     /// Returns `None` if the literal overflows `N`.
     pub fn value<N: FromIntegerLiteral>(&self) -> Option<N> {
-        let base = match self.base {
-            IntegerBase::Binary => N::from_small_number(2),
-            IntegerBase::Octal => N::from_small_number(8),
-            IntegerBase::Decimal => N::from_small_number(10),
-            IntegerBase::Hexadecimal => N::from_small_number(16),
-        };
+        let base = N::from_small_number(self.base.value());
 
         let mut acc = N::from_small_number(0);
         for digit in self.raw_main_part().bytes() {
@@ -142,9 +92,11 @@ impl<B: Buffer> IntegerLit<B> {
         &(*self.raw)[self.start_main_part..self.end_main_part]
     }
 
-    /// The type suffix, if specified.
-    pub fn type_suffix(&self) -> Option<IntegerType> {
-        self.type_suffix
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    ///
+    /// If you want the type, try `IntegerType::from_suffix(lit.suffix())`.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.end_main_part..]
     }
 
     /// Returns the raw input that was passed to `parse`.
@@ -167,7 +119,6 @@ impl IntegerLit<&str> {
             start_main_part: self.start_main_part,
             end_main_part: self.end_main_part,
             base: self.base,
-            type_suffix: self.type_suffix,
         }
     }
 }
@@ -248,57 +199,148 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
     };
     let without_prefix = &input[end_prefix..];
 
-    // Find end of main part.
-    let end_main = without_prefix.bytes()
-            .position(|b| !matches!(b, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' | b'_'))
-            .unwrap_or(without_prefix.len());
-    let (main_part, type_suffix) = without_prefix.split_at(end_main);
 
-    // Check for invalid digits and make sure there is at least one valid digit.
-    let invalid_digit_pos = match base {
-        IntegerBase::Binary => main_part.bytes()
-            .position(|b| !matches!(b, b'0' | b'1' | b'_')),
-        IntegerBase::Octal => main_part.bytes()
-            .position(|b| !matches!(b, b'0'..=b'7' | b'_')),
-        IntegerBase::Decimal => main_part.bytes()
-            .position(|b| !matches!(b, b'0'..=b'9' | b'_')),
-        IntegerBase::Hexadecimal => None,
+    // Scan input to find the first character that's not a valid digit.
+    let is_valid_digit = match base {
+        IntegerBase::Binary => |b| matches!(b, b'0' | b'1' | b'_'),
+        IntegerBase::Octal => |b| matches!(b, b'0'..=b'7' | b'_'),
+        IntegerBase::Decimal => |b| matches!(b, b'0'..=b'9' | b'_'),
+        IntegerBase::Hexadecimal => |b| matches!(b, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' | b'_'),
     };
+    let end_main = without_prefix.bytes()
+        .position(|b| !is_valid_digit(b))
+        .unwrap_or(without_prefix.len());
+    let (main_part, suffix) = without_prefix.split_at(end_main);
 
-    if let Some(pos) = invalid_digit_pos {
-        return Err(perr(end_prefix + pos, InvalidDigit));
+    check_suffix(suffix).map_err(|kind| {
+        // This is just to have a nicer error kind for this special case. If the
+        // suffix is invalid, it is non-empty -> unwrap ok.
+        let first = suffix.as_bytes()[0];
+        if !is_valid_digit(first) && first.is_ascii_digit() {
+            perr(end_main + end_prefix, InvalidDigit)
+        } else {
+            perr(end_main + end_prefix..input.len(), kind)
+        }
+    })?;
+    if suffix.starts_with('e') || suffix.starts_with('E') {
+        return Err(perr(end_main, IntegerSuffixStartingWithE));
     }
 
+    // Make sure main number part is not empty.
     if main_part.bytes().filter(|&b| b != b'_').count() == 0 {
         return Err(perr(end_prefix..end_prefix + end_main, NoDigits));
     }
-
-
-    // Parse type suffix
-    let type_suffix = match type_suffix {
-        "" => None,
-        "u8" => Some(IntegerType::U8),
-        "u16" => Some(IntegerType::U16),
-        "u32" => Some(IntegerType::U32),
-        "u64" => Some(IntegerType::U64),
-        "u128" => Some(IntegerType::U128),
-        "usize" => Some(IntegerType::Usize),
-        "i8" => Some(IntegerType::I8),
-        "i16" => Some(IntegerType::I16),
-        "i32" => Some(IntegerType::I32),
-        "i64" => Some(IntegerType::I64),
-        "i128" => Some(IntegerType::I128),
-        "isize" => Some(IntegerType::Isize),
-        _ => return Err(perr(end_main + end_prefix..input.len(), InvalidIntegerTypeSuffix)),
-    };
 
     Ok(IntegerLit {
         raw: input,
         start_main_part: end_prefix,
         end_main_part: end_main + end_prefix,
         base,
-        type_suffix,
     })
+}
+
+
+/// The bases in which an integer can be specified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerBase {
+    Binary,
+    Octal,
+    Decimal,
+    Hexadecimal,
+}
+
+impl IntegerBase {
+    /// Returns the literal prefix that indicates this base, i.e. `"0b"`,
+    /// `"0o"`, `""` and `"0x"`.
+    pub fn prefix(self) -> &'static str {
+        match self {
+            Self::Binary => "0b",
+            Self::Octal => "0o",
+            Self::Decimal => "",
+            Self::Hexadecimal => "0x",
+        }
+    }
+
+    /// Returns the base value, i.e. 2, 8, 10 or 16.
+    pub fn value(self) -> u8 {
+        match self {
+            Self::Binary => 2,
+            Self::Octal => 8,
+            Self::Decimal => 10,
+            Self::Hexadecimal => 16,
+        }
+    }
+}
+
+/// All possible integer type suffixes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerType {
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    Usize,
+    I8,
+    I16,
+    I32,
+    I64,
+    I128,
+    Isize,
+}
+
+impl IntegerType {
+    /// Returns the type corresponding to the given suffix (e.g. `"u8"` is
+    /// mapped to `Self::U8`). If the suffix is not a valid integer type,
+    /// `None` is returned.
+    pub fn from_suffix(suffix: &str) -> Option<Self> {
+        match suffix {
+            "u8" => Some(Self::U8),
+            "u16" => Some(Self::U16),
+            "u32" => Some(Self::U32),
+            "u64" => Some(Self::U64),
+            "u128" => Some(Self::U128),
+            "usize" => Some(Self::Usize),
+            "i8" => Some(Self::I8),
+            "i16" => Some(Self::I16),
+            "i32" => Some(Self::I32),
+            "i64" => Some(Self::I64),
+            "i128" => Some(Self::I128),
+            "isize" => Some(Self::Isize),
+            _ => None,
+        }
+    }
+
+    /// Returns the suffix for this type, e.g. `"u8"` for `Self::U8`.
+    pub fn suffix(self) -> &'static str {
+        match self {
+            Self::U8 => "u8",
+            Self::U16 => "u16",
+            Self::U32 => "u32",
+            Self::U64 => "u64",
+            Self::U128 => "u128",
+            Self::Usize => "usize",
+            Self::I8 => "i8",
+            Self::I16 => "i16",
+            Self::I32 => "i32",
+            Self::I64 => "i64",
+            Self::I128 => "i128",
+            Self::Isize => "isize",
+        }
+    }
+}
+
+impl FromStr for IntegerType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_suffix(s).ok_or(())
+    }
+}
+
+impl fmt::Display for IntegerType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.suffix().fmt(f)
+    }
 }
 
 

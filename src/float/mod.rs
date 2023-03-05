@@ -1,9 +1,9 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use crate::{
     Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{end_dec_digits, first_byte_or_empty},
+    parse::{end_dec_digits, first_byte_or_empty, check_suffix},
 };
 
 
@@ -52,21 +52,13 @@ pub struct FloatLit<B: Buffer> {
 
     /// The first index after the whole number part (everything except type suffix).
     end_number_part: usize,
-
-    /// Optional type suffix.
-    type_suffix: Option<FloatType>,
-}
-
-/// All possible float type suffixes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FloatType {
-    F32,
-    F64,
 }
 
 impl<B: Buffer> FloatLit<B> {
     /// Parses the input as a floating point literal. Returns an error if the
-    /// input is invalid or represents a different kind of literal.
+    /// input is invalid or represents a different kind of literal. Will also
+    /// reject decimal integer literals like `23` or `17f32`, in accordance
+    /// with the spec.
     pub fn parse(s: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&s)? {
             b'0'..=b'9' => {
@@ -75,26 +67,19 @@ impl<B: Buffer> FloatLit<B> {
                     end_integer_part,
                     end_fractional_part,
                     end_number_part,
-                    type_suffix,
                     ..
                 } = parse_impl(&s)?;
 
-                Ok(Self {
-                    raw: s,
-                    end_integer_part,
-                    end_fractional_part,
-                    end_number_part,
-                    type_suffix,
-                })
+                Ok(Self { raw: s, end_integer_part, end_fractional_part, end_number_part })
             },
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
 
-    /// Returns the whole number part (including integer part, fractional part
-    /// and exponent), but without the type suffix. If you want an actual
-    /// floating point value, you need to parse this string, e.g. with
-    /// `f32::from_str` or an external crate.
+    /// Returns the number part (including integer part, fractional part and
+    /// exponent), but without the suffix. If you want an actual floating
+    /// point value, you need to parse this string, e.g. with `f32::from_str`
+    /// or an external crate.
     pub fn number_part(&self) -> &str {
         &(*self.raw)[..self.end_number_part]
     }
@@ -121,9 +106,9 @@ impl<B: Buffer> FloatLit<B> {
         &(*self.raw)[self.end_fractional_part..self.end_number_part]
     }
 
-    /// The optional type suffix.
-    pub fn type_suffix(&self) -> Option<FloatType> {
-        self.type_suffix
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.end_number_part..]
     }
 
     /// Returns the raw input that was passed to `parse`.
@@ -146,7 +131,6 @@ impl FloatLit<&str> {
             end_integer_part: self.end_integer_part,
             end_fractional_part: self.end_fractional_part,
             end_number_part: self.end_number_part,
-            type_suffix: self.type_suffix,
         }
     }
 }
@@ -184,7 +168,6 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
         return Err(perr(end_integer_part + 1, UnexpectedChar));
     }
 
-
     // Optional exponent.
     let end_number_part = if rest.starts_with('e') || rest.starts_with('E') {
         // Strip single - or + sign at the beginning.
@@ -207,23 +190,66 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
         end_fractional_part
     };
 
+    // Make sure the suffix is valid.
+    let suffix = &input[end_number_part..];
+    check_suffix(suffix).map_err(|kind| perr(end_number_part..input.len(), kind))?;
 
-    // Type suffix
-    let type_suffix = match &input[end_number_part..] {
-        "" => None,
-        "f32" => Some(FloatType::F32),
-        "f64" => Some(FloatType::F64),
-        _ => return Err(perr(end_number_part..input.len(), InvalidFloatTypeSuffix)),
-    };
+    // A float literal needs either a fractional or exponent part, otherwise its
+    // an integer literal.
+    if end_integer_part == end_number_part {
+        return Err(perr(None, UnexpectedIntegerLit));
+    }
 
     Ok(FloatLit {
         raw: input,
         end_integer_part,
         end_fractional_part,
         end_number_part,
-        type_suffix,
     })
 }
+
+
+/// All possible float type suffixes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatType {
+    F32,
+    F64,
+}
+
+impl FloatType {
+    /// Returns the type corresponding to the given suffix (e.g. `"f32"` is
+    /// mapped to `Self::F32`). If the suffix is not a valid float type, `None`
+    /// is returned.
+    pub fn from_suffix(suffix: &str) -> Option<Self> {
+        match suffix {
+            "f32" => Some(FloatType::F32),
+            "f64" => Some(FloatType::F64),
+            _ => None,
+        }
+    }
+
+    /// Returns the suffix for this type, e.g. `"f32"` for `Self::F32`.
+    pub fn suffix(self) -> &'static str {
+        match self {
+            Self::F32 => "f32",
+            Self::F64 => "f64",
+        }
+    }
+}
+
+impl FromStr for FloatType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_suffix(s).ok_or(())
+    }
+}
+
+impl fmt::Display for FloatType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.suffix().fmt(f)
+    }
+}
+
 
 #[cfg(test)]
 mod tests;

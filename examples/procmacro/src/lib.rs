@@ -3,6 +3,14 @@ use proc_macro::{Spacing, TokenStream, TokenTree};
 use litrs::{Literal, IntegerLit, StringLit};
 
 
+#[proc_macro]
+pub fn dbg_and_swallow(input: TokenStream) -> TokenStream {
+    for token in input {
+        println!("{} -> {:#?}", token, Literal::try_from(&token));
+    }
+    TokenStream::new()
+}
+
 /// Concatinates all input string and char literals into a single output string
 /// literal.
 #[proc_macro]

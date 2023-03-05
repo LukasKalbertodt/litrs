@@ -221,13 +221,6 @@ pub(crate) enum ParseErrorKind {
     /// Integer literal does not contain any valid digits.
     NoDigits,
 
-    /// Found a integer type suffix that is invalid.
-    InvalidIntegerTypeSuffix,
-
-    /// Found a float type suffix that is invalid. Only `f32` and `f64` are
-    /// valid.
-    InvalidFloatTypeSuffix,
-
     /// Exponent of a float literal does not contain any digits.
     NoExponentDigits,
 
@@ -309,6 +302,17 @@ pub(crate) enum ParseErrorKind {
     /// An literal `\r` character not followed by a `\n` character in a
     /// (raw) string or byte string literal.
     IsolatedCr,
+
+    /// Literal suffix is not a valid identifier.
+    InvalidSuffix,
+
+    /// Returned by `Float::parse` if an integer literal (no fractional nor
+    /// exponent part) is passed.
+    UnexpectedIntegerLit,
+
+    /// Integer suffixes cannot start with `e` or `E` as this conflicts with the
+    /// grammar for float literals.
+    IntegerSuffixStartingWithE,
 }
 
 impl std::error::Error for ParseError {}
@@ -324,8 +328,6 @@ impl fmt::Display for ParseError {
             DoesNotStartWithDigit => "number literal does not start with decimal digit",
             InvalidDigit => "integer literal contains a digit invalid for its base",
             NoDigits => "integer literal does not contain any digits",
-            InvalidIntegerTypeSuffix => "invalid integer type suffix",
-            InvalidFloatTypeSuffix => "invalid floating point type suffix",
             NoExponentDigits => "exponent of floating point literal does not contain any digits",
             UnknownEscape => "unknown escape",
             UnterminatedEscape => "unterminated escape: input ended too soon",
@@ -354,6 +356,9 @@ impl fmt::Display for ParseError {
             InvalidByteLiteralStart => "invalid start for byte literal",
             InvalidByteStringLiteralStart => "invalid start for byte string literal",
             IsolatedCr => r"`\r` not immediately followed by `\n` in string",
+            InvalidSuffix => "literal suffix is not a valid identifier",
+            UnexpectedIntegerLit => "expected float literal, but found integer",
+            IntegerSuffixStartingWithE => "integer literal suffix must not start with 'e' or 'E'",
         };
 
         description.fmt(f)?;

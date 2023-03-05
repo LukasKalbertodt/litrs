@@ -18,13 +18,16 @@ pub struct StringLit<B: Buffer> {
     /// The raw input.
     raw: B,
 
-    /// The string value (with all escaped unescaped), or `None` if there were
-    /// no escapes. In the latter case, `input` is the string value.
+    /// The string value (with all escapes unescaped), or `None` if there were
+    /// no escapes. In the latter case, the string value is in `raw`.
     value: Option<String>,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
     num_hashes: Option<u32>,
+
+    /// Start index of the suffix or `raw.len()` if there is no suffix.
+    start_suffix: usize,
 }
 
 impl<B: Buffer> StringLit<B> {
@@ -32,7 +35,10 @@ impl<B: Buffer> StringLit<B> {
     /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, ParseError> {
         match first_byte_or_empty(&input)? {
-            b'r' | b'"' => Self::parse_impl(input),
+            b'r' | b'"' => {
+                let (value, num_hashes, start_suffix) = parse_impl(&input)?;
+                Ok(Self { raw: input, value, num_hashes, start_suffix })
+            }
             _ => Err(perr(0, InvalidStringLiteralStart)),
         }
     }
@@ -51,6 +57,11 @@ impl<B: Buffer> StringLit<B> {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
         value.map(B::Cow::from).unwrap_or_else(|| raw.cut(inner_range).into_cow())
+    }
+
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.start_suffix..]
     }
 
     /// Returns whether this literal is a raw string literal (starting with
@@ -72,27 +83,8 @@ impl<B: Buffer> StringLit<B> {
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
     fn inner_range(&self) -> Range<usize> {
         match self.num_hashes {
-            None => 1..self.raw.len() - 1,
-            Some(n) => 1 + n as usize + 1..self.raw.len() - n as usize - 1,
-        }
-    }
-
-    /// Precondition: input has to start with either `"` or `r`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        if input.starts_with('r') {
-            let (value, num_hashes) = scan_raw_string::<char>(&input, 1)?;
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: Some(num_hashes),
-            })
-        } else {
-            let value = unescape_string::<char>(&input, 1)?;
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: None,
-            })
+            None => 1..self.start_suffix - 1,
+            Some(n) => 1 + n as usize + 1..self.start_suffix - n as usize - 1,
         }
     }
 }
@@ -105,6 +97,7 @@ impl StringLit<&str> {
             raw: self.raw.to_owned(),
             value: self.value,
             num_hashes: self.num_hashes,
+            start_suffix: self.start_suffix,
         }
     }
 }
@@ -112,6 +105,18 @@ impl StringLit<&str> {
 impl<B: Buffer> fmt::Display for StringLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.pad(&self.raw)
+    }
+}
+
+/// Precondition: input has to start with either `"` or `r`.
+#[inline(never)]
+pub(crate) fn parse_impl(input: &str) -> Result<(Option<String>, Option<u32>, usize), ParseError> {
+    if input.starts_with('r') {
+        scan_raw_string::<char>(&input, 1)
+            .map(|(v, hashes, start_suffix)| (v, Some(hashes), start_suffix))
+    } else {
+        unescape_string::<char>(&input, 1)
+            .map(|(v, start_suffix)| (v, None, start_suffix))
     }
 }
 

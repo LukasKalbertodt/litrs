@@ -3,16 +3,20 @@ use crate::{ByteLit, Literal, test_util::{assert_parse_ok_eq, assert_roundtrip}}
 // ===== Utility functions =======================================================================
 
 macro_rules! check {
-    ($lit:literal) => {
-        let input = stringify!($lit);
+    ($lit:literal) => { check!($lit, stringify!($lit), "") };
+    ($lit:literal, $input:expr, $suffix:literal) => {
+        let input = $input;
         let expected = ByteLit {
             raw: input,
+            start_suffix: input.len() - $suffix.len(),
             value: $lit,
         };
 
         assert_parse_ok_eq(input, ByteLit::parse(input), expected.clone(), "ByteLit::parse");
         assert_parse_ok_eq(input, Literal::parse(input), Literal::Byte(expected), "Literal::parse");
-        assert_eq!(ByteLit::parse(input).unwrap().value(), $lit);
+        let lit = ByteLit::parse(input).unwrap();
+        assert_eq!(lit.value(), $lit);
+        assert_eq!(lit.suffix(), $suffix);
         assert_roundtrip(expected.to_owned(), input);
     };
 }
@@ -114,12 +118,22 @@ fn byte_escapes() {
 }
 
 #[test]
+fn suffixes() {
+    check!(b'a', r##"b'a'peter"##, "peter");
+    check!(b'#', r##"b'#'peter"##, "peter");
+    check!(b'\n', r##"b'\n'peter"##, "peter");
+    check!(b'\'', r##"b'\''peter"##, "peter");
+    check!(b'\"', r##"b'\"'peter"##, "peter");
+    check!(b'\xFF', r##"b'\xFF'peter"##, "peter");
+}
+
+#[test]
 fn invald_escapes() {
     assert_err!(ByteLit, r"b'\a'", UnknownEscape, 2..4);
     assert_err!(ByteLit, r"b'\y'", UnknownEscape, 2..4);
-    assert_err!(ByteLit, r"b'\", UnterminatedByteLiteral, None);
-    assert_err!(ByteLit, r"b'\x'", UnterminatedEscape, 2..4);
-    assert_err!(ByteLit, r"b'\x1'", UnterminatedEscape, 2..5);
+    assert_err!(ByteLit, r"b'\", UnterminatedEscape, 2..3);
+    assert_err!(ByteLit, r"b'\x'", UnterminatedEscape, 2..5);
+    assert_err!(ByteLit, r"b'\x1'", InvalidXEscape, 2..6);
     assert_err!(ByteLit, r"b'\xaj'", InvalidXEscape, 2..6);
     assert_err!(ByteLit, r"b'\xjb'", InvalidXEscape, 2..6);
 }
@@ -148,16 +162,16 @@ fn unicode_escape_not_allowed() {
 #[test]
 fn parse_err() {
     assert_err!(ByteLit, r"b''", EmptyByteLiteral, None);
-    assert_err!(ByteLit, r"b' ''", OverlongByteLiteral, 3..4);
+    assert_err!(ByteLit, r"b' ''", UnexpectedChar, 4..5);
 
     assert_err!(ByteLit, r"b'", UnterminatedByteLiteral, None);
     assert_err!(ByteLit, r"b'a", UnterminatedByteLiteral, None);
     assert_err!(ByteLit, r"b'\n", UnterminatedByteLiteral, None);
     assert_err!(ByteLit, r"b'\x35", UnterminatedByteLiteral, None);
 
-    assert_err!(ByteLit, r"b'ab'", OverlongByteLiteral, 3..4);
-    assert_err!(ByteLit, r"b'a _'", OverlongByteLiteral, 3..5);
-    assert_err!(ByteLit, r"b'\n3'", OverlongByteLiteral, 4..5);
+    assert_err!(ByteLit, r"b'ab'", OverlongByteLiteral, None);
+    assert_err!(ByteLit, r"b'a _'", OverlongByteLiteral, None);
+    assert_err!(ByteLit, r"b'\n3'", OverlongByteLiteral, None);
 
     assert_err!(ByteLit, r"", Empty, None);
 

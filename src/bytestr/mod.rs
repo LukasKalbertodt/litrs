@@ -24,6 +24,9 @@ pub struct ByteStringLit<B: Buffer> {
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
     num_hashes: Option<u32>,
+
+    /// Start index of the suffix or `raw.len()` if there is no suffix.
+    start_suffix: usize,
 }
 
 impl<B: Buffer> ByteStringLit<B> {
@@ -37,7 +40,8 @@ impl<B: Buffer> ByteStringLit<B> {
             return Err(perr(None, InvalidByteStringLiteralStart));
         }
 
-        Self::parse_impl(input)
+        let (value, num_hashes, start_suffix) = parse_impl(&input)?;
+        Ok(Self { raw: input, value, num_hashes, start_suffix })
     }
 
     /// Returns the string value this literal represents (where all escapes have
@@ -54,6 +58,11 @@ impl<B: Buffer> ByteStringLit<B> {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
         value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+    }
+
+    /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
+    pub fn suffix(&self) -> &str {
+        &(*self.raw)[self.start_suffix..]
     }
 
     /// Returns whether this literal is a raw string literal (starting with
@@ -75,27 +84,8 @@ impl<B: Buffer> ByteStringLit<B> {
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
     fn inner_range(&self) -> Range<usize> {
         match self.num_hashes {
-            None => 2..self.raw.len() - 1,
-            Some(n) => 2 + n as usize + 1..self.raw.len() - n as usize - 1,
-        }
-    }
-
-    /// Precondition: input has to start with either `b"` or `br`.
-    pub(crate) fn parse_impl(input: B) -> Result<Self, ParseError> {
-        if input.starts_with(r"br") {
-            let (value, num_hashes) = scan_raw_string::<u8>(&input, 2)?;
-            Ok(Self {
-                raw: input,
-                value: value.map(|s| s.into_bytes()),
-                num_hashes: Some(num_hashes),
-            })
-        } else {
-            let value = unescape_string::<u8>(&input, 2)?.map(|s| s.into_bytes());
-            Ok(Self {
-                raw: input,
-                value,
-                num_hashes: None,
-            })
+            None => 2..self.start_suffix - 1,
+            Some(n) => 2 + n as usize + 1..self.start_suffix - n as usize - 1,
         }
     }
 }
@@ -108,6 +98,7 @@ impl ByteStringLit<&str> {
             raw: self.raw.to_owned(),
             value: self.value,
             num_hashes: self.num_hashes,
+            start_suffix: self.start_suffix,
         }
     }
 }
@@ -118,6 +109,18 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
     }
 }
 
+
+/// Precondition: input has to start with either `b"` or `br`.
+#[inline(never)]
+fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>, usize), ParseError> {
+    if input.starts_with("br") {
+        scan_raw_string::<u8>(&input, 2)
+            .map(|(v, num, start_suffix)| (v.map(String::into_bytes), Some(num), start_suffix))
+    } else {
+        unescape_string::<u8>(&input, 2)
+            .map(|(v, start_suffix)| (v.map(String::into_bytes), None, start_suffix))
+    }
+}
 
 #[cfg(test)]
 mod tests;

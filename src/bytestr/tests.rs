@@ -4,19 +4,25 @@ use crate::{Literal, ByteStringLit, test_util::{assert_parse_ok_eq, assert_round
 
 macro_rules! check {
     ($lit:literal, $has_escapes:expr, $num_hashes:expr) => {
-        let input = stringify!($lit);
+        check!($lit, stringify!($lit), $has_escapes, $num_hashes, "")
+    };
+    ($lit:literal, $input:expr, $has_escapes:expr, $num_hashes:expr, $suffix:literal) => {
+        let input = $input;
         let expected = ByteStringLit {
             raw: input,
             value: if $has_escapes { Some($lit.to_vec()) } else { None },
             num_hashes: $num_hashes,
+            start_suffix: input.len() - $suffix.len(),
         };
 
         assert_parse_ok_eq(
             input, ByteStringLit::parse(input), expected.clone(), "ByteStringLit::parse");
         assert_parse_ok_eq(
             input, Literal::parse(input), Literal::ByteString(expected.clone()), "Literal::parse");
-        assert_eq!(ByteStringLit::parse(input).unwrap().value(), $lit);
-        assert_eq!(ByteStringLit::parse(input).unwrap().into_value().as_ref(), $lit);
+        let lit = ByteStringLit::parse(input).unwrap();
+        assert_eq!(lit.value(), $lit);
+        assert_eq!(lit.suffix(), $suffix);
+        assert_eq!(lit.into_value().as_ref(), $lit);
         assert_roundtrip(expected.into_owned(), input);
     };
 }
@@ -43,6 +49,7 @@ fn special_whitespace() {
                 raw: &*input,
                 value: None,
                 num_hashes,
+                start_suffix: input.len(),
             };
             assert_parse_ok_eq(
                 &input, ByteStringLit::parse(&*input), expected.clone(), "ByteStringLit::parse");
@@ -148,16 +155,22 @@ fn raw_byte_string() {
 }
 
 #[test]
+fn suffixes() {
+    check!(b"hello", r###"b"hello"suffix"###, false, None, "suffix");
+    check!(b"fox", r#"b"fox"peter"#, false, None, "peter");
+    check!(b"a\x0cb\\", r#"b"a\x0cb\\"_jürgen"#, true, None, "_jürgen");
+    check!(br"a\x0cb\\", r###"br#"a\x0cb\\"#_jürgen"###, false, Some(1), "_jürgen");
+}
+
+#[test]
 fn parse_err() {
     assert_err!(ByteStringLit, r#"b""#, UnterminatedString, None);
     assert_err!(ByteStringLit, r#"b"cat"#, UnterminatedString, None);
     assert_err!(ByteStringLit, r#"b"Jurgen"#, UnterminatedString, None);
     assert_err!(ByteStringLit, r#"b"foo bar baz"#, UnterminatedString, None);
 
-    assert_err!(ByteStringLit, r#"b"fox"peter"#, UnexpectedChar, 6..11);
-    assert_err!(ByteStringLit, r#"b"fox"peter""#, UnexpectedChar, 6..12);
-    assert_err!(ByteStringLit, r#"b"fox"bar"#, UnexpectedChar, 6..9);
-    assert_err!(ByteStringLit, r###"br#"foo "# bar"#"###, UnexpectedChar, 10..16);
+    assert_err!(ByteStringLit, r#"b"fox"peter""#, InvalidSuffix, 6);
+    assert_err!(ByteStringLit, r###"br#"foo "# bar"#"###, UnexpectedChar, 10);
 
     assert_err!(ByteStringLit, "b\"\r\"", IsolatedCr, 2);
     assert_err!(ByteStringLit, "b\"fo\rx\"", IsolatedCr, 4);
@@ -179,10 +192,10 @@ fn non_ascii() {
 }
 
 #[test]
-fn invald_escapes() {
+fn invalid_escapes() {
     assert_err!(ByteStringLit, r#"b"\a""#, UnknownEscape, 2..4);
     assert_err!(ByteStringLit, r#"b"foo\y""#, UnknownEscape, 5..7);
-    assert_err!(ByteStringLit, r#"b"\"#, UnterminatedString, None);
+    assert_err!(ByteStringLit, r#"b"\"#, UnterminatedEscape, 2);
     assert_err!(ByteStringLit, r#"b"\x""#, UnterminatedEscape, 2..4);
     assert_err!(ByteStringLit, r#"b"foo\x1""#, UnterminatedEscape, 5..8);
     assert_err!(ByteStringLit, r#"b" \xaj""#, InvalidXEscape, 3..7);
