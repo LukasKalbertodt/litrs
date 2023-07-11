@@ -1,7 +1,6 @@
 use crate::*;
 use std::fmt::{Debug, Display};
 
-
 #[track_caller]
 pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
     input: &str,
@@ -14,26 +13,20 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
             if actual.to_string() != input {
                 panic!(
                     "formatting does not yield original input `{}`: {:?}",
-                    input,
-                    actual,
+                    input, actual,
                 );
             }
         }
         Ok(actual) => {
             panic!(
                 "unexpected parsing result (with `{}`) for `{}`:\nactual:    {:?}\nexpected:  {:?}",
-                parse_method,
-                input,
-                actual,
-                expected,
+                parse_method, input, actual, expected,
             );
         }
         Err(e) => {
             panic!(
                 "expected `{}` to be parsed (with `{}`) successfully, but it failed: {:?}",
-                input,
-                parse_method,
-                e,
+                input, parse_method, e,
             );
         }
     }
@@ -52,7 +45,8 @@ where
     proc_macro2::Literal: From<T>,
     <T as std::convert::TryFrom<proc_macro2::Literal>>::Error: std::fmt::Display,
 {
-    let pm_lit = input.parse::<proc_macro2::Literal>()
+    let pm_lit = input
+        .parse::<proc_macro2::Literal>()
         .expect("failed to parse input as proc_macro2::Literal");
     let t_name = std::any::type_name::<T>();
 
@@ -70,16 +64,17 @@ where
 
     match T::try_from(pm_lit) {
         Err(e) => {
-            panic!("Trying to convert proc_macro2::Literal to {} results in error: {}", t_name, e);
+            panic!(
+                "Trying to convert proc_macro2::Literal to {} results in error: {}",
+                t_name, e
+            );
         }
         Ok(res) => {
             if res != ours {
                 panic!(
                     "Converting proc_macro2::Literal to {} has unexpected result:\
                         \nactual:    {:?}\nexpected:  {:?}",
-                    t_name,
-                    res,
-                    ours,
+                    t_name, res, ours,
                 );
             }
         }

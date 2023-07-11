@@ -1,11 +1,10 @@
 use std::{fmt, str::FromStr};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{first_byte_or_empty, hex_digit_value, check_suffix},
+    parse::{check_suffix, first_byte_or_empty, hex_digit_value},
+    Buffer, ParseError,
 };
-
 
 /// An integer literal, e.g. `27`, `0x7F`, `0b101010u8` or `5_000_000i64`.
 ///
@@ -47,10 +46,15 @@ impl<B: Buffer> IntegerLit<B> {
                     end_main_part,
                     base,
                     ..
-                } =  parse_impl(&input, digit)?;
+                } = parse_impl(&input, digit)?;
 
-                Ok(Self { raw: input, start_main_part, end_main_part, base })
-            },
+                Ok(Self {
+                    raw: input,
+                    start_main_part,
+                    end_main_part,
+                    base,
+                })
+            }
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
@@ -199,7 +203,6 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
     };
     let without_prefix = &input[end_prefix..];
 
-
     // Scan input to find the first character that's not a valid digit.
     let is_valid_digit = match base {
         IntegerBase::Binary => |b| matches!(b, b'0' | b'1' | b'_'),
@@ -207,7 +210,8 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
         IntegerBase::Decimal => |b| matches!(b, b'0'..=b'9' | b'_'),
         IntegerBase::Hexadecimal => |b| matches!(b, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' | b'_'),
     };
-    let end_main = without_prefix.bytes()
+    let end_main = without_prefix
+        .bytes()
         .position(|b| !is_valid_digit(b))
         .unwrap_or(without_prefix.len());
     let (main_part, suffix) = without_prefix.split_at(end_main);
@@ -238,7 +242,6 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
         base,
     })
 }
-
 
 /// The bases in which an integer can be specified.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -343,7 +346,6 @@ impl fmt::Display for IntegerType {
         self.suffix().fmt(f)
     }
 }
-
 
 #[cfg(test)]
 mod tests;

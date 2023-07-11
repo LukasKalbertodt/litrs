@@ -1,12 +1,11 @@
 use std::fmt;
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
-    parse::{first_byte_or_empty, check_suffix},
+    parse::{check_suffix, first_byte_or_empty},
+    Buffer, ParseError,
 };
-
 
 /// A character literal, e.g. `'g'` or `'🦊'`.
 ///
@@ -28,8 +27,12 @@ impl<B: Buffer> CharLit<B> {
         match first_byte_or_empty(&input)? {
             b'\'' => {
                 let (value, start_suffix) = parse_impl(&input)?;
-                Ok(Self { raw: input, value, start_suffix })
-            },
+                Ok(Self {
+                    raw: input,
+                    value,
+                    start_suffix,
+                })
+            }
             _ => Err(perr(0, DoesNotStartWithQuote)),
         }
     }
@@ -53,7 +56,6 @@ impl<B: Buffer> CharLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
 }
 
 impl CharLit<&str> {
@@ -77,12 +79,14 @@ impl<B: Buffer> fmt::Display for CharLit<B> {
 /// Precondition: first character in input must be `'`.
 #[inline(never)]
 pub(crate) fn parse_impl(input: &str) -> Result<(char, usize), ParseError> {
-    let first = input.chars().nth(1).ok_or(perr(None, UnterminatedCharLiteral))?;
+    let first = input
+        .chars()
+        .nth(1)
+        .ok_or(perr(None, UnterminatedCharLiteral))?;
     let (c, len) = match first {
         '\'' if input.chars().nth(2) == Some('\'') => return Err(perr(1, UnescapedSingleQuote)),
         '\'' => return Err(perr(None, EmptyCharLiteral)),
-        '\n' | '\t' | '\r'
-            => return Err(perr(1, UnescapedSpecialWhitespace)),
+        '\n' | '\t' | '\r' => return Err(perr(1, UnescapedSpecialWhitespace)),
 
         '\\' => unescape::<char>(&input[1..], 1)?,
         other => (other, other.len_utf8()),

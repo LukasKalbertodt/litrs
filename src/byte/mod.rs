@@ -1,12 +1,11 @@
 use core::fmt;
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
     parse::check_suffix,
+    Buffer, ParseError,
 };
-
 
 /// A (single) byte literal, e.g. `b'k'` or `b'!'`.
 ///
@@ -33,7 +32,11 @@ impl<B: Buffer> ByteLit<B> {
         }
 
         let (value, start_suffix) = parse_impl(&input)?;
-        Ok(Self { raw: input, value, start_suffix })
+        Ok(Self {
+            raw: input,
+            value,
+            start_suffix,
+        })
     }
 
     /// Returns the byte value that this literal represents.
@@ -55,7 +58,6 @@ impl<B: Buffer> ByteLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
 }
 
 impl ByteLit<&str> {
@@ -80,7 +82,9 @@ impl<B: Buffer> fmt::Display for ByteLit<B> {
 #[inline(never)]
 pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
     let input_bytes = input.as_bytes();
-    let first = input_bytes.get(2).ok_or(perr(None, UnterminatedByteLiteral))?;
+    let first = input_bytes
+        .get(2)
+        .ok_or(perr(None, UnterminatedByteLiteral))?;
     let (c, len) = match first {
         b'\'' if input_bytes.get(3) == Some(&b'\'') => return Err(perr(2, UnescapedSingleQuote)),
         b'\'' => return Err(perr(None, EmptyByteLiteral)),

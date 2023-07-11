@@ -1,9 +1,14 @@
-use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::{hex_digit_value, check_suffix}};
-
+use crate::{
+    err::{perr, ParseErrorKind::*},
+    parse::{check_suffix, hex_digit_value},
+    ParseError,
+};
 
 /// Must start with `\`
 pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usize), ParseError> {
-    let first = input.as_bytes().get(1)
+    let first = input
+        .as_bytes()
+        .get(1)
         .ok_or(perr(offset, UnterminatedEscape))?;
     let out = match first {
         // Quote escapes
@@ -17,13 +22,14 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
         b'\\' => (E::from_byte(b'\\'), 2),
         b'0' => (E::from_byte(b'\0'), 2),
         b'x' => {
-            let hex_string = input.get(2..4)
+            let hex_string = input
+                .get(2..4)
                 .ok_or(perr(offset..offset + input.len(), UnterminatedEscape))?
                 .as_bytes();
-            let first = hex_digit_value(hex_string[0])
-                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
-            let second = hex_digit_value(hex_string[1])
-                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
+            let first =
+                hex_digit_value(hex_string[0]).ok_or(perr(offset..offset + 4, InvalidXEscape))?;
+            let second =
+                hex_digit_value(hex_string[1]).ok_or(perr(offset..offset + 4, InvalidXEscape))?;
             let value = second + 16 * first;
 
             if E::SUPPORTS_UNICODE && value > 0x7F {
@@ -31,7 +37,7 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
             }
 
             (E::from_byte(value), 4)
-        },
+        }
 
         // Unicode escape
         b'u' => {
@@ -43,8 +49,10 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
                 return Err(perr(offset..offset + 2, UnicodeEscapeWithoutBrace));
             }
 
-            let closing_pos = input.bytes().position(|b| b == b'}')
-                .ok_or(perr(offset..offset + input.len(), UnterminatedUnicodeEscape))?;
+            let closing_pos = input.bytes().position(|b| b == b'}').ok_or(perr(
+                offset..offset + input.len(),
+                UnterminatedUnicodeEscape,
+            ))?;
 
             let inner = &input[3..closing_pos];
             if inner.as_bytes().first() == Some(&b'_') {
@@ -54,12 +62,12 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
             let mut v: u32 = 0;
             let mut digit_count = 0;
             for (i, b) in inner.bytes().enumerate() {
-                if b == b'_'{
+                if b == b'_' {
                     continue;
                 }
 
-                let digit = hex_digit_value(b)
-                    .ok_or(perr(offset + 3 + i, NonHexDigitInUnicodeEscape))?;
+                let digit =
+                    hex_digit_value(b).ok_or(perr(offset + 3 + i, NonHexDigitInUnicodeEscape))?;
 
                 if digit_count == 6 {
                     return Err(perr(offset + 3 + i, TooManyDigitInUnicodeEscape));
@@ -129,7 +137,8 @@ pub(crate) fn unescape_string<E: Escapee>(
                 value.push_str(&input[end_last_escape..i]);
 
                 // Find the first non-whitespace character.
-                let end_escape = input[i + 2..].bytes()
+                let end_escape = input[i + 2..]
+                    .bytes()
                     .position(|b| !is_string_continue_skipable_whitespace(b))
                     .ok_or(perr(None, UnterminatedString))?;
 
@@ -150,15 +159,16 @@ pub(crate) fn unescape_string<E: Escapee>(
                     i += 2;
                     end_last_escape = i;
                 } else {
-                    return Err(perr(i, IsolatedCr))
+                    return Err(perr(i, IsolatedCr));
                 }
             }
             b'"' => {
                 closing_quote_pos = Some(i);
                 break;
-            },
-            b if !E::SUPPORTS_UNICODE && !b.is_ascii()
-                => return Err(perr(i, NonAsciiInByteLiteral)),
+            }
+            b if !E::SUPPORTS_UNICODE && !b.is_ascii() => {
+                return Err(perr(i, NonAsciiInByteLiteral))
+            }
             _ => i += 1,
         }
     }
@@ -193,7 +203,9 @@ pub(crate) fn scan_raw_string<E: Escapee>(
     offset: usize,
 ) -> Result<(Option<String>, u32, usize), ParseError> {
     // Raw string literal
-    let num_hashes = input[offset..].bytes().position(|b| b != b'#')
+    let num_hashes = input[offset..]
+        .bytes()
+        .position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
 
     if input.as_bytes().get(offset + num_hashes) != Some(&b'"') {
@@ -227,7 +239,7 @@ pub(crate) fn scan_raw_string<E: Escapee>(
             } else if E::SUPPORTS_UNICODE {
                 // If no \n follows the \r and we are scanning a raw string
                 // (not raw byte string), we error.
-                return Err(perr(i, IsolatedCr))
+                return Err(perr(i, IsolatedCr));
             }
         }
 

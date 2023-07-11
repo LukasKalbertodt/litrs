@@ -1,10 +1,15 @@
-use crate::{Literal, test_util::{assert_parse_ok_eq, assert_roundtrip}};
 use super::CharLit;
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    Literal,
+};
 
 // ===== Utility functions =======================================================================
 
 macro_rules! check {
-    ($lit:literal) => { check!($lit, stringify!($lit), "") };
+    ($lit:literal) => {
+        check!($lit, stringify!($lit), "")
+    };
     ($lit:literal, $input:expr, $suffix:literal) => {
         let input = $input;
         let expected = CharLit {
@@ -13,15 +18,24 @@ macro_rules! check {
             value: $lit,
         };
 
-        assert_parse_ok_eq(input, CharLit::parse(input), expected.clone(), "CharLit::parse");
-        assert_parse_ok_eq(input, Literal::parse(input), Literal::Char(expected), "Literal::parse");
+        assert_parse_ok_eq(
+            input,
+            CharLit::parse(input),
+            expected.clone(),
+            "CharLit::parse",
+        );
+        assert_parse_ok_eq(
+            input,
+            Literal::parse(input),
+            Literal::Char(expected),
+            "Literal::parse",
+        );
         let lit = CharLit::parse(input).unwrap();
         assert_eq!(lit.value(), $lit);
         assert_eq!(lit.suffix(), $suffix);
         assert_roundtrip(expected.to_owned(), input);
     };
 }
-
 
 // ===== Actual tests ============================================================================
 
@@ -196,7 +210,12 @@ fn invalid_unicode_escapes() {
 
     assert_err!(CharLit, r"'\u{1234567}'", TooManyDigitInUnicodeEscape, 10);
     assert_err!(CharLit, r"'\u{1234567}'", TooManyDigitInUnicodeEscape, 10);
-    assert_err!(CharLit, r"'\u{1_23_4_56_7}'", TooManyDigitInUnicodeEscape, 14);
+    assert_err!(
+        CharLit,
+        r"'\u{1_23_4_56_7}'",
+        TooManyDigitInUnicodeEscape,
+        14
+    );
     assert_err!(CharLit, r"'\u{abcdef123}'", TooManyDigitInUnicodeEscape, 10);
 
     assert_err!(CharLit, r"'\u{110000}'", InvalidUnicodeEscapeChar, 1..10);
