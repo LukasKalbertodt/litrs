@@ -1,7 +1,9 @@
 use std::fmt;
 
-use crate::{ParseError, err::{perr, ParseErrorKind::*}};
-
+use crate::{
+    err::{perr, ParseErrorKind::*},
+    ParseError,
+};
 
 /// A bool literal: `true` or `false`. Also see [the reference][ref].
 ///
@@ -49,7 +51,6 @@ impl fmt::Display for BoolLit {
         f.pad(self.as_str())
     }
 }
-
 
 #[cfg(test)]
 mod tests;

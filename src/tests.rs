@@ -1,6 +1,5 @@
 use crate::Literal;
 
-
 #[test]
 fn empty() {
     assert_err!(Literal, "", Empty, None);
@@ -91,14 +90,13 @@ fn never_panic_len_4() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn proc_macro() {
-    use std::convert::TryFrom;
-    use proc_macro2::{
-        self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
-    };
     use crate::{
-        BoolLit, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit, err::TokenKind
+        err::TokenKind, BoolLit, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit,
     };
-
+    use proc_macro2::{
+        self as pm2, Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree,
+    };
+    use std::convert::TryFrom;
 
     macro_rules! assert_invalid_token {
         ($input:expr, expected: $expected:path, actual: $actual:path $(,)?) => {
@@ -106,16 +104,17 @@ fn proc_macro() {
             if err.expected != $expected {
                 panic!(
                     "err.expected was expected to be {:?}, but is {:?}",
-                    $expected,
-                    err.expected,
+                    $expected, err.expected,
                 );
             }
             if err.actual != $actual {
-                panic!("err.actual was expected to be {:?}, but is {:?}", $actual, err.actual);
+                panic!(
+                    "err.actual was expected to be {:?}, but is {:?}",
+                    $actual, err.actual
+                );
             }
         };
     }
-
 
     let pm_u16_lit = pm2::Literal::u16_suffixed(2700);
     let pm_i16_lit = pm2::Literal::i16_unsuffixed(3912);
@@ -141,7 +140,6 @@ fn proc_macro() {
     assert_eq!(Literal::from(&pm_bytestr_lit), bytestr_lit);
     assert_eq!(Literal::from(&pm_char_lit), char_lit);
 
-
     let group = TokenTree::from(Group::new(Delimiter::Brace, TokenStream::new()));
     let punct = TokenTree::from(Punct::new(':', Spacing::Alone));
     let ident = TokenTree::from(Ident::new("peter", Span::call_site()));
@@ -166,17 +164,34 @@ fn proc_macro() {
         actual: TokenKind::Ident,
     );
 
-
-    assert_eq!(Literal::from(IntegerLit::try_from(pm_u16_lit.clone()).unwrap()), u16_lit);
-    assert_eq!(Literal::from(IntegerLit::try_from(pm_i16_lit.clone()).unwrap()), i16_lit);
-    assert_eq!(Literal::from(FloatLit::try_from(pm_f32_lit.clone()).unwrap()), f32_lit);
-    assert_eq!(Literal::from(FloatLit::try_from(pm_f64_lit.clone()).unwrap()), f64_lit);
-    assert_eq!(Literal::from(StringLit::try_from(pm_string_lit.clone()).unwrap()), string_lit);
+    assert_eq!(
+        Literal::from(IntegerLit::try_from(pm_u16_lit.clone()).unwrap()),
+        u16_lit
+    );
+    assert_eq!(
+        Literal::from(IntegerLit::try_from(pm_i16_lit.clone()).unwrap()),
+        i16_lit
+    );
+    assert_eq!(
+        Literal::from(FloatLit::try_from(pm_f32_lit.clone()).unwrap()),
+        f32_lit
+    );
+    assert_eq!(
+        Literal::from(FloatLit::try_from(pm_f64_lit.clone()).unwrap()),
+        f64_lit
+    );
+    assert_eq!(
+        Literal::from(StringLit::try_from(pm_string_lit.clone()).unwrap()),
+        string_lit
+    );
     assert_eq!(
         Literal::from(ByteStringLit::try_from(pm_bytestr_lit.clone()).unwrap()),
         bytestr_lit,
     );
-    assert_eq!(Literal::from(CharLit::try_from(pm_char_lit.clone()).unwrap()), char_lit);
+    assert_eq!(
+        Literal::from(CharLit::try_from(pm_char_lit.clone()).unwrap()),
+        char_lit
+    );
 
     assert_invalid_token!(
         StringLit::try_from(pm_u16_lit.clone()),
@@ -208,7 +223,6 @@ fn proc_macro() {
         expected: TokenKind::IntegerLit,
         actual: TokenKind::CharLit,
     );
-
 
     assert_eq!(
         Literal::from(IntegerLit::try_from(TokenTree::from(pm_u16_lit.clone())).unwrap()),
@@ -290,22 +304,26 @@ fn proc_macro() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn bool_try_from_tt() {
-    use std::convert::TryFrom;
-    use proc_macro2::{Ident, Span, TokenTree};
     use crate::BoolLit;
-
+    use proc_macro2::{Ident, Span, TokenTree};
+    use std::convert::TryFrom;
 
     let ident = |s: &str| Ident::new(s, Span::call_site());
 
-    assert_eq!(BoolLit::try_from(TokenTree::Ident(ident("true"))).unwrap(), BoolLit::True);
-    assert_eq!(BoolLit::try_from(TokenTree::Ident(ident("false"))).unwrap(), BoolLit::False);
+    assert_eq!(
+        BoolLit::try_from(TokenTree::Ident(ident("true"))).unwrap(),
+        BoolLit::True
+    );
+    assert_eq!(
+        BoolLit::try_from(TokenTree::Ident(ident("false"))).unwrap(),
+        BoolLit::False
+    );
 
     assert!(BoolLit::try_from(TokenTree::Ident(ident("falsex"))).is_err());
     assert!(BoolLit::try_from(TokenTree::Ident(ident("_false"))).is_err());
     assert!(BoolLit::try_from(TokenTree::Ident(ident("False"))).is_err());
     assert!(BoolLit::try_from(TokenTree::Ident(ident("True"))).is_err());
     assert!(BoolLit::try_from(TokenTree::Ident(ident("ltrue"))).is_err());
-
 
     assert_eq!(
         Literal::try_from(TokenTree::Ident(ident("true"))).unwrap(),
@@ -326,7 +344,7 @@ fn bool_try_from_tt() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn invalid_token_display() {
-    use crate::{InvalidToken, err::TokenKind};
+    use crate::{err::TokenKind, InvalidToken};
 
     let span = crate::err::Span::Two(proc_macro2::Span::call_site());
     assert_eq!(
@@ -334,7 +352,8 @@ fn invalid_token_display() {
             actual: TokenKind::StringLit,
             expected: TokenKind::FloatLit,
             span,
-        }.to_string(),
+        }
+        .to_string(),
         r#"expected a float literal (e.g. `3.14`), but found a string literal (e.g. "Ferris")"#,
     );
 
@@ -343,7 +362,8 @@ fn invalid_token_display() {
             actual: TokenKind::Punct,
             expected: TokenKind::Literal,
             span,
-        }.to_string(),
+        }
+        .to_string(),
         r#"expected a literal, but found a punctuation character"#,
     );
 }

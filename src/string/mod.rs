@@ -1,12 +1,11 @@
 use std::{fmt, ops::Range};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::{scan_raw_string, unescape_string},
     parse::first_byte_or_empty,
+    Buffer, ParseError,
 };
-
 
 /// A string or raw string literal, e.g. `"foo"`, `"Grüße"` or `r#"a🦊c"d🦀f"#`.
 ///
@@ -37,7 +36,12 @@ impl<B: Buffer> StringLit<B> {
         match first_byte_or_empty(&input)? {
             b'r' | b'"' => {
                 let (value, num_hashes, start_suffix) = parse_impl(&input)?;
-                Ok(Self { raw: input, value, num_hashes, start_suffix })
+                Ok(Self {
+                    raw: input,
+                    value,
+                    num_hashes,
+                    start_suffix,
+                })
             }
             _ => Err(perr(0, InvalidStringLiteralStart)),
         }
@@ -46,7 +50,9 @@ impl<B: Buffer> StringLit<B> {
     /// Returns the string value this literal represents (where all escapes have
     /// been turned into their respective values).
     pub fn value(&self) -> &str {
-        self.value.as_deref().unwrap_or(&self.raw[self.inner_range()])
+        self.value
+            .as_deref()
+            .unwrap_or(&self.raw[self.inner_range()])
     }
 
     /// Like `value` but returns a potentially owned version of the value.
@@ -56,7 +62,9 @@ impl<B: Buffer> StringLit<B> {
     pub fn into_value(self) -> B::Cow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::Cow::from).unwrap_or_else(|| raw.cut(inner_range).into_cow())
+        value
+            .map(B::Cow::from)
+            .unwrap_or_else(|| raw.cut(inner_range).into_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -115,11 +123,9 @@ pub(crate) fn parse_impl(input: &str) -> Result<(Option<String>, Option<u32>, us
         scan_raw_string::<char>(&input, 1)
             .map(|(v, hashes, start_suffix)| (v, Some(hashes), start_suffix))
     } else {
-        unescape_string::<char>(&input, 1)
-            .map(|(v, start_suffix)| (v, None, start_suffix))
+        unescape_string::<char>(&input, 1).map(|(v, start_suffix)| (v, None, start_suffix))
     }
 }
-
 
 #[cfg(test)]
 mod tests;

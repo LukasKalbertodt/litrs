@@ -1,11 +1,10 @@
 use std::{fmt, ops::Range};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::{scan_raw_string, unescape_string},
+    Buffer, ParseError,
 };
-
 
 /// A byte string or raw byte string literal, e.g. `b"hello"` or `br#"abc"def"#`.
 ///
@@ -41,13 +40,20 @@ impl<B: Buffer> ByteStringLit<B> {
         }
 
         let (value, num_hashes, start_suffix) = parse_impl(&input)?;
-        Ok(Self { raw: input, value, num_hashes, start_suffix })
+        Ok(Self {
+            raw: input,
+            value,
+            num_hashes,
+            start_suffix,
+        })
     }
 
     /// Returns the string value this literal represents (where all escapes have
     /// been turned into their respective values).
     pub fn value(&self) -> &[u8] {
-        self.value.as_deref().unwrap_or(&self.raw.as_bytes()[self.inner_range()])
+        self.value
+            .as_deref()
+            .unwrap_or(&self.raw.as_bytes()[self.inner_range()])
     }
 
     /// Like `value` but returns a potentially owned version of the value.
@@ -57,7 +63,9 @@ impl<B: Buffer> ByteStringLit<B> {
     pub fn into_value(self) -> B::ByteCow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+        value
+            .map(B::ByteCow::from)
+            .unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -108,7 +116,6 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
         f.pad(&self.raw)
     }
 }
-
 
 /// Precondition: input has to start with either `b"` or `br`.
 #[inline(never)]

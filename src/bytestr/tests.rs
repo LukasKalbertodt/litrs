@@ -1,4 +1,7 @@
-use crate::{Literal, ByteStringLit, test_util::{assert_parse_ok_eq, assert_roundtrip}};
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    ByteStringLit, Literal,
+};
 
 // ===== Utility functions =======================================================================
 
@@ -10,15 +13,27 @@ macro_rules! check {
         let input = $input;
         let expected = ByteStringLit {
             raw: input,
-            value: if $has_escapes { Some($lit.to_vec()) } else { None },
+            value: if $has_escapes {
+                Some($lit.to_vec())
+            } else {
+                None
+            },
             num_hashes: $num_hashes,
             start_suffix: input.len() - $suffix.len(),
         };
 
         assert_parse_ok_eq(
-            input, ByteStringLit::parse(input), expected.clone(), "ByteStringLit::parse");
+            input,
+            ByteStringLit::parse(input),
+            expected.clone(),
+            "ByteStringLit::parse",
+        );
         assert_parse_ok_eq(
-            input, Literal::parse(input), Literal::ByteString(expected.clone()), "Literal::parse");
+            input,
+            Literal::parse(input),
+            Literal::ByteString(expected.clone()),
+            "Literal::parse",
+        );
         let lit = ByteStringLit::parse(input).unwrap();
         assert_eq!(lit.value(), $lit);
         assert_eq!(lit.suffix(), $suffix);
@@ -26,7 +41,6 @@ macro_rules! check {
         assert_roundtrip(expected.into_owned(), input);
     };
 }
-
 
 // ===== Actual tests ============================================================================
 
@@ -52,11 +66,22 @@ fn special_whitespace() {
                 start_suffix: input.len(),
             };
             assert_parse_ok_eq(
-                &input, ByteStringLit::parse(&*input), expected.clone(), "ByteStringLit::parse");
+                &input,
+                ByteStringLit::parse(&*input),
+                expected.clone(),
+                "ByteStringLit::parse",
+            );
             assert_parse_ok_eq(
-                &input, Literal::parse(&*input), Literal::ByteString(expected), "Literal::parse");
+                &input,
+                Literal::parse(&*input),
+                Literal::ByteString(expected),
+                "Literal::parse",
+            );
             assert_eq!(ByteStringLit::parse(&*input).unwrap().value(), s.as_bytes());
-            assert_eq!(ByteStringLit::parse(&*input).unwrap().into_value(), s.as_bytes());
+            assert_eq!(
+                ByteStringLit::parse(&*input).unwrap().into_value(),
+                s.as_bytes()
+            );
         }
     }
 
@@ -87,22 +112,38 @@ fn simple_escapes() {
 
 #[test]
 fn string_continue() {
-    check!(b"foo\
-        bar", true, None);
-    check!(b"foo\
-bar", true, None);
+    check!(
+        b"foo\
+        bar",
+        true,
+        None
+    );
+    check!(
+        b"foo\
+bar",
+        true,
+        None
+    );
 
-    check!(b"foo\
+    check!(
+        b"foo\
 
-        banana", true, None);
+        banana",
+        true,
+        None
+    );
 
     // Weird whitespace characters
     let lit = ByteStringLit::parse("b\"foo\\\n\r\t\n \n\tbar\"").expect("failed to parse");
     assert_eq!(lit.value(), b"foobar");
 
     // Raw strings do not handle "string continues"
-    check!(br"foo\
-        bar", false, Some(0));
+    check!(
+        br"foo\
+        bar",
+        false,
+        Some(0)
+    );
 }
 
 #[test]
@@ -137,7 +178,11 @@ fn raw_byte_string() {
     check!(br#"a"#, false, Some(1));
     check!(br##"peter"##, false, Some(2));
     check!(br###"Greetings # Jason!"###, false, Some(3));
-    check!(br########"we ## need #### more ####### hashtags"########, false, Some(8));
+    check!(
+        br########"we ## need #### more ####### hashtags"########,
+        false,
+        Some(8)
+    );
 
     check!(br#"foo " bar"#, false, Some(1));
     check!(br##"foo " bar"##, false, Some(2));
@@ -159,7 +204,13 @@ fn suffixes() {
     check!(b"hello", r###"b"hello"suffix"###, false, None, "suffix");
     check!(b"fox", r#"b"fox"peter"#, false, None, "peter");
     check!(b"a\x0cb\\", r#"b"a\x0cb\\"_jürgen"#, true, None, "_jürgen");
-    check!(br"a\x0cb\\", r###"br#"a\x0cb\\"#_jürgen"###, false, Some(1), "_jürgen");
+    check!(
+        br"a\x0cb\\",
+        r###"br#"a\x0cb\\"#_jürgen"###,
+        false,
+        Some(1),
+        "_jürgen"
+    );
 }
 
 #[test]
@@ -176,7 +227,12 @@ fn parse_err() {
     assert_err!(ByteStringLit, "b\"fo\rx\"", IsolatedCr, 4);
 
     assert_err!(ByteStringLit, r##"br####""##, UnterminatedRawString, None);
-    assert_err!(ByteStringLit, r#####"br##"foo"#bar"#####, UnterminatedRawString, None);
+    assert_err!(
+        ByteStringLit,
+        r#####"br##"foo"#bar"#####,
+        UnterminatedRawString,
+        None
+    );
     assert_err!(ByteStringLit, r##"br####"##, InvalidLiteral, None);
     assert_err!(ByteStringLit, r##"br####x"##, InvalidLiteral, None);
 }
@@ -204,21 +260,106 @@ fn invalid_escapes() {
 
 #[test]
 fn unicode_escape_not_allowed() {
-    assert_err!(ByteStringLit, r#"b"\u{0}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{00}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{b}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{B}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{7e}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{E4}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{e4}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{fc}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{Fc}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{fC}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{FC}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{b10}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{B10}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{0b10}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{2764}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{1f602}""#, UnicodeEscapeInByteLiteral, 2..4);
-    assert_err!(ByteStringLit, r#"b"\u{1F602}""#, UnicodeEscapeInByteLiteral, 2..4);
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{0}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{00}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{b}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{B}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{7e}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{E4}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{e4}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{fc}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{Fc}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{fC}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{FC}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{b10}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{B10}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{0b10}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{2764}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{1f602}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
+    assert_err!(
+        ByteStringLit,
+        r#"b"\u{1F602}""#,
+        UnicodeEscapeInByteLiteral,
+        2..4
+    );
 }

@@ -1,9 +1,8 @@
-use crate::{
-    Literal, ParseError,
-    test_util::{assert_parse_ok_eq, assert_roundtrip},
-};
 use super::{FloatLit, FloatType};
-
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    Literal, ParseError,
+};
 
 // ===== Utility functions =======================================================================
 
@@ -35,7 +34,6 @@ macro_rules! check {
     (@stringify_suffix -) => { "" };
     (@stringify_suffix $suffix:ident) => { stringify!($suffix) };
 }
-
 
 // ===== Actual tests ===========================================================================
 
@@ -175,7 +173,10 @@ fn non_standard_suffixes() {
 
         let lit = match Literal::parse(input) {
             Ok(Literal::Float(f)) => f,
-            other => panic!("Expected float literal, but got {:?} for '{}'", other, input),
+            other => panic!(
+                "Expected float literal, but got {:?} for '{}'",
+                other, input
+            ),
         };
         assert_eq!(lit.integer_part(), integer_part);
         assert_eq!(lit.fractional_part(), fractional_part);
@@ -237,8 +238,8 @@ fn parse_err() {
     assert_err!(FloatLit, "3.7-2", UnexpectedChar, 3..5);
     assert_err!(FloatLit, "3.7e+", NoExponentDigits, 3..5);
     assert_err!(FloatLit, "3.7e-", NoExponentDigits, 3..5);
-    assert_err!(FloatLit, "3.7e-+3", NoExponentDigits, 3..5);  // suboptimal error
-    assert_err!(FloatLit, "3.7e+-3", NoExponentDigits, 3..5);  // suboptimal error
+    assert_err!(FloatLit, "3.7e-+3", NoExponentDigits, 3..5); // suboptimal error
+    assert_err!(FloatLit, "3.7e+-3", NoExponentDigits, 3..5); // suboptimal error
     assert_err_single!(FloatLit::parse("0x44.5"), InvalidSuffix, 1..6);
 
     assert_err_single!(FloatLit::parse("3"), UnexpectedIntegerLit, None);

@@ -1,9 +1,14 @@
-use crate::{ByteLit, Literal, test_util::{assert_parse_ok_eq, assert_roundtrip}};
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    ByteLit, Literal,
+};
 
 // ===== Utility functions =======================================================================
 
 macro_rules! check {
-    ($lit:literal) => { check!($lit, stringify!($lit), "") };
+    ($lit:literal) => {
+        check!($lit, stringify!($lit), "")
+    };
     ($lit:literal, $input:expr, $suffix:literal) => {
         let input = $input;
         let expected = ByteLit {
@@ -12,15 +17,24 @@ macro_rules! check {
             value: $lit,
         };
 
-        assert_parse_ok_eq(input, ByteLit::parse(input), expected.clone(), "ByteLit::parse");
-        assert_parse_ok_eq(input, Literal::parse(input), Literal::Byte(expected), "Literal::parse");
+        assert_parse_ok_eq(
+            input,
+            ByteLit::parse(input),
+            expected.clone(),
+            "ByteLit::parse",
+        );
+        assert_parse_ok_eq(
+            input,
+            Literal::parse(input),
+            Literal::Byte(expected),
+            "Literal::parse",
+        );
         let lit = ByteLit::parse(input).unwrap();
         assert_eq!(lit.value(), $lit);
         assert_eq!(lit.suffix(), $suffix);
         assert_roundtrip(expected.to_owned(), input);
     };
 }
-
 
 // ===== Actual tests ============================================================================
 

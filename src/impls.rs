@@ -1,7 +1,9 @@
 use std::convert::TryFrom;
 
-use crate::{Literal, err::{InvalidToken, TokenKind}};
-
+use crate::{
+    err::{InvalidToken, TokenKind},
+    Literal,
+};
 
 /// Helper macro to call a `callback` macro four times for all combinations of
 /// `proc_macro`/`proc_macro2` and `&`/owned.
@@ -25,7 +27,6 @@ macro_rules! helper_no_refs {
     };
 }
 
-
 // ==============================================================================================
 // ===== `From<*Lit> for Literal`
 // ==============================================================================================
@@ -48,12 +49,9 @@ impl_specific_lit_to_lit!(crate::StringLit<B>, String);
 impl_specific_lit_to_lit!(crate::ByteLit<B>, Byte);
 impl_specific_lit_to_lit!(crate::ByteStringLit<B>, ByteString);
 
-
-
 // ==============================================================================================
 // ===== `From<pm::Literal> for Literal`
 // ==============================================================================================
-
 
 macro_rules! impl_tt_to_lit {
     ([$($prefix:tt)*] => ) => {
@@ -69,8 +67,7 @@ macro_rules! impl_tt_to_lit {
     }
 }
 
-helper!(impl_tt_to_lit, );
-
+helper!(impl_tt_to_lit,);
 
 // ==============================================================================================
 // ===== `TryFrom<pm::TokenTree> for Literal`
@@ -106,8 +103,7 @@ macro_rules! impl_tt_to_lit {
     }
 }
 
-helper!(impl_tt_to_lit, );
-
+helper!(impl_tt_to_lit,);
 
 // ==============================================================================================
 // ===== `TryFrom<pm::Literal>`, `TryFrom<pm::TokenTree>` for non-bool `*Lit`
@@ -167,13 +163,32 @@ macro_rules! impl_for_specific_lit {
     };
 }
 
-helper!(impl_for_specific_lit, crate::IntegerLit<String>, Integer, IntegerLit);
-helper!(impl_for_specific_lit, crate::FloatLit<String>, Float, FloatLit);
+helper!(
+    impl_for_specific_lit,
+    crate::IntegerLit<String>,
+    Integer,
+    IntegerLit
+);
+helper!(
+    impl_for_specific_lit,
+    crate::FloatLit<String>,
+    Float,
+    FloatLit
+);
 helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
-helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
+helper!(
+    impl_for_specific_lit,
+    crate::StringLit<String>,
+    String,
+    StringLit
+);
 helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
-helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);
-
+helper!(
+    impl_for_specific_lit,
+    crate::ByteStringLit<String>,
+    ByteString,
+    ByteStringLit
+);
 
 // ==============================================================================================
 // ===== `From<*Lit> for pm::Literal`
@@ -204,8 +219,12 @@ helper_no_refs!(impl_specific_lit_to_pm_lit, FloatLit, Float, FloatLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, CharLit, Char, CharLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, StringLit, String, StringLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, ByteLit, Byte, ByteLit);
-helper_no_refs!(impl_specific_lit_to_pm_lit, ByteStringLit, ByteString, ByteStringLit);
-
+helper_no_refs!(
+    impl_specific_lit_to_pm_lit,
+    ByteStringLit,
+    ByteString,
+    ByteStringLit
+);
 
 // ==============================================================================================
 // ===== `TryFrom<pm::TokenTree> for BoolLit`
@@ -239,7 +258,7 @@ macro_rules! impl_from_tt_for_bool {
     };
 }
 
-helper!(impl_from_tt_for_bool, );
+helper!(impl_from_tt_for_bool,);
 
 // ==============================================================================================
 // ===== `From<BoolLit> for pm::Ident`
@@ -255,8 +274,7 @@ macro_rules! impl_bool_lit_to_pm_lit {
     };
 }
 
-helper_no_refs!(impl_bool_lit_to_pm_lit, );
-
+helper_no_refs!(impl_bool_lit_to_pm_lit,);
 
 mod tests {
     //! # Tests

@@ -1,4 +1,7 @@
-use crate::{Literal, StringLit, test_util::{assert_parse_ok_eq, assert_roundtrip}};
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    Literal, StringLit,
+};
 
 // ===== Utility functions =======================================================================
 
@@ -10,14 +13,27 @@ macro_rules! check {
         let input = $input;
         let expected = StringLit {
             raw: input,
-            value: if $has_escapes { Some($lit.to_string()) } else { None },
+            value: if $has_escapes {
+                Some($lit.to_string())
+            } else {
+                None
+            },
             num_hashes: $num_hashes,
             start_suffix: input.len() - $suffix.len(),
         };
 
-        assert_parse_ok_eq(input, StringLit::parse(input), expected.clone(), "StringLit::parse");
         assert_parse_ok_eq(
-            input, Literal::parse(input), Literal::String(expected.clone()), "Literal::parse");
+            input,
+            StringLit::parse(input),
+            expected.clone(),
+            "StringLit::parse",
+        );
+        assert_parse_ok_eq(
+            input,
+            Literal::parse(input),
+            Literal::String(expected.clone()),
+            "Literal::parse",
+        );
         let lit = StringLit::parse(input).unwrap();
         assert_eq!(lit.value(), $lit);
         assert_eq!(lit.suffix(), $suffix);
@@ -25,7 +41,6 @@ macro_rules! check {
         assert_roundtrip(expected.into_owned(), input);
     };
 }
-
 
 // ===== Actual tests ============================================================================
 
@@ -56,9 +71,17 @@ fn special_whitespace() {
                 start_suffix: input.len(),
             };
             assert_parse_ok_eq(
-                &input, StringLit::parse(&*input), expected.clone(), "StringLit::parse");
+                &input,
+                StringLit::parse(&*input),
+                expected.clone(),
+                "StringLit::parse",
+            );
             assert_parse_ok_eq(
-                &input, Literal::parse(&*input), Literal::String(expected), "Literal::parse");
+                &input,
+                Literal::parse(&*input),
+                Literal::String(expected),
+                "Literal::parse",
+            );
             assert_eq!(StringLit::parse(&*input).unwrap().value(), s);
             assert_eq!(StringLit::parse(&*input).unwrap().into_value(), s);
         }
@@ -117,14 +140,26 @@ fn unicode_escapes() {
 
 #[test]
 fn string_continue() {
-    check!("నక్క\
-        bar", true, None);
-    check!("foo\
-🦊", true, None);
+    check!(
+        "నక్క\
+        bar",
+        true,
+        None
+    );
+    check!(
+        "foo\
+🦊",
+        true,
+        None
+    );
 
-    check!("foo\
+    check!(
+        "foo\
 
-        banana", true, None);
+        banana",
+        true,
+        None
+    );
 
     // Weird whitespace characters
     let lit = StringLit::parse("\"foo\\\n\r\t\n \n\tbar\"").expect("failed to parse");
@@ -135,8 +170,12 @@ fn string_continue() {
     assert_eq!(lit.value(), "foo\u{a0}bar");
 
     // Raw strings do not handle "string continues"
-    check!(r"foo\
-        bar", false, Some(0));
+    check!(
+        r"foo\
+        bar",
+        false,
+        Some(0)
+    );
 }
 
 #[test]
@@ -168,7 +207,11 @@ fn raw_string() {
     check!(r"Sei gegrüßt, Bärthelt!", false, Some(0));
     check!(r"أنا لا أتحدث العربية", false, Some(0));
     check!(r"お前はもう死んでいる", false, Some(0));
-    check!(r"Пушки - интересные музыкальные инструменты", false, Some(0));
+    check!(
+        r"Пушки - интересные музыкальные инструменты",
+        false,
+        Some(0)
+    );
     check!(r"lit 👌 😂 af", false, Some(0));
 
     check!(r#""#, false, Some(1));
@@ -195,10 +238,22 @@ fn raw_string() {
 #[test]
 fn suffixes() {
     check!("hello", r###""hello"suffix"###, false, None, "suffix");
-    check!(r"お前はもう死んでいる", r###"r"お前はもう死んでいる"_banana"###, false, Some(0), "_banana");
+    check!(
+        r"お前はもう死んでいる",
+        r###"r"お前はもう死んでいる"_banana"###,
+        false,
+        Some(0),
+        "_banana"
+    );
     check!("fox", r#""fox"peter"#, false, None, "peter");
     check!("🦊", r#""🦊"peter"#, false, None, "peter");
-    check!("నక్క\\\\u{0b10}", r###""నక్క\\\\u{0b10}"jü_rgen"###, true, None, "jü_rgen");
+    check!(
+        "నక్క\\\\u{0b10}",
+        r###""నక్క\\\\u{0b10}"jü_rgen"###,
+        true,
+        None,
+        "jü_rgen"
+    );
 }
 
 #[test]
@@ -217,7 +272,12 @@ fn parse_err() {
     assert_err!(StringLit, "r\"fo\rx\"", IsolatedCr, 4);
 
     assert_err!(StringLit, r##"r####""##, UnterminatedRawString, None);
-    assert_err!(StringLit, r#####"r##"foo"#bar"#####, UnterminatedRawString, None);
+    assert_err!(
+        StringLit,
+        r#####"r##"foo"#bar"#####,
+        UnterminatedRawString,
+        None
+    );
     assert_err!(StringLit, r##"r####"##, InvalidLiteral, None);
     assert_err!(StringLit, r##"r####x"##, InvalidLiteral, None);
 }
@@ -258,7 +318,12 @@ fn invalid_unicode_escapes() {
     assert_err!(StringLit, r#""\u{""#, UnterminatedUnicodeEscape, 1..4);
     assert_err!(StringLit, r#""\u{12""#, UnterminatedUnicodeEscape, 1..6);
     assert_err!(StringLit, r#""🦊\u{a0b""#, UnterminatedUnicodeEscape, 5..11);
-    assert_err!(StringLit, r#""\u{a0_b  ""#, UnterminatedUnicodeEscape, 1..10);
+    assert_err!(
+        StringLit,
+        r#""\u{a0_b  ""#,
+        UnterminatedUnicodeEscape,
+        1..10
+    );
 
     assert_err!(StringLit, r#""\u{_}నక్క""#, InvalidStartOfUnicodeEscape, 4);
     assert_err!(StringLit, r#""\u{_5f}""#, InvalidStartOfUnicodeEscape, 4);
@@ -266,13 +331,43 @@ fn invalid_unicode_escapes() {
     assert_err!(StringLit, r#""fox\u{x}""#, NonHexDigitInUnicodeEscape, 7);
     assert_err!(StringLit, r#""\u{0x}🦊""#, NonHexDigitInUnicodeEscape, 5);
     assert_err!(StringLit, r#""నక్క\u{3bx}""#, NonHexDigitInUnicodeEscape, 18);
-    assert_err!(StringLit, r#""\u{3b_x}лиса""#, NonHexDigitInUnicodeEscape, 7);
+    assert_err!(
+        StringLit,
+        r#""\u{3b_x}лиса""#,
+        NonHexDigitInUnicodeEscape,
+        7
+    );
     assert_err!(StringLit, r#""\u{4x_}""#, NonHexDigitInUnicodeEscape, 5);
 
-    assert_err!(StringLit, r#""\u{1234567}""#, TooManyDigitInUnicodeEscape, 10);
-    assert_err!(StringLit, r#""నక్క\u{1234567}🦊""#, TooManyDigitInUnicodeEscape, 22);
-    assert_err!(StringLit, r#""నక్క\u{1_23_4_56_7}""#, TooManyDigitInUnicodeEscape, 26);
-    assert_err!(StringLit, r#""\u{abcdef123}лиса""#, TooManyDigitInUnicodeEscape, 10);
+    assert_err!(
+        StringLit,
+        r#""\u{1234567}""#,
+        TooManyDigitInUnicodeEscape,
+        10
+    );
+    assert_err!(
+        StringLit,
+        r#""నక్క\u{1234567}🦊""#,
+        TooManyDigitInUnicodeEscape,
+        22
+    );
+    assert_err!(
+        StringLit,
+        r#""నక్క\u{1_23_4_56_7}""#,
+        TooManyDigitInUnicodeEscape,
+        26
+    );
+    assert_err!(
+        StringLit,
+        r#""\u{abcdef123}лиса""#,
+        TooManyDigitInUnicodeEscape,
+        10
+    );
 
-    assert_err!(StringLit, r#""\u{110000}fox""#, InvalidUnicodeEscapeChar, 1..10);
+    assert_err!(
+        StringLit,
+        r#""\u{110000}fox""#,
+        InvalidUnicodeEscapeChar,
+        1..10
+    );
 }

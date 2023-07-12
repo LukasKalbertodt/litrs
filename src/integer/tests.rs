@@ -1,9 +1,10 @@
-use std::fmt::{Debug, Display};
 use crate::{
-    FromIntegerLiteral, Literal, IntegerLit, IntegerType as Ty, IntegerBase, IntegerBase::*,
     test_util::{assert_parse_ok_eq, assert_roundtrip},
+    FromIntegerLiteral, IntegerBase,
+    IntegerBase::*,
+    IntegerLit, IntegerType as Ty, Literal,
 };
-
+use std::fmt::{Debug, Display};
 
 // ===== Utility functions =======================================================================
 
@@ -22,11 +23,22 @@ fn check<T: FromIntegerLiteral + PartialEq + Debug + Display>(
         base,
     };
     assert_parse_ok_eq(
-        input, IntegerLit::parse(input), expected_integer.clone(), "IntegerLit::parse");
+        input,
+        IntegerLit::parse(input),
+        expected_integer.clone(),
+        "IntegerLit::parse",
+    );
     assert_parse_ok_eq(
-        input, Literal::parse(input), Literal::Integer(expected_integer), "Literal::parse");
+        input,
+        Literal::parse(input),
+        Literal::Integer(expected_integer),
+        "Literal::parse",
+    );
     assert_roundtrip(expected_integer.to_owned(), input);
-    assert_eq!(Ty::from_suffix(IntegerLit::parse(input).unwrap().suffix()), type_suffix);
+    assert_eq!(
+        Ty::from_suffix(IntegerLit::parse(input).unwrap().suffix()),
+        type_suffix
+    );
 
     let actual_value = IntegerLit::parse(input)
         .unwrap()
@@ -35,13 +47,10 @@ fn check<T: FromIntegerLiteral + PartialEq + Debug + Display>(
     if actual_value != value {
         panic!(
             "Parsing int literal `{}` should give value `{}`, but actually resulted in `{}`",
-            input,
-            value,
-            actual_value,
+            input, value, actual_value,
         );
     }
 }
-
 
 // ===== Actual tests ===========================================================================
 
@@ -96,7 +105,13 @@ fn parse_binary() {
     check("0b01", 0b01, Binary, "01", None);
     check("0b101010", 0b101010, Binary, "101010", None);
     check("0b10_10_10", 0b10_10_10, Binary, "10_10_10", None);
-    check("0b01101110____", 0b01101110____, Binary, "01101110____", None);
+    check(
+        "0b01101110____",
+        0b01101110____,
+        Binary,
+        "01101110____",
+        None,
+    );
 
     check("0b10010u8", 0b10010u8, Binary, "10010", Some(Ty::U8));
     check("0b10010i8", 0b10010u8, Binary, "10010", Some(Ty::I8));
@@ -175,12 +190,42 @@ fn starting_underscore() {
 #[test]
 fn parse_overflowing_just_fine() {
     check("256u8", 256u16, Decimal, "256", Some(Ty::U8));
-    check("123_456_789u8", 123_456_789u32, Decimal, "123_456_789", Some(Ty::U8));
-    check("123_456_789u16", 123_456_789u32, Decimal, "123_456_789", Some(Ty::U16));
+    check(
+        "123_456_789u8",
+        123_456_789u32,
+        Decimal,
+        "123_456_789",
+        Some(Ty::U8),
+    );
+    check(
+        "123_456_789u16",
+        123_456_789u32,
+        Decimal,
+        "123_456_789",
+        Some(Ty::U16),
+    );
 
-    check("123_123_456_789u8", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U8));
-    check("123_123_456_789u16", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U16));
-    check("123_123_456_789u32", 123_123_456_789u64, Decimal, "123_123_456_789", Some(Ty::U32));
+    check(
+        "123_123_456_789u8",
+        123_123_456_789u64,
+        Decimal,
+        "123_123_456_789",
+        Some(Ty::U8),
+    );
+    check(
+        "123_123_456_789u16",
+        123_123_456_789u64,
+        Decimal,
+        "123_123_456_789",
+        Some(Ty::U16),
+    );
+    check(
+        "123_123_456_789u32",
+        123_123_456_789u64,
+        Decimal,
+        "123_123_456_789",
+        Some(Ty::U32),
+    );
 }
 
 #[test]
@@ -196,8 +241,13 @@ fn suffixes() {
         ("123u32", Ty::U32),
         ("123u64", Ty::U64),
         ("123u128", Ty::U128),
-    ].iter().for_each(|&(s, ty)| {
-        assert_eq!(Ty::from_suffix(IntegerLit::parse(s).unwrap().suffix()), Some(ty));
+    ]
+    .iter()
+    .for_each(|&(s, ty)| {
+        assert_eq!(
+            Ty::from_suffix(IntegerLit::parse(s).unwrap().suffix()),
+            Some(ty)
+        );
     });
 }
 
@@ -226,8 +276,14 @@ fn overflow_u128() {
 #[test]
 fn overflow_u8() {
     let inputs = [
-        "256", "0x100", "0o400", "0b100000000",
-        "257", "0x101", "0o401", "0b100000001",
+        "256",
+        "0x100",
+        "0o400",
+        "0b100000000",
+        "257",
+        "0x101",
+        "0o401",
+        "0b100000001",
         "300",
         "1548",
         "2548985",

@@ -1,17 +1,11 @@
 use crate::{
-    BoolLit,
-    Buffer,
-    ByteLit,
-    ByteStringLit,
-    CharLit,
-    ParseError,
-    FloatLit,
-    IntegerLit,
-    Literal,
+    err::{
+        perr,
+        ParseErrorKind::{self, *},
+    },
+    BoolLit, Buffer, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, Literal, ParseError,
     StringLit,
-    err::{perr, ParseErrorKind::{*, self}},
 };
-
 
 pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
     let (first, rest) = input.as_bytes().split_first().ok_or(perr(None, Empty))?;
@@ -32,24 +26,23 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
             // The first non-decimal char in a float literal must
             // be '.', 'e' or 'E'.
             match input.as_bytes().get(1 + end_dec_digits(rest)) {
-                Some(b'.') | Some(b'e') | Some(b'E')
-                    => FloatLit::parse(input).map(Literal::Float),
+                Some(b'.') | Some(b'e') | Some(b'E') => FloatLit::parse(input).map(Literal::Float),
 
                 _ => IntegerLit::parse(input).map(Literal::Integer),
             }
-        },
+        }
 
         b'\'' => CharLit::parse(input).map(Literal::Char),
         b'"' | b'r' => StringLit::parse(input).map(Literal::String),
 
         b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
-        b'b' if second == Some(b'r') || second == Some(b'"')
-            => ByteStringLit::parse(input).map(Literal::ByteString),
+        b'b' if second == Some(b'r') || second == Some(b'"') => {
+            ByteStringLit::parse(input).map(Literal::ByteString)
+        }
 
         _ => Err(perr(None, InvalidLiteral)),
     }
 }
-
 
 pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, ParseError> {
     s.as_bytes().get(0).copied().ok_or(perr(None, Empty))
@@ -58,7 +51,8 @@ pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, ParseError> {
 /// Returns the index of the first non-underscore, non-decimal digit in `input`,
 /// or the `input.len()` if all characters are decimal digits.
 pub(crate) fn end_dec_digits(input: &[u8]) -> usize {
-    input.iter()
+    input
+        .iter()
         .position(|b| !matches!(b, b'_' | b'0'..=b'9'))
         .unwrap_or(input.len())
 }
@@ -98,8 +92,7 @@ pub(crate) fn check_suffix(s: &str) -> Result<(), ParseErrorKind> {
     fn is_valid_suffix(first: char, rest: &str) -> bool {
         use unicode_xid::UnicodeXID;
 
-        (first == '_' || first.is_xid_start())
-            && rest.chars().all(|c| c.is_xid_continue())
+        (first == '_' || first.is_xid_start()) && rest.chars().all(|c| c.is_xid_continue())
     }
 
     // When avoiding the dependency on `unicode_xid`, we just do a best effort

@@ -1,12 +1,10 @@
 use std::{fmt, str::FromStr};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{end_dec_digits, first_byte_or_empty, check_suffix},
+    parse::{check_suffix, end_dec_digits, first_byte_or_empty},
+    Buffer, ParseError,
 };
-
-
 
 /// A floating point literal, e.g. `3.14`, `8.`, `135e12`, `27f32` or `1.956e2f64`.
 ///
@@ -70,8 +68,13 @@ impl<B: Buffer> FloatLit<B> {
                     ..
                 } = parse_impl(&s)?;
 
-                Ok(Self { raw: s, end_integer_part, end_fractional_part, end_number_part })
-            },
+                Ok(Self {
+                    raw: s,
+                    end_integer_part,
+                    end_fractional_part,
+                    end_number_part,
+                })
+            }
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }
@@ -148,7 +151,6 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
     let end_integer_part = end_dec_digits(input.as_bytes());
     let rest = &input[end_integer_part..];
 
-
     // Fractional part.
     let end_fractional_part = if rest.as_bytes().get(0) == Some(&b'.') {
         // The fractional part must not start with `_`.
@@ -178,7 +180,10 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
 
         // Find end of exponent and make sure there is at least one digit.
         let end_exponent = end_dec_digits(rest[exp_number_start..].as_bytes()) + exp_number_start;
-        if !rest[exp_number_start..end_exponent].bytes().any(|b| matches!(b, b'0'..=b'9')) {
+        if !rest[exp_number_start..end_exponent]
+            .bytes()
+            .any(|b| matches!(b, b'0'..=b'9'))
+        {
             return Err(perr(
                 end_fractional_part..end_fractional_part + end_exponent,
                 NoExponentDigits,
@@ -207,7 +212,6 @@ pub(crate) fn parse_impl(input: &str) -> Result<FloatLit<&str>, ParseError> {
         end_number_part,
     })
 }
-
 
 /// All possible float type suffixes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -250,7 +254,6 @@ impl fmt::Display for FloatType {
         self.suffix().fmt(f)
     }
 }
-
 
 #[cfg(test)]
 mod tests;

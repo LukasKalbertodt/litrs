@@ -1,6 +1,5 @@
 use std::{fmt, ops::Range};
 
-
 /// An error signaling that a different kind of token was expected. Returned by
 /// the various `TryFrom` impls.
 #[derive(Debug, Clone, Copy)]
@@ -15,7 +14,7 @@ impl InvalidToken {
     /// `"msg"` is the output of `self.to_string()`. **Panics if called outside
     /// of a proc-macro context!**
     pub fn to_compile_error(&self) -> proc_macro::TokenStream {
-        use proc_macro::{Delimiter, Ident, Group, Punct, Spacing, TokenTree};
+        use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, TokenTree};
 
         let span = match self.span {
             Span::One(s) => s,
@@ -32,8 +31,13 @@ impl InvalidToken {
             )),
         ];
 
-
-        tokens.into_iter().map(|mut t| { t.set_span(span); t }).collect()
+        tokens
+            .into_iter()
+            .map(|mut t| {
+                t.set_span(span);
+                t
+            })
+            .collect()
     }
 
     /// Like [`to_compile_error`][Self::to_compile_error], but returns a token
@@ -41,7 +45,7 @@ impl InvalidToken {
     /// context.
     #[cfg(feature = "proc-macro2")]
     pub fn to_compile_error2(&self) -> proc_macro2::TokenStream {
-        use proc_macro2::{Delimiter, Ident, Group, Punct, Spacing, TokenTree};
+        use proc_macro2::{Delimiter, Group, Ident, Punct, Spacing, TokenTree};
 
         let span = match self.span {
             Span::One(s) => proc_macro2::Span::from(s),
@@ -57,8 +61,13 @@ impl InvalidToken {
             )),
         ];
 
-
-        tokens.into_iter().map(|mut t| { t.set_span(span); t }).collect()
+        tokens
+            .into_iter()
+            .map(|mut t| {
+                t.set_span(span);
+                t
+            })
+            .collect()
     }
 }
 
@@ -82,7 +91,12 @@ impl fmt::Display for InvalidToken {
             }
         }
 
-        write!(f, "expected {}, but found {}", kind_desc(self.expected), kind_desc(self.actual))
+        write!(
+            f,
+            "expected {}, but found {}",
+            kind_desc(self.expected),
+            kind_desc(self.actual)
+        )
     }
 }
 
@@ -197,7 +211,6 @@ impl SpanLike for usize {
         Some(self..self + 1)
     }
 }
-
 
 /// Kinds of errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
