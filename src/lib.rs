@@ -154,6 +154,9 @@ mod test_util;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "printing")]
+mod printing;
+
 mod bool;
 mod byte;
 mod bytestr;
