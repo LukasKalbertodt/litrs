@@ -60,6 +60,13 @@ impl<B: Buffer> IntegerLit<B> {
     /// method**. This means `N` does not need to match the type suffix!
     ///
     /// Returns `None` if the literal overflows `N`.
+    ///
+    /// Hint: `u128` can represent all possible values integer literal values,
+    /// as there are no negative literals (see type docs). Thus you can, for
+    /// example, safely use `lit.value::<u128>().to_string()` to get a decimal
+    /// string. (Technically, Rust integer literals can represent arbitrarily
+    /// large numbers, but those would be rejected at a later stage by the Rust
+    /// compiler).
     pub fn value<N: FromIntegerLiteral>(&self) -> Option<N> {
         let base = N::from_small_number(self.base.value());
 
