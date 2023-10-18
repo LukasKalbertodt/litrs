@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2023-10-18
+- Fixed incorrectly labeling `27f32` a float literals in docs.
+- Added hint to integer literal docs about parsing as `u128`.
+
 ## [0.4.0] - 2023-03-05
 ### Added
 - Add ability to parse literals with arbitrary suffixes (e.g. `"foo"bla` or `23px`)
@@ -88,7 +92,8 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.2...v0.2.3
