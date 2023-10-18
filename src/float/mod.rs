@@ -8,14 +8,15 @@ use crate::{
 
 
 
-/// A floating point literal, e.g. `3.14`, `8.`, `135e12`, `27f32` or `1.956e2f64`.
+/// A floating point literal, e.g. `3.14`, `8.`, `135e12`, or `1.956e2f64`.
 ///
 /// This kind of literal has several forms, but generally consists of a main
 /// number part, an optional exponent and an optional type suffix. See
 /// [the reference][ref] for more information.
 ///
 /// A leading minus sign `-` is not part of the literal grammar! `-3.14` are two
-/// tokens in the Rust grammar.
+/// tokens in the Rust grammar. Further, `27` and `27f32` are both not float,
+/// but integer literals! Consequently `FloatLit::parse` will reject them.
 ///
 ///
 /// [ref]: https://doc.rust-lang.org/reference/tokens.html#floating-point-literals
