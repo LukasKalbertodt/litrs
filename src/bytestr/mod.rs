@@ -114,10 +114,10 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
 #[inline(never)]
 fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>, usize), ParseError> {
     if input.starts_with("br") {
-        scan_raw_string::<u8>(&input, 2)
+        scan_raw_string::<u8>(&input, 2, false)
             .map(|(num, start_suffix)| (None, Some(num), start_suffix))
     } else {
-        unescape_string::<u8>(&input, 2)
+        unescape_string::<u8>(&input, 2, false, true)
             .map(|(v, start_suffix)| (v.map(String::into_bytes), None, start_suffix))
     }
 }

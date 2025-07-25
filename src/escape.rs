@@ -1,8 +1,25 @@
 use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::{hex_digit_value, check_suffix}};
 
 
-/// Must start with `\`
-pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usize), ParseError> {
+/// Must start with `\`. Returns the unscaped value as `E` and the number of
+/// input bytes the escape is long.
+///
+/// `unicode` and `byte_escapes` specify which types of escapes are
+/// supported. [Quote escapes] are always unescaped, [Unicode escapes] only if
+/// `unicode` is true. If `byte_escapes` is false, [ASCII escapes] are
+/// used, if it's true, [Byte escapes] are (the only difference being that the
+/// latter supports \xHH escapes > 0x7f).
+///
+/// [Quote escapes]: https://doc.rust-lang.org/reference/tokens.html#quote-escapes
+/// [Unicode escapes]: https://doc.rust-lang.org/reference/tokens.html#unicode-escapes
+/// [Ascii escapes]: https://doc.rust-lang.org/reference/tokens.html#ascii-escapes
+/// [Byte escapes]: https://doc.rust-lang.org/reference/tokens.html#byte-escapes
+pub(crate) fn unescape<E: Escapee>(
+    input: &str,
+    offset: usize,
+    unicode: bool,
+    byte_escapes: bool,
+) -> Result<(E, usize), ParseError> {
     let first = input.as_bytes().get(1)
         .ok_or(perr(offset, UnterminatedEscape))?;
     let out = match first {
@@ -26,7 +43,7 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
                 .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
             let value = second + 16 * first;
 
-            if E::SUPPORTS_UNICODE && value > 0x7F {
+            if !byte_escapes && value > 0x7F {
                 return Err(perr(offset..offset + 4, NonAsciiXEscape));
             }
 
@@ -35,7 +52,7 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
 
         // Unicode escape
         b'u' => {
-            if !E::SUPPORTS_UNICODE {
+            if !unicode {
                 return Err(perr(offset..offset + 2, UnicodeEscapeInByteLiteral));
             }
 
@@ -81,13 +98,11 @@ pub(crate) fn unescape<E: Escapee>(input: &str, offset: usize) -> Result<(E, usi
 }
 
 pub(crate) trait Escapee: Into<char> {
-    const SUPPORTS_UNICODE: bool;
     fn from_byte(b: u8) -> Self;
     fn from_char(c: char) -> Self;
 }
 
 impl Escapee for u8 {
-    const SUPPORTS_UNICODE: bool = false;
     fn from_byte(b: u8) -> Self {
         b
     }
@@ -97,7 +112,6 @@ impl Escapee for u8 {
 }
 
 impl Escapee for char {
-    const SUPPORTS_UNICODE: bool = true;
     fn from_byte(b: u8) -> Self {
         b.into()
     }
@@ -117,6 +131,8 @@ fn is_string_continue_skipable_whitespace(b: u8) -> bool {
 pub(crate) fn unescape_string<E: Escapee>(
     input: &str,
     offset: usize,
+    unicode: bool,
+    byte_escapes: bool,
 ) -> Result<(Option<String>, usize), ParseError> {
     let mut closing_quote_pos = None;
     let mut i = offset;
@@ -137,7 +153,8 @@ pub(crate) fn unescape_string<E: Escapee>(
                 end_last_escape = i;
             }
             b'\\' => {
-                let (c, len) = unescape::<E>(&input[i..input.len() - 1], i)?;
+                let rest = &input[i..input.len() - 1];
+                let (c, len) = unescape::<E>(rest, i, unicode, byte_escapes)?;
                 value.push_str(&input[end_last_escape..i]);
                 value.push(c.into());
                 i += len;
@@ -148,8 +165,7 @@ pub(crate) fn unescape_string<E: Escapee>(
                 closing_quote_pos = Some(i);
                 break;
             },
-            b if !E::SUPPORTS_UNICODE && !b.is_ascii()
-                => return Err(perr(i, NonAsciiInByteLiteral)),
+            b if !unicode && !b.is_ascii() => return Err(perr(i, NonAsciiInByteLiteral)),
             _ => i += 1,
         }
     }
@@ -181,6 +197,7 @@ pub(crate) fn unescape_string<E: Escapee>(
 pub(crate) fn scan_raw_string<E: Escapee>(
     input: &str,
     offset: usize,
+    unicode: bool,
 ) -> Result<(u32, usize), ParseError> {
     // Raw string literal
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
@@ -208,7 +225,7 @@ pub(crate) fn scan_raw_string<E: Escapee>(
             return Err(perr(i, CarriageReturn));
         }
 
-        if !E::SUPPORTS_UNICODE {
+        if !unicode {
             if !b.is_ascii() {
                 return Err(perr(i, NonAsciiInByteLiteral));
             }

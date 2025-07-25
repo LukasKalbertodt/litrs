@@ -85,7 +85,7 @@ pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
         b'\'' if input_bytes.get(3) == Some(&b'\'') => return Err(perr(2, UnescapedSingleQuote)),
         b'\'' => return Err(perr(None, EmptyByteLiteral)),
         b'\n' | b'\t' | b'\r' => return Err(perr(2, UnescapedSpecialWhitespace)),
-        b'\\' => unescape::<u8>(&input[2..], 2)?,
+        b'\\' => unescape::<u8>(&input[2..], 2, false, true)?,
         other if other.is_ascii() => (*other, 1),
         _ => return Err(perr(2, NonAsciiInByteLiteral)),
     };
