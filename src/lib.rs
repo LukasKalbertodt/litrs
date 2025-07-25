@@ -64,8 +64,8 @@
 //!
 //! All of the `From` and `TryFrom` conversions also work for reference to
 //! `proc_macro` types. Additionally, if the crate feature `proc-macro2` is
-//! enabled (which it is by default), all these `From` and `TryFrom` impls also
-//! exist for the corresponding `proc_macro2` types.
+//! enabled, all these `From` and `TryFrom` impls also exist for the
+//! corresponding `proc_macro2` types.
 //!
 //! **Note**: `true` and `false` are `Ident`s when passed to your proc macro.
 //! The `TryFrom<TokenTree>` impls check for those two special idents and
@@ -132,8 +132,8 @@
 //!
 //! # Crate features
 //!
-//! - `proc-macro2` (**default**): adds the dependency `proc_macro2`, a bunch of
-//!   `From` and `TryFrom` impls, and [`InvalidToken::to_compile_error2`].
+//! - `proc-macro2`: adds the dependency `proc_macro2`, a bunch of `From` and
+//!   `TryFrom` impls, and [`InvalidToken::to_compile_error2`].
 //! - `check_suffix`: if enabled, `parse` functions will exactly verify that the
 //!   literal suffix is valid. Adds the dependency `unicode-xid`. If disabled,
 //!   only an approximate check (only in ASCII range) is done. If you are
