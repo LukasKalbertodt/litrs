@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-07-25
+**Note**: this is supposed to be essentially a 1.0 release candidate.
+If there are no problems with this release, it will be released as 1.0 after some time.
+
+- **Breaking** Bump MSRC from 1.54 to 1.56
+- **Breaking**: Remove `proc-macro2` from default features
+- **Breaking**: Make `StringLit<String>::into_value` return `String` instead of `Cow<'static, str>`.
+  Make `ByteStringLit<String>::into_value` return `Vec<u8>` instead of `Cow<'static, [u8]>`.
+- Add support for C string literals
+- Limit number of `#` as delimiter of raw string literals to 256 (to align with spec)
+- Fix license in `Cargo.toml` to use proper SPDX format (in #19, thanks @atouchet)
+- Fix error span for `InvalidStartOfUnicodeEscape` errors
+
+
 ## [0.4.2] - 2025-07-25
 - Fix incorrect byte string value with non-ASCII `\xHH` byte string escapes
     - `ByteStringLit::parse(r#"b"\xff""#).unwrap().value()` would return `[0xc3, 0xbf]` instead of `[0xff]`.
@@ -99,7 +113,8 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...v0.4.0
