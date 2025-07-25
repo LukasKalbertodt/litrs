@@ -313,6 +313,9 @@ pub(crate) enum ParseErrorKind {
     /// `\r` in a (raw) string or (raw) byte string literal.
     CarriageReturn,
 
+    /// Rust only allows 256 hashes in raw * string literals.
+    TooManyHashes,
+
     /// Literal suffix is not a valid identifier.
     InvalidSuffix,
 
@@ -369,6 +372,7 @@ impl fmt::Display for ParseError {
             DisallowedNulEscape => r"`\0` escape not allowed inside C string literal",
             NulByte => r"nul byte not allowed inside C string literal",
             CarriageReturn => r"`\r` not allowed in string literals",
+            TooManyHashes => "raw string literal has too many # symbols (max 256)",
             InvalidSuffix => "literal suffix is not a valid identifier",
             UnexpectedIntegerLit => "expected float literal, but found integer",
             IntegerSuffixStartingWithE => "integer literal suffix must not start with 'e' or 'E'",

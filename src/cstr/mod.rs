@@ -23,7 +23,7 @@ pub struct CStringLit<B: Buffer> {
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
-    num_hashes: Option<u32>,
+    num_hashes: Option<u8>,
 
     /// Start index of the suffix or `raw.len()` if there is no suffix.
     start_suffix: usize,
@@ -78,7 +78,7 @@ impl<B: Buffer> CStringLit<B> {
 }
 
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
-fn inner_range(num_hashes: Option<u32>, start_suffix: usize) -> Range<usize> {
+fn inner_range(num_hashes: Option<u8>, start_suffix: usize) -> Range<usize> {
     match num_hashes {
         None => 2..start_suffix - 1,
         Some(n) => 2 + n as usize + 1..start_suffix - n as usize - 1,
@@ -107,7 +107,7 @@ impl<B: Buffer> fmt::Display for CStringLit<B> {
 
 /// Precondition: input has to start with either `b"` or `br`.
 #[inline(never)]
-fn parse_impl(input: &str) -> Result<(CString, Option<u32>, usize), ParseError> {
+fn parse_impl(input: &str) -> Result<(CString, Option<u8>, usize), ParseError> {
     let (vec, num_hashes, start_suffix) = if input.starts_with("cr") {
         scan_raw_string(&input, 2, true, false)
             .map(|(num, start_suffix)| (None, Some(num), start_suffix))?

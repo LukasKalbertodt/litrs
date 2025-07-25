@@ -249,10 +249,14 @@ pub(crate) fn scan_raw_string(
     offset: usize,
     unicode: bool,
     allow_nul: bool,
-) -> Result<(u32, usize), ParseError> {
+) -> Result<(u8, usize), ParseError> {
     // Raw string literal
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
+
+    if num_hashes > 256 {
+        return Err(perr(offset..offset + num_hashes, TooManyHashes));
+    }
 
     if input.as_bytes().get(offset + num_hashes) != Some(&b'"') {
         return Err(perr(None, InvalidLiteral));
@@ -295,5 +299,5 @@ pub(crate) fn scan_raw_string(
     let suffix = &input[start_suffix..];
     check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
 
-    Ok((num_hashes as u32, start_suffix))
+    Ok((num_hashes as u8, start_suffix))
 }

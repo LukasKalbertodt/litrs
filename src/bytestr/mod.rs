@@ -23,7 +23,7 @@ pub struct ByteStringLit<B: Buffer> {
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
-    num_hashes: Option<u32>,
+    num_hashes: Option<u8>,
 
     /// Start index of the suffix or `raw.len()` if there is no suffix.
     start_suffix: usize,
@@ -112,7 +112,7 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
 
 /// Precondition: input has to start with either `b"` or `br`.
 #[inline(never)]
-fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>, usize), ParseError> {
+fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u8>, usize), ParseError> {
     if input.starts_with("br") {
         scan_raw_string(&input, 2, false, true)
             .map(|(num, start_suffix)| (None, Some(num), start_suffix))
