@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-07-25
+- Fix incorrect byte string value with non-ASCII `\xHH` byte string escapes
+    - `ByteStringLit::parse(r#"b"\xff""#).unwrap().value()` would return `[0xc3, 0xbf]` instead of `[0xff]`.
+- Remove CR LF normalization to align with spec
+    - This is technically a breaking change, but released with a minor version bump as it just aligns with the specification. It is extremely unlikely to affect any real world use case.
+- Fix incorrect error span for out-of-range Unicode escapes
+
 ## [0.4.1] - 2023-10-18
 - Fixed incorrectly labeling `27f32` a float literals in docs.
 - Added hint to integer literal docs about parsing as `u128`.
@@ -92,7 +99,8 @@ All notable changes to this project will be documented in this file.
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.2.3...v0.3.0
