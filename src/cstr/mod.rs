@@ -109,10 +109,10 @@ impl<B: Buffer> fmt::Display for CStringLit<B> {
 #[inline(never)]
 fn parse_impl(input: &str) -> Result<(CString, Option<u8>, usize), ParseError> {
     let (vec, num_hashes, start_suffix) = if input.starts_with("cr") {
-        scan_raw_string(&input, 2, true, false)
+        scan_raw_string(input, 2, true, false)
             .map(|(num, start_suffix)| (None, Some(num), start_suffix))?
     } else {
-        unescape_string::<Vec<u8>>(&input, 2, true, true, false)
+        unescape_string::<Vec<u8>>(input, 2, true, true, false)
             .map(|(v, start_suffix)| (v, None, start_suffix))?
     };
 

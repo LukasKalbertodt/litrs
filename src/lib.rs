@@ -332,7 +332,7 @@ mod sealed {
     pub trait Sealed {}
 }
 
-impl<'a> sealed::Sealed for &'a str {}
+impl sealed::Sealed for &'_ str {}
 impl<'a> Buffer for &'a str {
     #[doc(hidden)]
     fn cut(self, range: Range<usize>) -> Self {

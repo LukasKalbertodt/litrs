@@ -55,7 +55,7 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
 
 
 pub(crate) fn first_byte_or_empty(s: &str) -> Result<u8, ParseError> {
-    s.as_bytes().get(0).copied().ok_or(perr(None, Empty))
+    s.as_bytes().first().copied().ok_or(perr(None, Empty))
 }
 
 /// Returns the index of the first non-underscore, non-decimal digit in `input`,
