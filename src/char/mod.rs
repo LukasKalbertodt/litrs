@@ -84,7 +84,10 @@ pub(crate) fn parse_impl(input: &str) -> Result<(char, usize), ParseError> {
         '\n' | '\t' | '\r'
             => return Err(perr(1, UnescapedSpecialWhitespace)),
 
-        '\\' => unescape::<char>(&input[1..], 1, true, false)?,
+        '\\' => {
+            let (v, len) = unescape(&input[1..], 1, true, false, true)?;
+            (v.unwrap_char(), len)
+        }
         other => (other, other.len_utf8()),
     };
 

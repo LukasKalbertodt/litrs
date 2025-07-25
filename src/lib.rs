@@ -124,6 +124,7 @@
 //!     Literal::String(lit) => { /* ... */ }
 //!     Literal::Byte(lit) => { /* ... */ }
 //!     Literal::ByteString(lit) => { /* ... */ }
+//!     Literal::CString(lit) => { /* ... */ }
 //! }
 //! ```
 //!
@@ -158,6 +159,7 @@ mod bool;
 mod byte;
 mod bytestr;
 mod char;
+mod cstr;
 mod err;
 mod escape;
 mod float;
@@ -174,6 +176,7 @@ pub use self::{
     byte::ByteLit,
     bytestr::ByteStringLit,
     char::CharLit,
+    cstr::CStringLit,
     err::{InvalidToken, ParseError},
     float::{FloatLit, FloatType},
     integer::{FromIntegerLiteral, IntegerLit, IntegerBase, IntegerType},
@@ -203,6 +206,7 @@ pub enum Literal<B: Buffer> {
     String(StringLit<B>),
     Byte(ByteLit<B>),
     ByteString(ByteStringLit<B>),
+    CString(CStringLit<B>),
 }
 
 impl<B: Buffer> Literal<B> {
@@ -257,6 +261,7 @@ impl<B: Buffer> Literal<B> {
             Literal::String(l) => l.suffix(),
             Literal::Byte(l) => l.suffix(),
             Literal::ByteString(l) => l.suffix(),
+            Literal::CString(l) => l.suffix(),
         }
     }
 }
@@ -273,6 +278,7 @@ impl Literal<&str> {
             Literal::String(l) => Literal::String(l.into_owned()),
             Literal::Byte(l) => Literal::Byte(l.to_owned()),
             Literal::ByteString(l) => Literal::ByteString(l.into_owned()),
+            Literal::CString(l) => Literal::CString(l.into_owned()),
         }
     }
 }
@@ -287,6 +293,7 @@ impl<B: Buffer> fmt::Display for Literal<B> {
             Literal::String(l) => l.fmt(f),
             Literal::Byte(l) => l.fmt(f),
             Literal::ByteString(l) => l.fmt(f),
+            Literal::CString(l) => l.fmt(f),
         }
     }
 }

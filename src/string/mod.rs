@@ -112,10 +112,10 @@ impl<B: Buffer> fmt::Display for StringLit<B> {
 #[inline(never)]
 pub(crate) fn parse_impl(input: &str) -> Result<(Option<String>, Option<u32>, usize), ParseError> {
     if input.starts_with('r') {
-        scan_raw_string::<char>(&input, 1, true)
+        scan_raw_string(&input, 1, true, true)
             .map(|(hashes, start_suffix)| (None, Some(hashes), start_suffix))
     } else {
-        unescape_string::<char>(&input, 1, true, false)
+        unescape_string::<String>(&input, 1, true, false, true)
             .map(|(v, start_suffix)| (v, None, start_suffix))
     }
 }

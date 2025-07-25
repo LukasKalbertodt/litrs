@@ -113,6 +113,8 @@ fn unicode_escapes() {
     check!("\\🦊\u{3_b}", true, None);
     check!("🦊\u{1_F_6_0_2}Füchsin", true, None);
     check!("నక్క\\\u{1_F6_02_____}నక్క", true, None);
+
+    check!("a\u{7e}b\u{fc}c\u{0b10}d", true, None);
 }
 
 #[test]

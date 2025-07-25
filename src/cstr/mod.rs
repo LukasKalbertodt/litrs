@@ -1,4 +1,4 @@
-use std::{fmt, ops::Range};
+use std::{ffi::{CStr, CString}, fmt, ops::Range};
 
 use crate::{
     Buffer, ParseError,
@@ -7,19 +7,19 @@ use crate::{
 };
 
 
-/// A byte string or raw byte string literal, e.g. `b"hello"` or `br#"abc"def"#`.
+/// A C string or raw C string literal, e.g. `c"hello"` or `cr#"abc"def"#`.
 ///
 /// See [the reference][ref] for more information.
 ///
-/// [ref]: https://doc.rust-lang.org/reference/tokens.html#byte-string-literals
+/// [ref]: https://doc.rust-lang.org/reference/tokens.html#c-string-and-raw-c-string-literals
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ByteStringLit<B: Buffer> {
+pub struct CStringLit<B: Buffer> {
     /// The raw input.
     raw: B,
 
-    /// The string value (with all escaped unescaped), or `None` if there were
-    /// no escapes. In the latter case, `input` is the string value.
-    value: Option<Vec<u8>>,
+    /// The string value (with all escaped unescaped) as CString. This is not an
+    /// `Option` as we always have to add the trailing zero byte.
+    value: CString,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
@@ -29,15 +29,15 @@ pub struct ByteStringLit<B: Buffer> {
     start_suffix: usize,
 }
 
-impl<B: Buffer> ByteStringLit<B> {
+impl<B: Buffer> CStringLit<B> {
     /// Parses the input as a (raw) byte string literal. Returns an error if the
     /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, ParseError> {
         if input.is_empty() {
             return Err(perr(None, Empty));
         }
-        if !input.starts_with(r#"b""#) && !input.starts_with("br") {
-            return Err(perr(None, InvalidByteStringLiteralStart));
+        if !input.starts_with(r#"c""#) && !input.starts_with("cr") {
+            return Err(perr(None, InvalidCStringLiteralStart));
         }
 
         let (value, num_hashes, start_suffix) = parse_impl(&input)?;
@@ -46,18 +46,13 @@ impl<B: Buffer> ByteStringLit<B> {
 
     /// Returns the string value this literal represents (where all escapes have
     /// been turned into their respective values).
-    pub fn value(&self) -> &[u8] {
-        self.value.as_deref().unwrap_or(&self.raw.as_bytes()[self.inner_range()])
+    pub fn value(&self) -> &CStr {
+        &self.value
     }
 
-    /// Like `value` but returns a potentially owned version of the value.
-    ///
-    /// The return value is either `Cow<'static, [u8]>` if `B = String`, or
-    /// `Cow<'a, [u8]>` if `B = &'a str`.
-    pub fn into_value(self) -> B::ByteCow {
-        let inner_range = self.inner_range();
-        let Self { raw, value, .. } = self;
-        value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+    /// Like `value` but returns an owned version of the value.
+    pub fn into_value(self) -> CString {
+        self.value
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -66,8 +61,8 @@ impl<B: Buffer> ByteStringLit<B> {
     }
 
     /// Returns whether this literal is a raw string literal (starting with
-    /// `r`).
-    pub fn is_raw_byte_string(&self) -> bool {
+    /// `cr`).
+    pub fn is_raw_c_string(&self) -> bool {
         self.num_hashes.is_some()
     }
 
@@ -80,21 +75,21 @@ impl<B: Buffer> ByteStringLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
+}
 
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
-    fn inner_range(&self) -> Range<usize> {
-        match self.num_hashes {
-            None => 2..self.start_suffix - 1,
-            Some(n) => 2 + n as usize + 1..self.start_suffix - n as usize - 1,
-        }
+fn inner_range(num_hashes: Option<u32>, start_suffix: usize) -> Range<usize> {
+    match num_hashes {
+        None => 2..start_suffix - 1,
+        Some(n) => 2 + n as usize + 1..start_suffix - n as usize - 1,
     }
 }
 
-impl ByteStringLit<&str> {
+impl CStringLit<&str> {
     /// Makes a copy of the underlying buffer and returns the owned version of
     /// `Self`.
-    pub fn into_owned(self) -> ByteStringLit<String> {
-        ByteStringLit {
+    pub fn into_owned(self) -> CStringLit<String> {
+        CStringLit {
             raw: self.raw.to_owned(),
             value: self.value,
             num_hashes: self.num_hashes,
@@ -103,7 +98,7 @@ impl ByteStringLit<&str> {
     }
 }
 
-impl<B: Buffer> fmt::Display for ByteStringLit<B> {
+impl<B: Buffer> fmt::Display for CStringLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.pad(&self.raw)
     }
@@ -112,15 +107,23 @@ impl<B: Buffer> fmt::Display for ByteStringLit<B> {
 
 /// Precondition: input has to start with either `b"` or `br`.
 #[inline(never)]
-fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>, usize), ParseError> {
-    if input.starts_with("br") {
-        scan_raw_string(&input, 2, false, true)
-            .map(|(num, start_suffix)| (None, Some(num), start_suffix))
+fn parse_impl(input: &str) -> Result<(CString, Option<u32>, usize), ParseError> {
+    let (vec, num_hashes, start_suffix) = if input.starts_with("cr") {
+        scan_raw_string(&input, 2, true, false)
+            .map(|(num, start_suffix)| (None, Some(num), start_suffix))?
     } else {
-        unescape_string::<Vec<u8>>(&input, 2, false, true, true)
-            .map(|(v, start_suffix)| (v, None, start_suffix))
-    }
+        unescape_string::<Vec<u8>>(&input, 2, true, true, false)
+            .map(|(v, start_suffix)| (v, None, start_suffix))?
+    };
+
+
+    let inner_range = inner_range(num_hashes, start_suffix);
+    let vec = vec.unwrap_or_else(|| input[inner_range].as_bytes().to_vec());
+    let value = CString::new(vec).unwrap(); // we already checked for nul bytes
+
+    Ok((value, num_hashes, start_suffix))
 }
+
 
 #[cfg(test)]
 mod tests;

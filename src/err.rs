@@ -79,6 +79,7 @@ impl fmt::Display for InvalidToken {
                 TokenKind::FloatLit => "a float literal (e.g. `3.14`)",
                 TokenKind::IntegerLit => "an integer literal (e.g. `27`)",
                 TokenKind::StringLit => r#"a string literal (e.g. "Ferris")"#,
+                TokenKind::CStringLit => r#"a C string literal (e.g. c"Ferris")"#,
             }
         }
 
@@ -99,6 +100,7 @@ pub(crate) enum TokenKind {
     FloatLit,
     IntegerLit,
     StringLit,
+    CStringLit,
 }
 
 /// Unfortunately, we have to deal with both cases.
@@ -299,6 +301,15 @@ pub(crate) enum ParseErrorKind {
 
     InvalidByteStringLiteralStart,
 
+    /// Not starting with `c"` or `cr`.
+    InvalidCStringLiteralStart,
+
+    /// A `\0` escape inside a C string.
+    DisallowedNulEscape,
+
+    /// A nul byte inside a C String.
+    NulByte,
+
     /// `\r` in a (raw) string or (raw) byte string literal.
     CarriageReturn,
 
@@ -354,6 +365,9 @@ impl fmt::Display for ParseError {
             InvalidStringLiteralStart => "invalid start for string literal",
             InvalidByteLiteralStart => "invalid start for byte literal",
             InvalidByteStringLiteralStart => "invalid start for byte string literal",
+            InvalidCStringLiteralStart => "invalid start for C string literal",
+            DisallowedNulEscape => r"`\0` escape not allowed inside C string literal",
+            NulByte => r"nul byte not allowed inside C string literal",
             CarriageReturn => r"`\r` not allowed in string literals",
             InvalidSuffix => "literal suffix is not a valid identifier",
             UnexpectedIntegerLit => "expected float literal, but found integer",

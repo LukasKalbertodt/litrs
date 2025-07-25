@@ -9,6 +9,7 @@ use crate::{
     IntegerLit,
     Literal,
     StringLit,
+    CStringLit,
     err::{perr, ParseErrorKind::{*, self}},
 };
 
@@ -45,6 +46,8 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
         b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
         b'b' if second == Some(b'r') || second == Some(b'"')
             => ByteStringLit::parse(input).map(Literal::ByteString),
+
+        b'c' => CStringLit::parse(input).map(Literal::CString),
 
         _ => Err(perr(None, InvalidLiteral)),
     }

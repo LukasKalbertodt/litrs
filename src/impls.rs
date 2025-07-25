@@ -47,6 +47,7 @@ impl_specific_lit_to_lit!(crate::CharLit<B>, Char);
 impl_specific_lit_to_lit!(crate::StringLit<B>, String);
 impl_specific_lit_to_lit!(crate::ByteLit<B>, Byte);
 impl_specific_lit_to_lit!(crate::ByteStringLit<B>, ByteString);
+impl_specific_lit_to_lit!(crate::CStringLit<B>, CString);
 
 
 
@@ -122,6 +123,7 @@ fn kind_of(lit: &Literal<String>) -> TokenKind {
         Literal::Char(_) => TokenKind::CharLit,
         Literal::Byte(_) => TokenKind::ByteLit,
         Literal::ByteString(_) => TokenKind::ByteStringLit,
+        Literal::CString(_) => TokenKind::CStringLit,
     }
 }
 
@@ -173,6 +175,7 @@ helper!(impl_for_specific_lit, crate::CharLit<String>, Char, CharLit);
 helper!(impl_for_specific_lit, crate::StringLit<String>, String, StringLit);
 helper!(impl_for_specific_lit, crate::ByteLit<String>, Byte, ByteLit);
 helper!(impl_for_specific_lit, crate::ByteStringLit<String>, ByteString, ByteStringLit);
+helper!(impl_for_specific_lit, crate::CStringLit<String>, CString, CStringLit);
 
 
 // ==============================================================================================
@@ -205,6 +208,7 @@ helper_no_refs!(impl_specific_lit_to_pm_lit, CharLit, Char, CharLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, StringLit, String, StringLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, ByteLit, Byte, ByteLit);
 helper_no_refs!(impl_specific_lit_to_pm_lit, ByteStringLit, ByteString, ByteStringLit);
+helper_no_refs!(impl_specific_lit_to_pm_lit, CStringLit, CString, CStringLit);
 
 
 // ==============================================================================================
@@ -278,6 +282,7 @@ mod tests {
     //! let _ = litrs::Literal::<String>::from(give::<litrs::StringLit<String>>());
     //! let _ = litrs::Literal::<String>::from(give::<litrs::ByteLit<String>>());
     //! let _ = litrs::Literal::<String>::from(give::<litrs::ByteStringLit<String>>());
+    //! let _ = litrs::Literal::<String>::from(give::<litrs::CStringLit<String>>());
     //!
     //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::BoolLit>());
     //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::IntegerLit<&'static str>>());
@@ -286,6 +291,7 @@ mod tests {
     //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::StringLit<&'static str>>());
     //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteLit<&'static str>>());
     //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::ByteStringLit<&'static str>>());
+    //! let _ = litrs::Literal::<&'static str>::from(give::<litrs::CStringLit<&'static str>>());
     //!
     //!
     //! let _ = litrs::Literal::from(give::<proc_macro::Literal>());
@@ -313,6 +319,9 @@ mod tests {
     //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::Literal>());
     //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::Literal>());
     //!
+    //! let _ = litrs::CStringLit::try_from(give::<proc_macro::Literal>());
+    //! let _ = litrs::CStringLit::try_from(give::<&proc_macro::Literal>());
+    //!
     //!
     //! let _ = litrs::BoolLit::try_from(give::<proc_macro::TokenTree>());
     //! let _ = litrs::BoolLit::try_from(give::<&proc_macro::TokenTree>());
@@ -334,6 +343,9 @@ mod tests {
     //!
     //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro::TokenTree>());
     //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro::TokenTree>());
+    //!
+    //! let _ = litrs::CStringLit::try_from(give::<proc_macro::TokenTree>());
+    //! let _ = litrs::CStringLit::try_from(give::<&proc_macro::TokenTree>());
     //! ```
 }
 
@@ -376,6 +388,9 @@ mod tests_proc_macro2 {
     //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::Literal>());
     //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::Literal>());
     //!
+    //! let _ = litrs::CStringLit::try_from(give::<proc_macro2::Literal>());
+    //! let _ = litrs::CStringLit::try_from(give::<&proc_macro2::Literal>());
+    //!
     //!
     //! let _ = litrs::BoolLit::try_from(give::<proc_macro2::TokenTree>());
     //! let _ = litrs::BoolLit::try_from(give::<&proc_macro2::TokenTree>());
@@ -397,5 +412,8 @@ mod tests_proc_macro2 {
     //!
     //! let _ = litrs::ByteStringLit::try_from(give::<proc_macro2::TokenTree>());
     //! let _ = litrs::ByteStringLit::try_from(give::<&proc_macro2::TokenTree>());
+    //!
+    //! let _ = litrs::CStringLit::try_from(give::<proc_macro2::TokenTree>());
+    //! let _ = litrs::CStringLit::try_from(give::<&proc_macro2::TokenTree>());
     //! ```
 }
