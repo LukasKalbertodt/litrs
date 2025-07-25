@@ -109,7 +109,7 @@ impl Escapee for char {
 /// Checks whether the character is skipped after a string continue start
 /// (unescaped backlash followed by `\n`).
 fn is_string_continue_skipable_whitespace(b: u8) -> bool {
-    b == b' ' || b == b'\t' || b == b'\n' || b == b'\r'
+    b == b' ' || b == b'\t' || b == b'\n'
 }
 
 /// Unescapes a whole string or byte string.
@@ -143,16 +143,7 @@ pub(crate) fn unescape_string<E: Escapee>(
                 i += len;
                 end_last_escape = i;
             }
-            b'\r' => {
-                if input.as_bytes().get(i + 1) == Some(&b'\n') {
-                    value.push_str(&input[end_last_escape..i]);
-                    value.push('\n');
-                    i += 2;
-                    end_last_escape = i;
-                } else {
-                    return Err(perr(i, IsolatedCr))
-                }
-            }
+            b'\r' => return Err(perr(i, CarriageReturn)),
             b'"' => {
                 closing_quote_pos = Some(i);
                 break;
@@ -184,14 +175,13 @@ pub(crate) fn unescape_string<E: Escapee>(
     Ok((value, start_suffix))
 }
 
-/// Reads and checks a raw (byte) string literal, converting `\r\n` sequences to
-/// just `\n` sequences. Returns an optional new string (if the input contained
-/// any `\r\n`) and the number of hashes used by the literal.
+/// Reads and checks a raw (byte) string literal. Returns the number of hashes
+/// and the index when the suffix starts.
 #[inline(never)]
 pub(crate) fn scan_raw_string<E: Escapee>(
     input: &str,
     offset: usize,
-) -> Result<(Option<String>, u32, usize), ParseError> {
+) -> Result<(u32, usize), ParseError> {
     // Raw string literal
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
@@ -204,8 +194,6 @@ pub(crate) fn scan_raw_string<E: Escapee>(
 
     let mut closing_quote_pos = None;
     let mut i = start_inner;
-    let mut end_last_escape = start_inner;
-    let mut value = String::new();
     while i < input.len() {
         let b = input.as_bytes()[i];
         if b == b'"' && input[i + 1..].starts_with(hashes) {
@@ -213,22 +201,11 @@ pub(crate) fn scan_raw_string<E: Escapee>(
             break;
         }
 
+        // CR are just always disallowed in all (raw) strings. Rust performs
+        // a normalization of CR LF to just LF in a pass prior to lexing. But
+        // in lexing, it's disallowed.
         if b == b'\r' {
-            // Convert `\r\n` into `\n`. This is currently not well documented
-            // in the Rust reference, but is done even for raw strings. That's
-            // because rustc simply converts all line endings when reading
-            // source files.
-            if input.as_bytes().get(i + 1) == Some(&b'\n') {
-                value.push_str(&input[end_last_escape..i]);
-                value.push('\n');
-                i += 2;
-                end_last_escape = i;
-                continue;
-            } else if E::SUPPORTS_UNICODE {
-                // If no \n follows the \r and we are scanning a raw string
-                // (not raw byte string), we error.
-                return Err(perr(i, IsolatedCr))
-            }
+            return Err(perr(i, CarriageReturn));
         }
 
         if !E::SUPPORTS_UNICODE {
@@ -246,17 +223,5 @@ pub(crate) fn scan_raw_string<E: Escapee>(
     let suffix = &input[start_suffix..];
     check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
 
-    // `value` is only empty if there was no \r\n in the input string (with the
-    // special case of the input being empty). This means the string value
-    // equals the input, so we store `None`.
-    let value = if value.is_empty() {
-        None
-    } else {
-        // There was an \r\n in the string, so we need to push the remaining
-        // unescaped part of the string still.
-        value.push_str(&input[end_last_escape..closing_quote_pos]);
-        Some(value)
-    };
-
-    Ok((value, num_hashes as u32, start_suffix))
+    Ok((num_hashes as u32, start_suffix))
 }

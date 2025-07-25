@@ -299,9 +299,8 @@ pub(crate) enum ParseErrorKind {
 
     InvalidByteStringLiteralStart,
 
-    /// An literal `\r` character not followed by a `\n` character in a
-    /// (raw) string or byte string literal.
-    IsolatedCr,
+    /// `\r` in a (raw) string or (raw) byte string literal.
+    CarriageReturn,
 
     /// Literal suffix is not a valid identifier.
     InvalidSuffix,
@@ -355,7 +354,7 @@ impl fmt::Display for ParseError {
             InvalidStringLiteralStart => "invalid start for string literal",
             InvalidByteLiteralStart => "invalid start for byte literal",
             InvalidByteStringLiteralStart => "invalid start for byte string literal",
-            IsolatedCr => r"`\r` not immediately followed by `\n` in string",
+            CarriageReturn => r"`\r` not allowed in string literals",
             InvalidSuffix => "literal suffix is not a valid identifier",
             UnexpectedIntegerLit => "expected float literal, but found integer",
             IntegerSuffixStartingWithE => "integer literal suffix must not start with 'e' or 'E'",

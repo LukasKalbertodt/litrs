@@ -127,7 +127,7 @@ fn string_continue() {
         banana", true, None);
 
     // Weird whitespace characters
-    let lit = StringLit::parse("\"foo\\\n\r\t\n \n\tbar\"").expect("failed to parse");
+    let lit = StringLit::parse("\"foo\\\n\t\n \n\tbar\"").expect("failed to parse");
     assert_eq!(lit.value(), "foobar");
     let lit = StringLit::parse("\"foo\\\n\u{85}bar\"").expect("failed to parse");
     assert_eq!(lit.value(), "foo\u{85}bar");
@@ -137,27 +137,6 @@ fn string_continue() {
     // Raw strings do not handle "string continues"
     check!(r"foo\
         bar", false, Some(0));
-}
-
-#[test]
-fn crlf_newlines() {
-    let lit = StringLit::parse("\"foo\r\nbar\"").expect("failed to parse");
-    assert_eq!(lit.value(), "foo\nbar");
-
-    let lit = StringLit::parse("\"\r\nbar\"").expect("failed to parse");
-    assert_eq!(lit.value(), "\nbar");
-
-    let lit = StringLit::parse("\"лиса\r\n\"").expect("failed to parse");
-    assert_eq!(lit.value(), "лиса\n");
-
-    let lit = StringLit::parse("r\"foo\r\nbar\"").expect("failed to parse");
-    assert_eq!(lit.value(), "foo\nbar");
-
-    let lit = StringLit::parse("r#\"\r\nbar\"#").expect("failed to parse");
-    assert_eq!(lit.value(), "\nbar");
-
-    let lit = StringLit::parse("r##\"лиса\r\n\"##").expect("failed to parse");
-    assert_eq!(lit.value(), "лиса\n");
 }
 
 #[test]
@@ -211,10 +190,10 @@ fn parse_err() {
     assert_err!(StringLit, r#""fox"peter""#, InvalidSuffix, 5);
     assert_err!(StringLit, r###"r#"foo "# bar"#"###, UnexpectedChar, 9);
 
-    assert_err!(StringLit, "\"\r\"", IsolatedCr, 1);
-    assert_err!(StringLit, "\"fo\rx\"", IsolatedCr, 3);
-    assert_err!(StringLit, "r\"\r\"", IsolatedCr, 2);
-    assert_err!(StringLit, "r\"fo\rx\"", IsolatedCr, 4);
+    assert_err!(StringLit, "\"\r\"", CarriageReturn, 1);
+    assert_err!(StringLit, "\"fo\rx\"", CarriageReturn, 3);
+    assert_err!(StringLit, "r\"\r\"", CarriageReturn, 2);
+    assert_err!(StringLit, "r\"fo\rx\"", CarriageReturn, 4);
 
     assert_err!(StringLit, r##"r####""##, UnterminatedRawString, None);
     assert_err!(StringLit, r#####"r##"foo"#bar"#####, UnterminatedRawString, None);
