@@ -97,12 +97,14 @@ pub(crate) fn unescape<E: Escapee>(
     Ok(out)
 }
 
-pub(crate) trait Escapee: Into<char> {
+pub(crate) trait Escapee: Sized {
+    type Container: EscapeeContainer<Self>;
     fn from_byte(b: u8) -> Self;
     fn from_char(c: char) -> Self;
 }
 
 impl Escapee for u8 {
+    type Container = Vec<u8>;
     fn from_byte(b: u8) -> Self {
         b
     }
@@ -112,6 +114,7 @@ impl Escapee for u8 {
 }
 
 impl Escapee for char {
+    type Container = String;
     fn from_byte(b: u8) -> Self {
         b.into()
     }
@@ -119,6 +122,28 @@ impl Escapee for char {
         c
     }
 }
+
+pub(crate) trait EscapeeContainer<E: Escapee> {
+    fn new() -> Self;
+    fn is_empty(&self) -> bool;
+    fn push(&mut self, v: E);
+    fn push_str(&mut self, s: &str);
+}
+
+impl EscapeeContainer<u8> for Vec<u8> {
+    fn new() -> Self { Self::new() }
+    fn is_empty(&self) -> bool { self.is_empty() }
+    fn push(&mut self, v: u8) { self.push(v); }
+    fn push_str(&mut self, s: &str) { self.extend_from_slice(s.as_bytes()); }
+}
+
+impl EscapeeContainer<char> for String {
+    fn new() -> Self { Self::new() }
+    fn is_empty(&self) -> bool { self.is_empty() }
+    fn push(&mut self, v: char) { self.push(v); }
+    fn push_str(&mut self, s: &str) { self.push_str(s); }
+}
+
 
 /// Checks whether the character is skipped after a string continue start
 /// (unescaped backlash followed by `\n`).
@@ -133,11 +158,11 @@ pub(crate) fn unescape_string<E: Escapee>(
     offset: usize,
     unicode: bool,
     byte_escapes: bool,
-) -> Result<(Option<String>, usize), ParseError> {
+) -> Result<(Option<E::Container>, usize), ParseError> {
     let mut closing_quote_pos = None;
     let mut i = offset;
     let mut end_last_escape = offset;
-    let mut value = String::new();
+    let mut value = <E::Container>::new();
     while i < input.len() {
         match input.as_bytes()[i] {
             // Handle "string continue".
@@ -156,7 +181,7 @@ pub(crate) fn unescape_string<E: Escapee>(
                 let rest = &input[i..input.len() - 1];
                 let (c, len) = unescape::<E>(rest, i, unicode, byte_escapes)?;
                 value.push_str(&input[end_last_escape..i]);
-                value.push(c.into());
+                value.push(c);
                 i += len;
                 end_last_escape = i;
             }

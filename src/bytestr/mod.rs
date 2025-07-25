@@ -118,7 +118,7 @@ fn parse_impl(input: &str) -> Result<(Option<Vec<u8>>, Option<u32>, usize), Pars
             .map(|(num, start_suffix)| (None, Some(num), start_suffix))
     } else {
         unescape_string::<u8>(&input, 2, false, true)
-            .map(|(v, start_suffix)| (v.map(String::into_bytes), None, start_suffix))
+            .map(|(v, start_suffix)| (v, None, start_suffix))
     }
 }
 
