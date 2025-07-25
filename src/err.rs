@@ -165,6 +165,14 @@ impl ParseError {
     pub fn span(&self) -> Option<Range<usize>> {
         self.span.clone()
     }
+
+    /// Adds `offset` to the start and endpoint of the inner span.
+    pub(crate) fn offset_span(self, offset: usize) -> Self {
+        Self {
+            span: self.span.map(|span| span.start + offset..span.end + offset),
+            ..self
+        }
+    }
 }
 
 /// This is a free standing function instead of an associated one to reduce

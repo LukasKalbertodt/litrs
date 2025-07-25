@@ -16,13 +16,12 @@ use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::{hex_digit_value,
 /// [Byte escapes]: https://doc.rust-lang.org/reference/tokens.html#byte-escapes
 pub(crate) fn unescape(
     input: &str,
-    offset: usize,
     unicode: bool,
     byte_escapes: bool,
     allow_nul: bool,
 ) -> Result<(Unescape, usize), ParseError> {
     let first = input.as_bytes().get(1)
-        .ok_or(perr(offset, UnterminatedEscape))?;
+        .ok_or(perr(0, UnterminatedEscape))?;
     let out = match first {
         // Quote escapes
         b'\'' => (Unescape::Byte(b'\''), 2),
@@ -36,24 +35,24 @@ pub(crate) fn unescape(
         b'0' => if allow_nul {
             (Unescape::Byte(b'\0'), 2)
         } else {
-            return Err(perr(offset..offset + 2, DisallowedNulEscape))
+            return Err(perr(0..2, DisallowedNulEscape))
         },
         b'x' => {
             let hex_string = input.get(2..4)
-                .ok_or(perr(offset..offset + input.len(), UnterminatedEscape))?
+                .ok_or(perr(0..input.len(), UnterminatedEscape))?
                 .as_bytes();
             let first = hex_digit_value(hex_string[0])
-                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
+                .ok_or(perr(0..4, InvalidXEscape))?;
             let second = hex_digit_value(hex_string[1])
-                .ok_or(perr(offset..offset + 4, InvalidXEscape))?;
+                .ok_or(perr(0..4, InvalidXEscape))?;
             let value = second + 16 * first;
 
             if !byte_escapes && value > 0x7F {
-                return Err(perr(offset..offset + 4, NonAsciiXEscape));
+                return Err(perr(0..4, NonAsciiXEscape));
             }
 
             if !allow_nul && value == 0 {
-                return Err(perr(offset..offset + 4, DisallowedNulEscape));
+                return Err(perr(0..4, DisallowedNulEscape));
             }
 
             (Unescape::Byte(value), 4)
@@ -62,19 +61,19 @@ pub(crate) fn unescape(
         // Unicode escape
         b'u' => {
             if !unicode {
-                return Err(perr(offset..offset + 2, UnicodeEscapeInByteLiteral));
+                return Err(perr(0..2, UnicodeEscapeInByteLiteral));
             }
 
             if input.as_bytes().get(2) != Some(&b'{') {
-                return Err(perr(offset..offset + 2, UnicodeEscapeWithoutBrace));
+                return Err(perr(0..2, UnicodeEscapeWithoutBrace));
             }
 
             let closing_pos = input.bytes().position(|b| b == b'}')
-                .ok_or(perr(offset..offset + input.len(), UnterminatedUnicodeEscape))?;
+                .ok_or(perr(0..input.len(), UnterminatedUnicodeEscape))?;
 
             let inner = &input[3..closing_pos];
             if inner.as_bytes().first() == Some(&b'_') {
-                return Err(perr(4, InvalidStartOfUnicodeEscape));
+                return Err(perr(3, InvalidStartOfUnicodeEscape));
             }
 
             let mut v: u32 = 0;
@@ -85,26 +84,26 @@ pub(crate) fn unescape(
                 }
 
                 let digit = hex_digit_value(b)
-                    .ok_or(perr(offset + 3 + i, NonHexDigitInUnicodeEscape))?;
+                    .ok_or(perr(3 + i, NonHexDigitInUnicodeEscape))?;
 
                 if digit_count == 6 {
-                    return Err(perr(offset + 3 + i, TooManyDigitInUnicodeEscape));
+                    return Err(perr(3 + i, TooManyDigitInUnicodeEscape));
                 }
                 digit_count += 1;
                 v = 16 * v + digit as u32;
             }
 
             if !allow_nul && v == 0 {
-                return Err(perr(offset..offset + closing_pos + 1, DisallowedNulEscape));
+                return Err(perr(0..closing_pos + 1, DisallowedNulEscape));
             }
 
             let c = std::char::from_u32(v)
-                .ok_or(perr(offset..offset + closing_pos + 1, InvalidUnicodeEscapeChar))?;
+                .ok_or(perr(0..closing_pos + 1, InvalidUnicodeEscapeChar))?;
 
             (Unescape::Unicode(c), closing_pos + 1)
         }
 
-        _ => return Err(perr(offset..offset + 2, UnknownEscape)),
+        _ => return Err(perr(0..2, UnknownEscape)),
     };
 
     Ok(out)
@@ -203,7 +202,8 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
             }
             b'\\' => {
                 let rest = &input[i..input.len() - 1];
-                let (c, len) = unescape(rest, i, unicode, byte_escapes, allow_nul)?;
+                let (c, len) = unescape(rest, unicode, byte_escapes, allow_nul)
+                    .map_err(|e| e.offset_span(i))?;
                 value.push_str(&input[end_last_escape..i]);
                 value.push(c);
                 i += len;

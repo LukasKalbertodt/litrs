@@ -86,7 +86,7 @@ pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
         b'\'' => return Err(perr(None, EmptyByteLiteral)),
         b'\n' | b'\t' | b'\r' => return Err(perr(2, UnescapedSpecialWhitespace)),
         b'\\' => {
-            let (v, len) = unescape(&input[2..], 2, false, true, true)?;
+            let (v, len) = unescape(&input[2..], false, true, true).map_err(|e| e.offset_span(2))?;
             (v.unwrap_byte(), len)
         },
         other if other.is_ascii() => (*other, 1),
