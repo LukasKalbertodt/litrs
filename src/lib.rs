@@ -310,13 +310,13 @@ impl<B: Buffer> fmt::Display for Literal<B> {
 /// `litrs` only guarantees that this trait is implemented for `String` and
 /// `for<'a> &'a str`.
 pub trait Buffer: sealed::Sealed + Deref<Target = str> {
-    /// This is `Cow<'static, str>` for `String`, and `Cow<'a, str>` for `&'a str`.
+    /// This is `String` for `String`, and `Cow<'a, str>` for `&'a str`.
     type Cow: From<String> + AsRef<str> + Borrow<str> + Deref<Target = str>;
 
     #[doc(hidden)]
     fn into_cow(self) -> Self::Cow;
 
-    /// This is `Cow<'static, [u8]>` for `String`, and `Cow<'a, [u8]>` for `&'a str`.
+    /// This is `Vec<u8>` for `String`, and `Cow<'a, [u8]>` for `&'a str`.
     type ByteCow: From<Vec<u8>> + AsRef<[u8]> + Borrow<[u8]> + Deref<Target = [u8]>;
 
     #[doc(hidden)]
@@ -363,15 +363,15 @@ impl Buffer for String {
         self
     }
 
-    type Cow = Cow<'static, str>;
+    type Cow = String;
     #[doc(hidden)]
     fn into_cow(self) -> Self::Cow {
-        self.into()
+        self
     }
 
-    type ByteCow = Cow<'static, [u8]>;
+    type ByteCow = Vec<u8>;
     #[doc(hidden)]
     fn into_byte_cow(self) -> Self::ByteCow {
-        self.into_bytes().into()
+        self.into_bytes()
     }
 }

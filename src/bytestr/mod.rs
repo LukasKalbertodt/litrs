@@ -52,7 +52,7 @@ impl<B: Buffer> ByteStringLit<B> {
 
     /// Like `value` but returns a potentially owned version of the value.
     ///
-    /// The return value is either `Cow<'static, [u8]>` if `B = String`, or
+    /// The return value is either `Vec<u8>` if `B = String`, or
     /// `Cow<'a, [u8]>` if `B = &'a str`.
     pub fn into_value(self) -> B::ByteCow {
         let inner_range = self.inner_range();

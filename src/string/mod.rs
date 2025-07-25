@@ -51,7 +51,7 @@ impl<B: Buffer> StringLit<B> {
 
     /// Like `value` but returns a potentially owned version of the value.
     ///
-    /// The return value is either `Cow<'static, str>` if `B = String`, or
+    /// The return value is either `String` if `B = String`, or
     /// `Cow<'a, str>` if `B = &'a str`.
     pub fn into_value(self) -> B::Cow {
         let inner_range = self.inner_range();
