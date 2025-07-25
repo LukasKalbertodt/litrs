@@ -199,7 +199,7 @@ fn invalid_unicode_escapes() {
     assert_err!(CharLit, r"'\u{1_23_4_56_7}'", TooManyDigitInUnicodeEscape, 14);
     assert_err!(CharLit, r"'\u{abcdef123}'", TooManyDigitInUnicodeEscape, 10);
 
-    assert_err!(CharLit, r"'\u{110000}'", InvalidUnicodeEscapeChar, 1..10);
+    assert_err!(CharLit, r"'\u{110000}'", InvalidUnicodeEscapeChar, 1..11);
 }
 
 #[test]

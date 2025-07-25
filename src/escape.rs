@@ -86,7 +86,7 @@ pub(crate) fn unescape<E: Escapee>(
             }
 
             let c = std::char::from_u32(v)
-                .ok_or(perr(offset..closing_pos + 1, InvalidUnicodeEscapeChar))?;
+                .ok_or(perr(offset..offset + closing_pos + 1, InvalidUnicodeEscapeChar))?;
 
             (E::from_char(c), closing_pos + 1)
         }

@@ -253,5 +253,5 @@ fn invalid_unicode_escapes() {
     assert_err!(StringLit, r#""నక్క\u{1_23_4_56_7}""#, TooManyDigitInUnicodeEscape, 26);
     assert_err!(StringLit, r#""\u{abcdef123}лиса""#, TooManyDigitInUnicodeEscape, 10);
 
-    assert_err!(StringLit, r#""\u{110000}fox""#, InvalidUnicodeEscapeChar, 1..10);
+    assert_err!(StringLit, r#""\u{110000}fox""#, InvalidUnicodeEscapeChar, 1..11);
 }
