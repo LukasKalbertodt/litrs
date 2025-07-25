@@ -10,10 +10,10 @@ Parse and inspect Rust literals (i.e. tokens in the Rust programming language
 representing fixed values). Particularly useful for proc macros, but can also
 be used outside of a proc-macro context.
 """
-documentation = "https://docs.rs/litrs/"
-repository = "https://github.com/LukasKalbertodt/litrs/"
+documentation = "https://docs.rs/litrs"
+repository = "https://github.com/LukasKalbertodt/litrs"
 readme = "README.md"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 keywords = ["literal", "parsing", "proc-macro", "type", "procedural"]
 categories = [
