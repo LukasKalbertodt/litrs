@@ -121,6 +121,16 @@ impl<B: Buffer> FloatLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
+    
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> FloatLit<&str> {
+        FloatLit {
+            raw: self.raw.as_ref(),
+            end_integer_part: self.end_integer_part,
+            end_fractional_part: self.end_fractional_part,
+            end_number_part: self.end_number_part,
+        }
+    }
 }
 
 impl FloatLit<&str> {

@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{borrow::Cow, ffi::{CStr, CString}};
 
 use crate::{Literal, CStringLit, test_util::{assert_parse_ok_eq, assert_roundtrip}};
 
@@ -12,7 +12,7 @@ macro_rules! check {
         let input = $input;
         let expected = CStringLit {
             raw: input,
-            value: $lit.to_owned(),
+            value: Cow::Borrowed($lit),
             num_hashes: $num_hashes,
             start_suffix: input.len() - $suffix.len(),
         };
@@ -51,7 +51,7 @@ fn special_whitespace() {
     for &s in &strings {
         let input = format!(r#"c"{}""#, s);
         let input_raw = format!(r#"cr"{}""#, s);
-        let value = CString::new(s).unwrap();
+        let value = Cow::<CStr>::Owned(CString::new(s).unwrap());
         for (input, num_hashes) in vec![(input, None), (input_raw, Some(0))] {
             let expected = CStringLit {
                 raw: &*input,
@@ -63,8 +63,8 @@ fn special_whitespace() {
                 &input, CStringLit::parse(&*input), expected.clone(), "CStringLit::parse");
             assert_parse_ok_eq(
                 &input, Literal::parse(&*input), Literal::CString(expected), "Literal::parse");
-            assert_eq!(CStringLit::parse(&*input).unwrap().value(), value.as_c_str());
-            assert_eq!(CStringLit::parse(&*input).unwrap().into_value(), value);
+            assert_eq!(CStringLit::parse(&*input).unwrap().value(), value.as_ref());
+            assert_eq!(&CStringLit::parse(&*input).unwrap().into_value(), &value);
         }
     }
 }

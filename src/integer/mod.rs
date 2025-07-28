@@ -115,6 +115,16 @@ impl<B: Buffer> IntegerLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
+    
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> IntegerLit<&str> {
+        IntegerLit {
+            raw: self.raw.as_ref(),
+            start_main_part: self.start_main_part,
+            end_main_part: self.end_main_part,
+            base: self.base,
+        }
+    }
 }
 
 impl IntegerLit<&str> {

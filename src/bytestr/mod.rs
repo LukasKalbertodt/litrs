@@ -1,4 +1,4 @@
-use std::{fmt, ops::Range};
+use std::{borrow::Cow, fmt, ops::Range};
 
 use crate::{
     Buffer, ParseError,
@@ -19,7 +19,7 @@ pub struct ByteStringLit<B: Buffer> {
 
     /// The string value (with all escaped unescaped), or `None` if there were
     /// no escapes. In the latter case, `input` is the string value.
-    value: Option<Vec<u8>>,
+    value: Option<B::ByteCow>,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
@@ -41,6 +41,7 @@ impl<B: Buffer> ByteStringLit<B> {
         }
 
         let (value, num_hashes, start_suffix) = parse_impl(&input)?;
+        let value = value.map(B::ByteCow::from);
         Ok(Self { raw: input, value, num_hashes, start_suffix })
     }
 
@@ -57,7 +58,7 @@ impl<B: Buffer> ByteStringLit<B> {
     pub fn into_value(self) -> B::ByteCow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+        value.unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -88,6 +89,15 @@ impl<B: Buffer> ByteStringLit<B> {
             Some(n) => 2 + n as usize + 1..self.start_suffix - n as usize - 1,
         }
     }
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> ByteStringLit<&str> {
+        ByteStringLit {
+            raw: self.raw.as_ref(),
+            value: self.value.as_ref().map(B::ByteCow::as_ref).map(Cow::Borrowed),
+            num_hashes: self.num_hashes,
+            start_suffix: self.start_suffix,
+        }
+    }
 }
 
 impl ByteStringLit<&str> {
@@ -96,7 +106,7 @@ impl ByteStringLit<&str> {
     pub fn into_owned(self) -> ByteStringLit<String> {
         ByteStringLit {
             raw: self.raw.to_owned(),
-            value: self.value,
+            value: self.value.map(Cow::into_owned),
             num_hashes: self.num_hashes,
             start_suffix: self.start_suffix,
         }

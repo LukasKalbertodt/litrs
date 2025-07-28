@@ -1,4 +1,4 @@
-use std::{fmt, ops::Range};
+use std::{borrow::Cow, fmt, ops::Range};
 
 use crate::{
     Buffer, ParseError,
@@ -20,7 +20,7 @@ pub struct StringLit<B: Buffer> {
 
     /// The string value (with all escapes unescaped), or `None` if there were
     /// no escapes. In the latter case, the string value is in `raw`.
-    value: Option<String>,
+    value: Option<B::Cow>,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
@@ -37,6 +37,7 @@ impl<B: Buffer> StringLit<B> {
         match first_byte_or_empty(&input)? {
             b'r' | b'"' => {
                 let (value, num_hashes, start_suffix) = parse_impl(&input)?;
+                let value = value.map(B::Cow::from);
                 Ok(Self { raw: input, value, num_hashes, start_suffix })
             }
             _ => Err(perr(0, InvalidStringLiteralStart)),
@@ -56,7 +57,7 @@ impl<B: Buffer> StringLit<B> {
     pub fn into_value(self) -> B::Cow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::Cow::from).unwrap_or_else(|| raw.cut(inner_range).into_cow())
+        value.unwrap_or_else(|| raw.cut(inner_range).into_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -87,6 +88,16 @@ impl<B: Buffer> StringLit<B> {
             Some(n) => 1 + n as usize + 1..self.start_suffix - n as usize - 1,
         }
     }
+    
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> StringLit<&str> {
+        StringLit {
+            raw: self.raw.as_ref(),
+            value: self.value.as_ref().map(B::Cow::as_ref).map(Cow::Borrowed),
+            num_hashes: self.num_hashes,
+            start_suffix: self.start_suffix,
+        }
+    }
 }
 
 impl StringLit<&str> {
@@ -95,7 +106,7 @@ impl StringLit<&str> {
     pub fn into_owned(self) -> StringLit<String> {
         StringLit {
             raw: self.raw.to_owned(),
-            value: self.value,
+            value: self.value.map(Cow::into_owned),
             num_hashes: self.num_hashes,
             start_suffix: self.start_suffix,
         }

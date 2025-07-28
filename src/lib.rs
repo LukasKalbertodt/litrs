@@ -169,7 +169,7 @@ mod parse;
 mod string;
 
 
-use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
+use std::{borrow::{Borrow, Cow}, ffi::{CStr, CString}, fmt, ops::{Deref, Range}};
 
 pub use self::{
     bool::BoolLit,
@@ -264,6 +264,19 @@ impl<B: Buffer> Literal<B> {
             Literal::CString(l) => l.suffix(),
         }
     }
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> Literal<&str> {
+        match self {
+            Literal::Bool(l) => Literal::Bool(*l),
+            Literal::Integer(l) => Literal::Integer(l.as_ref()),
+            Literal::Float(l) => Literal::Float(l.as_ref()),
+            Literal::Char(l) => Literal::Char(l.as_ref()),
+            Literal::String(l) => Literal::String(l.as_ref()),
+            Literal::Byte(l) => Literal::Byte(l.as_ref()),
+            Literal::ByteString(l) => Literal::ByteString(l.as_ref()),
+            Literal::CString(l) => Literal::CString(l.as_ref()),
+        }
+    }
 }
 
 impl Literal<&str> {
@@ -311,13 +324,13 @@ impl<B: Buffer> fmt::Display for Literal<B> {
 /// `for<'a> &'a str`.
 pub trait Buffer: sealed::Sealed + Deref<Target = str> {
     /// This is `String` for `String`, and `Cow<'a, str>` for `&'a str`.
-    type Cow: From<String> + AsRef<str> + Borrow<str> + Deref<Target = str>;
+    type Cow: From<String> + AsRef<str> + Borrow<str> + Deref<Target = str> + fmt::Debug + Clone + Eq;
 
     #[doc(hidden)]
     fn into_cow(self) -> Self::Cow;
 
     /// This is `Vec<u8>` for `String`, and `Cow<'a, [u8]>` for `&'a str`.
-    type ByteCow: From<Vec<u8>> + AsRef<[u8]> + Borrow<[u8]> + Deref<Target = [u8]>;
+    type ByteCow: From<Vec<u8>> + AsRef<[u8]> + Borrow<[u8]> + Deref<Target = [u8]> + fmt::Debug + Clone + Eq;
 
     #[doc(hidden)]
     fn into_byte_cow(self) -> Self::ByteCow;
@@ -326,6 +339,9 @@ pub trait Buffer: sealed::Sealed + Deref<Target = str> {
     /// range has to be in bounds.
     #[doc(hidden)]
     fn cut(self, range: Range<usize>) -> Self;
+
+    /// This is `CString` for `String`, and `Cow<'a, CStr>` for `&'a str`.
+    type CStrCow: From<CString> + AsRef<CStr> + Borrow<CStr> + Deref<Target = CStr> + fmt::Debug + Clone + Eq;
 }
 
 mod sealed {
@@ -349,6 +365,7 @@ impl<'a> Buffer for &'a str {
     fn into_byte_cow(self) -> Self::ByteCow {
         self.as_bytes().into()
     }
+    type CStrCow = Cow<'a, CStr>;
 }
 
 impl sealed::Sealed for String {}
@@ -374,4 +391,5 @@ impl Buffer for String {
     fn into_byte_cow(self) -> Self::ByteCow {
         self.into_bytes()
     }
+    type CStrCow = CString;
 }

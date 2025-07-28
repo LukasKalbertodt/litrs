@@ -10,7 +10,7 @@ macro_rules! check {
         let input = $input;
         let expected = ByteStringLit {
             raw: input,
-            value: if $has_escapes { Some($lit.to_vec()) } else { None },
+            value: if $has_escapes { Some(std::borrow::Cow::Borrowed($lit)) } else { None },
             num_hashes: $num_hashes,
             start_suffix: input.len() - $suffix.len(),
         };

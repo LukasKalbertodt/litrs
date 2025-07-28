@@ -1,4 +1,4 @@
-use std::{ffi::{CStr, CString}, fmt, ops::Range};
+use std::{borrow::Cow, ffi::{CStr, CString}, fmt, ops::Range};
 
 use crate::{
     Buffer, ParseError,
@@ -19,7 +19,7 @@ pub struct CStringLit<B: Buffer> {
 
     /// The string value (with all escaped unescaped) as CString. This is not an
     /// `Option` as we always have to add the trailing zero byte.
-    value: CString,
+    value: B::CStrCow,
 
     /// The number of hash signs in case of a raw string literal, or `None` if
     /// it's not a raw string literal.
@@ -41,6 +41,7 @@ impl<B: Buffer> CStringLit<B> {
         }
 
         let (value, num_hashes, start_suffix) = parse_impl(&input)?;
+        let value = value.into();
         Ok(Self { raw: input, value, num_hashes, start_suffix })
     }
 
@@ -51,8 +52,10 @@ impl<B: Buffer> CStringLit<B> {
     }
 
     /// Like `value` but returns an owned version of the value.
-    pub fn into_value(self) -> CString {
-        self.value
+    /// The return value is either `CString` if `B = String`, or
+    /// `Cow<'a, CStr>` if `B = &'a str`.
+    pub fn into_value(self) -> B::CStrCow {
+        self.value.into()
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.
@@ -75,6 +78,17 @@ impl<B: Buffer> CStringLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
+    
+    /// Makes a copy of the underlying buffer and returns the owned version of
+    /// `Self`.
+    pub fn as_ref(&self) -> CStringLit<&str> {
+        CStringLit {
+            raw: self.raw.as_ref(),
+            value: Cow::Borrowed(&self.value),
+            num_hashes: self.num_hashes,
+            start_suffix: self.start_suffix,
+        }
+    }
 }
 
     /// The range within `self.raw` that excludes the quotes and potential `r#`.
@@ -91,7 +105,7 @@ impl CStringLit<&str> {
     pub fn into_owned(self) -> CStringLit<String> {
         CStringLit {
             raw: self.raw.to_owned(),
-            value: self.value,
+            value: self.value.into_owned(),
             num_hashes: self.num_hashes,
             start_suffix: self.start_suffix,
         }

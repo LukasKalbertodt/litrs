@@ -56,6 +56,14 @@ impl<B: Buffer> ByteLit<B> {
         self.raw
     }
 
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> ByteLit<&str> {
+        ByteLit {
+            raw: self.raw.as_ref(),
+            start_suffix: self.start_suffix,
+            value: self.value,
+        }
+    }
 }
 
 impl ByteLit<&str> {

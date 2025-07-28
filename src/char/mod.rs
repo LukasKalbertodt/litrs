@@ -53,7 +53,15 @@ impl<B: Buffer> CharLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
+    
+    /// Returns the reference version of `Self`.
+    pub fn as_ref(&self) -> CharLit<&str> {
+        CharLit {
+            raw: self.raw.as_ref(),
+            start_suffix: self.start_suffix,
+            value: self.value,
+        }
+    }
 }
 
 impl CharLit<&str> {
