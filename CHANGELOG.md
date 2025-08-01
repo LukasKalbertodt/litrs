@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
+- Add `Literal::raw_input`
 
 ## [0.5.0] - 2025-07-25
 **Note**: this is supposed to be essentially a 1.0 release candidate.

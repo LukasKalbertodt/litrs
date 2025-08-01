@@ -268,6 +268,24 @@ impl<B: Buffer> Literal<B> {
             Literal::CString(l) => l.suffix(),
         }
     }
+
+    /// Returns the raw input that was passed to `parse`.
+    ///
+    /// This can be used to compare literals with different `Buffer` types.
+    /// Note: this does not necessarily point to the same string buffer, in
+    /// particular, bool literals just return a `&'static str`.
+    pub fn raw_input(&self) -> &str {
+        match self {
+            Literal::Bool(l) => l.as_str(),
+            Literal::Integer(l) => l.raw_input(),
+            Literal::Float(l) => l.raw_input(),
+            Literal::Char(l) => l.raw_input(),
+            Literal::String(l) => l.raw_input(),
+            Literal::Byte(l) => l.raw_input(),
+            Literal::ByteString(l) => l.raw_input(),
+            Literal::CString(l) => l.raw_input(),
+        }
+    }
 }
 
 impl Literal<&str> {
