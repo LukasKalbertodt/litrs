@@ -129,6 +129,15 @@
 //! }
 //! ```
 //!
+//! # SemVer/Versioning guarantees
+//!
+//! Some technically breaking changes might be released as a minor/patch version
+//! in some situations, for example:
+//! - Bugs in this library (e.g. behavior different from rustc)
+//! - Rust making breaking changes, likely via new edition
+//!
+//! In all cases, releasing these changes as a minor/patch version is only done
+//! if it is expected that breakage is minimal or non-existent.
 //!
 //!
 //! # Crate features
