@@ -175,7 +175,7 @@ fn non_standard_suffixes() {
 
         let lit = match Literal::parse(input) {
             Ok(Literal::Float(f)) => f,
-            other => panic!("Expected float literal, but got {:?} for '{}'", other, input),
+            other => panic!("Expected float literal, but got {other:?} for '{input}'"),
         };
         assert_eq!(lit.integer_part(), integer_part);
         assert_eq!(lit.fractional_part(), fractional_part);

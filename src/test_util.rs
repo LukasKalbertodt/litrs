@@ -13,29 +13,17 @@ pub(crate) fn assert_parse_ok_eq<T: PartialEq + Debug + Display>(
     match result {
         Ok(actual) if actual == expected => {
             if actual.to_string() != input {
-                panic!(
-                    "formatting does not yield original input `{}`: {:?}",
-                    input,
-                    actual,
-                );
+                panic!("formatting does not yield original input `{input}`: {actual:?}");
             }
         }
         Ok(actual) => {
-            panic!(
-                "unexpected parsing result (with `{}`) for `{}`:\nactual:    {:?}\nexpected:  {:?}",
-                parse_method,
-                input,
-                actual,
-                expected,
-            );
+            panic!("unexpected parsing result (with `{parse_method}`) for `{input}`:\n\
+                actual:    {actual:?}\n\
+                expected:  {expected:?}");
         }
         Err(e) => {
-            panic!(
-                "expected `{}` to be parsed (with `{}`) successfully, but it failed: {:?}",
-                input,
-                parse_method,
-                e,
-            );
+            panic!("expected `{input}` to be parsed (with `{parse_method}`) successfully, \
+                but it failed: {e:?}");
         }
     }
 }
@@ -71,17 +59,13 @@ where
 
     match T::try_from(pm_lit) {
         Err(e) => {
-            panic!("Trying to convert proc_macro2::Literal to {} results in error: {}", t_name, e);
+            panic!("Trying to convert proc_macro2::Literal to {t_name} results in error: {e}");
         }
         Ok(res) => {
             if res != ours {
-                panic!(
-                    "Converting proc_macro2::Literal to {} has unexpected result:\
-                        \nactual:    {:?}\nexpected:  {:?}",
-                    t_name,
-                    res,
-                    ours,
-                );
+                panic!("Converting proc_macro2::Literal to {t_name} has unexpected result:\n\
+                    actual:    {res:?}\n\
+                    expected:  {ours:?}");
             }
         }
     }

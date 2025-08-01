@@ -36,12 +36,8 @@ fn check<T: FromIntegerLiteral + PartialEq + Debug + Display>(
         .value::<T>()
         .unwrap_or_else(|| panic!("unexpected overflow in `IntegerLit::value` for `{}`", input));
     if actual_value != value {
-        panic!(
-            "Parsing int literal `{}` should give value `{}`, but actually resulted in `{}`",
-            input,
-            value,
-            actual_value,
-        );
+        panic!("Parsing int literal `{input}` should give value `{value}`, \
+            but actually resulted in `{actual_value}`");
     }
 }
 
