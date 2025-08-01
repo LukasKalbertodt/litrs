@@ -47,7 +47,9 @@ impl<B: Buffer> ByteStringLit<B> {
     /// Returns the string value this literal represents (where all escapes have
     /// been turned into their respective values).
     pub fn value(&self) -> &[u8] {
-        self.value.as_deref().unwrap_or(&self.raw.as_bytes()[self.inner_range()])
+        self.value
+            .as_deref()
+            .unwrap_or(&self.raw.as_bytes()[self.inner_range()])
     }
 
     /// Like `value` but returns a potentially owned version of the value.
@@ -57,7 +59,9 @@ impl<B: Buffer> ByteStringLit<B> {
     pub fn into_value(self) -> B::ByteCow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::ByteCow::from).unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
+        value
+            .map(B::ByteCow::from)
+            .unwrap_or_else(|| raw.cut(inner_range).into_byte_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.

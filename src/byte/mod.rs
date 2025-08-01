@@ -79,7 +79,9 @@ impl<B: Buffer> fmt::Display for ByteLit<B> {
 #[inline(never)]
 pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
     let input_bytes = input.as_bytes();
-    let first = input_bytes.get(2).ok_or(perr(None, UnterminatedByteLiteral))?;
+    let first = input_bytes
+        .get(2)
+        .ok_or(perr(None, UnterminatedByteLiteral))?;
     let (c, len) = match first {
         b'\'' if input_bytes.get(3) == Some(&b'\'') => return Err(perr(2, UnescapedSingleQuote)),
         b'\'' => return Err(perr(None, EmptyByteLiteral)),

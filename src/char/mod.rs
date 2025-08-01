@@ -80,8 +80,7 @@ pub(crate) fn parse_impl(input: &str) -> Result<(char, usize), ParseError> {
     let (c, len) = match first {
         '\'' if input.chars().nth(2) == Some('\'') => return Err(perr(1, UnescapedSingleQuote)),
         '\'' => return Err(perr(None, EmptyCharLiteral)),
-        '\n' | '\t' | '\r'
-            => return Err(perr(1, UnescapedSpecialWhitespace)),
+        '\n' | '\t' | '\r' => return Err(perr(1, UnescapedSpecialWhitespace)),
 
         '\\' => {
             let (v, len) = unescape(&input[1..], true, false, true).map_err(|e| e.offset_span(1))?;

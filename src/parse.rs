@@ -27,8 +27,7 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
             // The first non-decimal char in a float literal must
             // be '.', 'e' or 'E'.
             match input.as_bytes().get(1 + end_dec_digits(rest)) {
-                Some(b'.') | Some(b'e') | Some(b'E')
-                    => FloatLit::parse(input).map(Literal::Float),
+                Some(b'.') | Some(b'e') | Some(b'E') => FloatLit::parse(input).map(Literal::Float),
 
                 _ => IntegerLit::parse(input).map(Literal::Integer),
             }
@@ -38,8 +37,9 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
         b'"' | b'r' => StringLit::parse(input).map(Literal::String),
 
         b'b' if second == Some(b'\'') => ByteLit::parse(input).map(Literal::Byte),
-        b'b' if second == Some(b'r') || second == Some(b'"')
-            => ByteStringLit::parse(input).map(Literal::ByteString),
+        b'b' if second == Some(b'r') || second == Some(b'"') => {
+            ByteStringLit::parse(input).map(Literal::ByteString)
+        }
 
         b'c' => CStringLit::parse(input).map(Literal::CString),
 

@@ -46,7 +46,9 @@ impl<B: Buffer> StringLit<B> {
     /// Returns the string value this literal represents (where all escapes have
     /// been turned into their respective values).
     pub fn value(&self) -> &str {
-        self.value.as_deref().unwrap_or(&self.raw[self.inner_range()])
+        self.value
+            .as_deref()
+            .unwrap_or(&self.raw[self.inner_range()])
     }
 
     /// Like `value` but returns a potentially owned version of the value.
@@ -56,7 +58,9 @@ impl<B: Buffer> StringLit<B> {
     pub fn into_value(self) -> B::Cow {
         let inner_range = self.inner_range();
         let Self { raw, value, .. } = self;
-        value.map(B::Cow::from).unwrap_or_else(|| raw.cut(inner_range).into_cow())
+        value
+            .map(B::Cow::from)
+            .unwrap_or_else(|| raw.cut(inner_range).into_cow())
     }
 
     /// The optional suffix. Returns `""` if the suffix is empty/does not exist.

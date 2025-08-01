@@ -108,12 +108,14 @@ fn proc_macro() {
             if err.expected != $expected {
                 panic!(
                     "err.expected was expected to be {:?}, but is {:?}",
-                    $expected,
-                    err.expected,
+                    $expected, err.expected,
                 );
             }
             if err.actual != $actual {
-                panic!("err.actual was expected to be {:?}, but is {:?}", $actual, err.actual);
+                panic!(
+                    "err.actual was expected to be {:?}, but is {:?}",
+                    $actual, err.actual
+                );
             }
         };
     }

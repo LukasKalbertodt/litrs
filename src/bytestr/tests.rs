@@ -19,9 +19,17 @@ macro_rules! check {
         };
 
         assert_parse_ok_eq(
-            input, ByteStringLit::parse(input), expected.clone(), "ByteStringLit::parse");
+            input,
+            ByteStringLit::parse(input),
+            expected.clone(),
+            "ByteStringLit::parse",
+        );
         assert_parse_ok_eq(
-            input, Literal::parse(input), Literal::ByteString(expected.clone()), "Literal::parse");
+            input,
+            Literal::parse(input),
+            Literal::ByteString(expected.clone()),
+            "Literal::parse",
+        );
         let lit = ByteStringLit::parse(input).unwrap();
         assert_eq!(lit.value(), $lit);
         assert_eq!(lit.suffix(), $suffix);
@@ -55,9 +63,17 @@ fn special_whitespace() {
                 start_suffix: input.len(),
             };
             assert_parse_ok_eq(
-                &input, ByteStringLit::parse(&*input), expected.clone(), "ByteStringLit::parse");
+                &input,
+                ByteStringLit::parse(&*input),
+                expected.clone(),
+                "ByteStringLit::parse",
+            );
             assert_parse_ok_eq(
-                &input, Literal::parse(&*input), Literal::ByteString(expected), "Literal::parse");
+                &input,
+                Literal::parse(&*input),
+                Literal::ByteString(expected),
+                "Literal::parse",
+            );
             assert_eq!(ByteStringLit::parse(&*input).unwrap().value(), s.as_bytes());
             assert_eq!(ByteStringLit::parse(&*input).unwrap().into_value(), s.as_bytes());
         }

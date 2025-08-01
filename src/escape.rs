@@ -24,8 +24,7 @@ pub(crate) fn unescape(
     byte_escapes: bool,
     allow_nul: bool,
 ) -> Result<(Unescape, usize), ParseError> {
-    let first = input.as_bytes().get(1)
-        .ok_or(perr(0, UnterminatedEscape))?;
+    let first = input.as_bytes().get(1).ok_or(perr(0, UnterminatedEscape))?;
     let out = match first {
         // Quote escapes
         b'\'' => (Unescape::Byte(b'\''), 2),
@@ -45,10 +44,8 @@ pub(crate) fn unescape(
             let hex_string = input.get(2..4)
                 .ok_or(perr(0..input.len(), UnterminatedEscape))?
                 .as_bytes();
-            let first = hex_digit_value(hex_string[0])
-                .ok_or(perr(0..4, InvalidXEscape))?;
-            let second = hex_digit_value(hex_string[1])
-                .ok_or(perr(0..4, InvalidXEscape))?;
+            let first = hex_digit_value(hex_string[0]).ok_or(perr(0..4, InvalidXEscape))?;
+            let second = hex_digit_value(hex_string[1]).ok_or(perr(0..4, InvalidXEscape))?;
             let value = second + 16 * first;
 
             if !byte_escapes && value > 0x7F {
@@ -87,8 +84,7 @@ pub(crate) fn unescape(
                     continue;
                 }
 
-                let digit = hex_digit_value(b)
-                    .ok_or(perr(3 + i, NonHexDigitInUnicodeEscape))?;
+                let digit = hex_digit_value(b).ok_or(perr(3 + i, NonHexDigitInUnicodeEscape))?;
 
                 if digit_count == 6 {
                     return Err(perr(3 + i, TooManyDigitInUnicodeEscape));
@@ -148,9 +144,15 @@ pub(crate) trait EscapeContainer {
 }
 
 impl EscapeContainer for Vec<u8> {
-    fn new() -> Self { Self::new() }
-    fn is_empty(&self) -> bool { self.is_empty() }
-    fn push_str(&mut self, s: &str) { self.extend_from_slice(s.as_bytes()); }
+    fn new() -> Self {
+        Self::new()
+    }
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+    fn push_str(&mut self, s: &str) {
+        self.extend_from_slice(s.as_bytes());
+    }
     fn push(&mut self, v: Unescape) {
         match v {
             Unescape::Byte(b) => self.push(b),
@@ -164,10 +166,18 @@ impl EscapeContainer for Vec<u8> {
 }
 
 impl EscapeContainer for String {
-    fn new() -> Self { Self::new() }
-    fn is_empty(&self) -> bool { self.is_empty() }
-    fn push_str(&mut self, s: &str) { self.push_str(s); }
-    fn push(&mut self, v: Unescape) { self.push(v.unwrap_char()); }
+    fn new() -> Self {
+        Self::new()
+    }
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+    fn push_str(&mut self, s: &str) {
+        self.push_str(s);
+    }
+    fn push(&mut self, v: Unescape) {
+        self.push(v.unwrap_char());
+    }
 }
 
 
