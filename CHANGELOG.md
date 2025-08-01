@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
+
+## [0.5.1] - 2025-08-01
 - Add `Literal::raw_input`
 
 ## [0.5.0] - 2025-07-25
@@ -114,7 +116,8 @@ If there are no problems with this release, it will be released as 1.0 after som
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.0...v0.4.1
