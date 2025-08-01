@@ -125,6 +125,7 @@
 //!     Literal::Byte(lit) => { /* ... */ }
 //!     Literal::ByteString(lit) => { /* ... */ }
 //!     Literal::CString(lit) => { /* ... */ }
+//!     _ => { /* ... */ }
 //! }
 //! ```
 //!
@@ -202,6 +203,7 @@ pub use self::{
 /// available of the corresponding crate features are enabled (they are enabled
 /// by default).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Literal<B: Buffer> {
     Bool(BoolLit),
     Integer(IntegerLit<B>),

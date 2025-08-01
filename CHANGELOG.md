@@ -16,7 +16,7 @@ If there are no problems with this release, it will be released as 1.0 after som
 - **Breaking**: Remove `proc-macro2` from default features
 - **Breaking**: Make `StringLit<String>::into_value` return `String` instead of `Cow<'static, str>`.
   Make `ByteStringLit<String>::into_value` return `Vec<u8>` instead of `Cow<'static, [u8]>`.
-- Add support for C string literals
+- Add support for C string literals (also breaking due to new enum variant)
 - Limit number of `#` as delimiter of raw string literals to 256 (to align with spec)
 - Fix license in `Cargo.toml` to use proper SPDX format (in #19, thanks @atouchet)
 - Fix error span for `InvalidStartOfUnicodeEscape` errors
