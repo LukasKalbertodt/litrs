@@ -92,11 +92,13 @@ fn never_panic_len_4() {
 #[test]
 fn proc_macro() {
     use std::convert::TryFrom;
+
     use proc_macro2::{
-        self as pm2, TokenTree, Group, TokenStream, Delimiter, Spacing, Punct, Span, Ident,
+        self as pm2, Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree,
     };
+
     use crate::{
-        BoolLit, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit, err::TokenKind
+        err::TokenKind, BoolLit, ByteLit, ByteStringLit, CharLit, FloatLit, IntegerLit, StringLit,
     };
 
 
@@ -291,7 +293,9 @@ fn proc_macro() {
 #[test]
 fn bool_try_from_tt() {
     use std::convert::TryFrom;
+
     use proc_macro2::{Ident, Span, TokenTree};
+
     use crate::BoolLit;
 
 
@@ -326,7 +330,7 @@ fn bool_try_from_tt() {
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn invalid_token_display() {
-    use crate::{InvalidToken, err::TokenKind};
+    use crate::{err::TokenKind, InvalidToken};
 
     let span = crate::err::Span::Two(proc_macro2::Span::call_site());
     assert_eq!(

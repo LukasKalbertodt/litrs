@@ -169,7 +169,11 @@ mod parse;
 mod string;
 
 
-use std::{borrow::{Borrow, Cow}, fmt, ops::{Deref, Range}};
+use std::{
+    borrow::{Borrow, Cow},
+    fmt,
+    ops::{Deref, Range},
+};
 
 pub use self::{
     bool::BoolLit,
@@ -179,7 +183,7 @@ pub use self::{
     cstr::CStringLit,
     err::{InvalidToken, ParseError},
     float::{FloatLit, FloatType},
-    integer::{FromIntegerLiteral, IntegerLit, IntegerBase, IntegerType},
+    integer::{FromIntegerLiteral, IntegerBase, IntegerLit, IntegerType},
     string::StringLit,
 };
 

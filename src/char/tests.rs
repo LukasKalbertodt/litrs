@@ -1,5 +1,8 @@
-use crate::{Literal, test_util::{assert_parse_ok_eq, assert_roundtrip}};
 use super::CharLit;
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    Literal,
+};
 
 // ===== Utility functions =======================================================================
 

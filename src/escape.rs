@@ -1,4 +1,8 @@
-use crate::{ParseError, err::{perr, ParseErrorKind::*}, parse::{hex_digit_value, check_suffix}};
+use crate::{
+    err::{perr, ParseErrorKind::*},
+    parse::{check_suffix, hex_digit_value},
+    ParseError,
+};
 
 
 /// Must start with `\`. Returns the unscaped value as `E` and the number of
@@ -56,7 +60,7 @@ pub(crate) fn unescape(
             }
 
             (Unescape::Byte(value), 4)
-        },
+        }
 
         // Unicode escape
         b'u' => {
@@ -79,7 +83,7 @@ pub(crate) fn unescape(
             let mut v: u32 = 0;
             let mut digit_count = 0;
             for (i, b) in inner.bytes().enumerate() {
-                if b == b'_'{
+                if b == b'_' {
                     continue;
                 }
 
@@ -213,7 +217,7 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
             b'"' => {
                 closing_quote_pos = Some(i);
                 break;
-            },
+            }
             b'\0' if !allow_nul => return Err(perr(i, NulByte)),
             b if !unicode && !b.is_ascii() => return Err(perr(i, NonAsciiInByteLiteral)),
             _ => i += 1,

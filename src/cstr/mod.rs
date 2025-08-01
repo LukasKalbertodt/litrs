@@ -1,9 +1,13 @@
-use std::{ffi::{CStr, CString}, fmt, ops::Range};
+use std::{
+    ffi::{CStr, CString},
+    fmt,
+    ops::Range,
+};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::{scan_raw_string, unescape_string},
+    Buffer, ParseError,
 };
 
 
@@ -77,7 +81,7 @@ impl<B: Buffer> CStringLit<B> {
     }
 }
 
-    /// The range within `self.raw` that excludes the quotes and potential `r#`.
+/// The range within `self.raw` that excludes the quotes and potential `r#`.
 fn inner_range(num_hashes: Option<u8>, start_suffix: usize) -> Range<usize> {
     match num_hashes {
         None => 2..start_suffix - 1,

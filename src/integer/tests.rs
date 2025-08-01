@@ -1,7 +1,10 @@
 use std::fmt::{Debug, Display};
+
 use crate::{
-    FromIntegerLiteral, Literal, IntegerLit, IntegerType as Ty, IntegerBase, IntegerBase::*,
     test_util::{assert_parse_ok_eq, assert_roundtrip},
+    FromIntegerLiteral, IntegerBase,
+    IntegerBase::*,
+    IntegerLit, IntegerType as Ty, Literal,
 };
 
 

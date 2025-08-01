@@ -1,10 +1,10 @@
 use std::fmt;
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
-    parse::{first_byte_or_empty, check_suffix},
+    parse::{check_suffix, first_byte_or_empty},
+    Buffer, ParseError,
 };
 
 
@@ -29,7 +29,7 @@ impl<B: Buffer> CharLit<B> {
             b'\'' => {
                 let (value, start_suffix) = parse_impl(&input)?;
                 Ok(Self { raw: input, value, start_suffix })
-            },
+            }
             _ => Err(perr(0, DoesNotStartWithQuote)),
         }
     }
@@ -53,7 +53,6 @@ impl<B: Buffer> CharLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
 }
 
 impl CharLit<&str> {

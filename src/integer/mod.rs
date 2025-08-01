@@ -1,9 +1,9 @@
 use std::{fmt, str::FromStr};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{first_byte_or_empty, hex_digit_value, check_suffix},
+    parse::{check_suffix, first_byte_or_empty, hex_digit_value},
+    Buffer, ParseError,
 };
 
 
@@ -47,10 +47,10 @@ impl<B: Buffer> IntegerLit<B> {
                     end_main_part,
                     base,
                     ..
-                } =  parse_impl(&input, digit)?;
+                } = parse_impl(&input, digit)?;
 
                 Ok(Self { raw: input, start_main_part, end_main_part, base })
-            },
+            }
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }

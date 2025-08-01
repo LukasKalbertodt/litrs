@@ -1,10 +1,10 @@
 use std::{fmt, ops::Range};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::{scan_raw_string, unescape_string},
     parse::first_byte_or_empty,
+    Buffer, ParseError,
 };
 
 

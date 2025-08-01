@@ -1,6 +1,9 @@
 use std::convert::TryFrom;
 
-use crate::{Literal, err::{InvalidToken, TokenKind}};
+use crate::{
+    err::{InvalidToken, TokenKind},
+    Literal,
+};
 
 
 /// Helper macro to call a `callback` macro four times for all combinations of
@@ -70,7 +73,7 @@ macro_rules! impl_tt_to_lit {
     }
 }
 
-helper!(impl_tt_to_lit, );
+helper!(impl_tt_to_lit,);
 
 
 // ==============================================================================================
@@ -107,7 +110,7 @@ macro_rules! impl_tt_to_lit {
     }
 }
 
-helper!(impl_tt_to_lit, );
+helper!(impl_tt_to_lit,);
 
 
 // ==============================================================================================
@@ -243,7 +246,7 @@ macro_rules! impl_from_tt_for_bool {
     };
 }
 
-helper!(impl_from_tt_for_bool, );
+helper!(impl_from_tt_for_bool,);
 
 // ==============================================================================================
 // ===== `From<BoolLit> for pm::Ident`
@@ -259,7 +262,7 @@ macro_rules! impl_bool_lit_to_pm_lit {
     };
 }
 
-helper_no_refs!(impl_bool_lit_to_pm_lit, );
+helper_no_refs!(impl_bool_lit_to_pm_lit,);
 
 
 mod tests {

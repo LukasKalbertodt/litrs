@@ -1,9 +1,9 @@
 use std::{fmt, str::FromStr};
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
-    parse::{end_dec_digits, first_byte_or_empty, check_suffix},
+    parse::{check_suffix, end_dec_digits, first_byte_or_empty},
+    Buffer, ParseError,
 };
 
 
@@ -72,7 +72,7 @@ impl<B: Buffer> FloatLit<B> {
                 } = parse_impl(&s)?;
 
                 Ok(Self { raw: s, end_integer_part, end_fractional_part, end_number_part })
-            },
+            }
             _ => Err(perr(0, DoesNotStartWithDigit)),
         }
     }

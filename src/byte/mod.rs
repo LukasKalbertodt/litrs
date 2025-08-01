@@ -1,10 +1,10 @@
 use core::fmt;
 
 use crate::{
-    Buffer, ParseError,
     err::{perr, ParseErrorKind::*},
     escape::unescape,
     parse::check_suffix,
+    Buffer, ParseError,
 };
 
 
@@ -55,7 +55,6 @@ impl<B: Buffer> ByteLit<B> {
     pub fn into_raw_input(self) -> B {
         self.raw
     }
-
 }
 
 impl ByteLit<&str> {
@@ -88,7 +87,7 @@ pub(crate) fn parse_impl(input: &str) -> Result<(u8, usize), ParseError> {
         b'\\' => {
             let (v, len) = unescape(&input[2..], false, true, true).map_err(|e| e.offset_span(2))?;
             (v.unwrap_byte(), len)
-        },
+        }
         other if other.is_ascii() => (*other, 1),
         _ => return Err(perr(2, NonAsciiInByteLiteral)),
     };

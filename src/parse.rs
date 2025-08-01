@@ -1,16 +1,10 @@
 use crate::{
-    BoolLit,
-    Buffer,
-    ByteLit,
-    ByteStringLit,
-    CharLit,
-    ParseError,
-    FloatLit,
-    IntegerLit,
-    Literal,
-    StringLit,
-    CStringLit,
-    err::{perr, ParseErrorKind::{*, self}},
+    err::{
+        perr,
+        ParseErrorKind::{self, *},
+    },
+    BoolLit, Buffer, ByteLit, ByteStringLit, CStringLit, CharLit, FloatLit, IntegerLit, Literal,
+    ParseError, StringLit,
 };
 
 
@@ -38,7 +32,7 @@ pub fn parse<B: Buffer>(input: B) -> Result<Literal<B>, ParseError> {
 
                 _ => IntegerLit::parse(input).map(Literal::Integer),
             }
-        },
+        }
 
         b'\'' => CharLit::parse(input).map(Literal::Char),
         b'"' | b'r' => StringLit::parse(input).map(Literal::String),

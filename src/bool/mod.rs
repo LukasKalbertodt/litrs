@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::{ParseError, err::{perr, ParseErrorKind::*}};
+use crate::{
+    err::{perr, ParseErrorKind::*},
+    ParseError,
+};
 
 
 /// A bool literal: `true` or `false`. Also see [the reference][ref].

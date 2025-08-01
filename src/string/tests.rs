@@ -1,4 +1,7 @@
-use crate::{Literal, StringLit, test_util::{assert_parse_ok_eq, assert_roundtrip}};
+use crate::{
+    test_util::{assert_parse_ok_eq, assert_roundtrip},
+    Literal, StringLit,
+};
 
 // ===== Utility functions =======================================================================
 
