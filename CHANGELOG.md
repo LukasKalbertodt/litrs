@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-10-20
+As announced, this is basically just v0.5. I'm really happy to finally have `litrs` in v1.x state, as the library was already fit for production usage for a long time. Now the version reflects that.
+
+- **Breaking**: Mark `Literal` as `#[non_exhaustive]`
+- Document semver guarantees
+
 ## [0.5.1] - 2025-08-01
 - Add `Literal::raw_input`
 
@@ -116,7 +122,8 @@ If there are no problems with this release, it will be released as 1.0 after som
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.1...v0.4.2
