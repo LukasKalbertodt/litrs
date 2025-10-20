@@ -17,9 +17,6 @@ And `syn` is oftentimes overkill for the task at hand, especially when developin
 This crate is a lightweight alternative.
 Also, when it comes to literals, `litrs` offers a bit more flexibility and a few more features compared to `syn`.
 
-I'm interested in community feedback!
-If you consider using this, please speak your mind [in this issue](https://github.com/LukasKalbertodt/litrs/issues/1).
-
 ## Example
 
 ### In proc macro
