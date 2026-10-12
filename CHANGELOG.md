@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-12
+- Fix parsing of (byte/C) strings starting with `\<newline>` (without other escapes). In those cases, the backslash, newline and whitespace were incorrectly kept.
+- Fix `to_compile_error` causing a second, unrelated error in item position. Output changed from `compile_error!("...")` to  `compile_error! { "..." }`.
+- Fix bug parsing `\u{}` (empty unicode escape). This resulted in a null byte, now it's correctly rejected.
+- Fix panic bug when parsing (byte/C) string literals with escapes and a trailing multi-byte char (e.g. `"\n"é`). These are super fringe cases as they require a literal suffix or a malformed literal.
+- Fix off-by-one bug regarding number of `#` in raw string literals. Before, 256 were "allowed", which is wrong as Rust only allows up to 255. This also led to an overflow cast `as u8` which resulted in an incorrect `value()`.
+- Some documentation & error message fixes
+
 ## [1.0.0] - 2025-10-20
 As announced, this is basically just v0.5. I'm really happy to finally have `litrs` in v1.x state, as the library was already fit for production usage for a long time. Now the version reflects that.
 
@@ -122,7 +130,8 @@ If there are no problems with this release, it will be released as 1.0 after som
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.4.2...v0.5.0
