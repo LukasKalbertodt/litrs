@@ -196,6 +196,11 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
     byte_escapes: bool,
     allow_nul: bool,
 ) -> Result<(Option<C>, usize), ParseError> {
+    // Escapes are parsed from input without the last char (usually the closing
+    // quote). That char might be multi-byte (e.g. in a suffix), so we can't
+    // just cut off one byte.
+    let end_escape_input = input.len() - input.chars().next_back().map_or(0, char::len_utf8);
+
     let mut closing_quote_pos = None;
     let mut i = offset;
     let mut end_last_escape = offset;
@@ -215,7 +220,7 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
                 end_last_escape = i;
             }
             b'\\' => {
-                let rest = &input[i..input.len() - 1];
+                let rest = &input[i..end_escape_input];
                 let (c, len) = unescape(rest, unicode, byte_escapes, allow_nul)
                     .map_err(|e| e.offset_span(i))?;
                 value.push_str(&input[end_last_escape..i]);

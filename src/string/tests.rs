@@ -183,6 +183,7 @@ fn suffixes() {
     check!("fox", r#""fox"peter"#, false, None, "peter");
     check!("🦊", r#""🦊"peter"#, false, None, "peter");
     check!("నక్క\\\\u{0b10}", r###""నక్క\\\\u{0b10}"jü_rgen"###, true, None, "jü_rgen");
+    check!("a\nb", r#""a\nb"_josé"#, true, None, "_josé");
 }
 
 #[test]
@@ -191,6 +192,7 @@ fn parse_err() {
     assert_err!(StringLit, r#""犬"#, UnterminatedString, None);
     assert_err!(StringLit, r#""Jürgen"#, UnterminatedString, None);
     assert_err!(StringLit, r#""foo bar baz"#, UnterminatedString, None);
+    assert_err!(StringLit, r#""\nJosé"#, UnterminatedString, None);
 
     assert_err!(StringLit, r#""fox"peter""#, InvalidSuffix, 5);
     assert_err!(StringLit, r###"r#"foo "# bar"#"###, UnexpectedChar, 9);

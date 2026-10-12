@@ -170,6 +170,7 @@ fn suffixes() {
     check!(c"fox", r#"c"fox"peter"#, false, None, "peter");
     check!(c"a\x0cb\\", r#"c"a\x0cb\\"_jürgen"#, true, None, "_jürgen");
     check!(cr"a\x0cb\\", r###"cr#"a\x0cb\\"#_jürgen"###, false, Some(1), "_jürgen");
+    check!(c"a\nb", r#"c"a\nb"_josé"#, true, None, "_josé");
 }
 
 #[test]
@@ -178,6 +179,7 @@ fn parse_err() {
     assert_err!(CStringLit, r#"c"cat"#, UnterminatedString, None);
     assert_err!(CStringLit, r#"c"Jurgen"#, UnterminatedString, None);
     assert_err!(CStringLit, r#"c"foo bar baz"#, UnterminatedString, None);
+    assert_err!(CStringLit, r#"c"\nJosé"#, UnterminatedString, None);
 
     assert_err!(CStringLit, r#"c"fox"peter""#, InvalidSuffix, 6);
     assert_err!(CStringLit, r###"cr#"foo "# bar"#"###, UnexpectedChar, 10);
