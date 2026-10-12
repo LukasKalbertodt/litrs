@@ -72,8 +72,10 @@ pub(crate) fn unescape(
             let closing_pos = input.bytes().position(|b| b == b'}')
                 .ok_or(perr(0..input.len(), UnterminatedUnicodeEscape))?;
 
+            // The escape has to start with a hex digit, which also rules out
+            // an empty `\u{}`.
             let inner = &input[3..closing_pos];
-            if inner.as_bytes().first() == Some(&b'_') {
+            if matches!(inner.as_bytes().first(), None | Some(&b'_')) {
                 return Err(perr(3, InvalidStartOfUnicodeEscape));
             }
 

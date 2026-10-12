@@ -235,4 +235,5 @@ fn invalid_escapes() {
     assert_err!(CStringLit, r#"c"foo\x1""#, UnterminatedEscape, 5..8);
     assert_err!(CStringLit, r#"c" \xaj""#, InvalidXEscape, 3..7);
     assert_err!(CStringLit, r#"c"\xjbbaz""#, InvalidXEscape, 2..6);
+    assert_err!(CStringLit, r#"c"\u{}""#, InvalidStartOfUnicodeEscape, 5);
 }

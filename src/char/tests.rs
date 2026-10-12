@@ -190,6 +190,7 @@ fn invalid_unicode_escapes() {
 
     assert_err!(CharLit, r"'\u{_}'", InvalidStartOfUnicodeEscape, 4);
     assert_err!(CharLit, r"'\u{_5f}'", InvalidStartOfUnicodeEscape, 4);
+    assert_err!(CharLit, r"'\u{}'", InvalidStartOfUnicodeEscape, 4);
 
     assert_err!(CharLit, r"'\u{x}'", NonHexDigitInUnicodeEscape, 4);
     assert_err!(CharLit, r"'\u{0x}'", NonHexDigitInUnicodeEscape, 5);

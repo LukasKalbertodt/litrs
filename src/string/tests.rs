@@ -262,6 +262,8 @@ fn invalid_unicode_escapes() {
 
     assert_err!(StringLit, r#""\u{_}నక్క""#, InvalidStartOfUnicodeEscape, 4);
     assert_err!(StringLit, r#""\u{_5f}""#, InvalidStartOfUnicodeEscape, 4);
+    assert_err!(StringLit, r#""\u{}""#, InvalidStartOfUnicodeEscape, 4);
+    assert_err!(StringLit, r#""🦊\u{}a""#, InvalidStartOfUnicodeEscape, 8);
 
     assert_err!(StringLit, r#""fox\u{x}""#, NonHexDigitInUnicodeEscape, 7);
     assert_err!(StringLit, r#""\u{0x}🦊""#, NonHexDigitInUnicodeEscape, 5);
