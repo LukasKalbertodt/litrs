@@ -273,7 +273,7 @@ pub(crate) fn scan_raw_string(
     let num_hashes = input[offset..].bytes().position(|b| b != b'#')
         .ok_or(perr(None, InvalidLiteral))?;
 
-    if num_hashes > 256 {
+    if num_hashes > 255 {
         return Err(perr(offset..offset + num_hashes, TooManyHashes));
     }
 

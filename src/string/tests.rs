@@ -177,6 +177,16 @@ fn raw_string() {
 }
 
 #[test]
+fn raw_string_max_hashes() {
+    let input = format!("r{h}\"peter\"{h}", h = "#".repeat(255));
+    check!("peter", &*input, false, Some(255), "");
+
+    let input = format!("r{h}\"peter\"{h}", h = "#".repeat(256));
+    assert_err_single!(StringLit::parse(&*input), TooManyHashes, 1..257);
+    assert_err_single!(Literal::parse(&*input), TooManyHashes, 1..257);
+}
+
+#[test]
 fn suffixes() {
     check!("hello", r###""hello"suffix"###, false, None, "suffix");
     check!(r"お前はもう死んでいる", r###"r"お前はもう死んでいる"_banana"###, false, Some(0), "_banana");

@@ -164,6 +164,16 @@ fn raw_byte_string() {
 }
 
 #[test]
+fn raw_byte_string_max_hashes() {
+    let input = format!("br{h}\"peter\"{h}", h = "#".repeat(255));
+    check!(b"peter", &*input, false, Some(255), "");
+
+    let input = format!("br{h}\"peter\"{h}", h = "#".repeat(256));
+    assert_err_single!(ByteStringLit::parse(&*input), TooManyHashes, 2..258);
+    assert_err_single!(Literal::parse(&*input), TooManyHashes, 2..258);
+}
+
+#[test]
 fn suffixes() {
     check!(b"hello", r###"b"hello"suffix"###, false, None, "suffix");
     check!(b"fox", r#"b"fox"peter"#, false, None, "peter");

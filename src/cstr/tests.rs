@@ -165,6 +165,16 @@ fn raw_c_string() {
 }
 
 #[test]
+fn raw_c_string_max_hashes() {
+    let input = format!("cr{h}\"peter\"{h}", h = "#".repeat(255));
+    check!(c"peter", &*input, false, Some(255), "");
+
+    let input = format!("cr{h}\"peter\"{h}", h = "#".repeat(256));
+    assert_err_single!(CStringLit::parse(&*input), TooManyHashes, 2..258);
+    assert_err_single!(Literal::parse(&*input), TooManyHashes, 2..258);
+}
+
+#[test]
 fn suffixes() {
     check!(c"hello", r###"c"hello"suffix"###, false, None, "suffix");
     check!(c"fox", r#"c"fox"peter"#, false, None, "peter");
