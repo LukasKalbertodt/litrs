@@ -118,6 +118,10 @@ fn unicode_escapes() {    check!(c"\u{b} ", true, None);
 
 #[test]
 fn string_continue() {
+    check!(c"\
+        foo", true, None);
+    check!(c"\
+", true, None);
     check!(c"foo\
         bar", true, None);
     check!(c"foo\

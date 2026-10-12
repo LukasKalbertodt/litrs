@@ -117,6 +117,10 @@ fn non_ascii_escapes() {
 
 #[test]
 fn string_continue() {
+    check!(b"\
+        foo", true, None);
+    check!(b"\
+", true, None);
     check!(b"foo\
         bar", true, None);
     check!(b"foo\

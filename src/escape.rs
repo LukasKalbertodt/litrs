@@ -138,7 +138,6 @@ impl Unescape {
 
 pub(crate) trait EscapeContainer {
     fn new() -> Self;
-    fn is_empty(&self) -> bool;
     fn push(&mut self, v: Unescape);
     fn push_str(&mut self, s: &str);
 }
@@ -146,9 +145,6 @@ pub(crate) trait EscapeContainer {
 impl EscapeContainer for Vec<u8> {
     fn new() -> Self {
         Self::new()
-    }
-    fn is_empty(&self) -> bool {
-        self.is_empty()
     }
     fn push_str(&mut self, s: &str) {
         self.extend_from_slice(s.as_bytes());
@@ -168,9 +164,6 @@ impl EscapeContainer for Vec<u8> {
 impl EscapeContainer for String {
     fn new() -> Self {
         Self::new()
-    }
-    fn is_empty(&self) -> bool {
-        self.is_empty()
     }
     fn push_str(&mut self, s: &str) {
         self.push_str(s);
@@ -205,6 +198,7 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
     let mut i = offset;
     let mut end_last_escape = offset;
     let mut value = C::new();
+    let mut has_escape = false;
     while i < input.len() {
         match input.as_bytes()[i] {
             // Handle "string continue".
@@ -218,6 +212,7 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
 
                 i += 2 + end_escape;
                 end_last_escape = i;
+                has_escape = true;
             }
             b'\\' => {
                 let rest = &input[i..end_escape_input];
@@ -227,6 +222,7 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
                 value.push(c);
                 i += len;
                 end_last_escape = i;
+                has_escape = true;
             }
             b'\r' => return Err(perr(i, CarriageReturn)),
             b'"' => {
@@ -245,10 +241,9 @@ pub(crate) fn unescape_string<C: EscapeContainer>(
     let suffix = &input[start_suffix..];
     check_suffix(suffix).map_err(|kind| perr(start_suffix, kind))?;
 
-    // `value` is only empty if there was no escape in the input string
-    // (with the special case of the input being empty). This means the
-    // string value basically equals the input, so we store `None`.
-    let value = if value.is_empty() {
+    // If there was no escape in the input string, the string value equals the
+    // input, so we store `None`.
+    let value = if !has_escape {
         None
     } else {
         // There was an escape in the string, so we need to push the

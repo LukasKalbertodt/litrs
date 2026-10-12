@@ -122,6 +122,10 @@ fn unicode_escapes() {
 
 #[test]
 fn string_continue() {
+    check!("\
+        foo", true, None);
+    check!("\
+", true, None);
     check!("నక్క\
         bar", true, None);
     check!("foo\
