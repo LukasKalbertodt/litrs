@@ -28,7 +28,7 @@
 //! pub fn foo(input: TokenStream) -> TokenStream {
 //!      let first_token = input.into_iter().next().unwrap(); // Do proper error handling!
 //!      let string_value = match litrs::StringLit::try_from(first_token) {
-//!          Ok(string_lit) => string_lit.value(),
+//!          Ok(string_lit) => string_lit.into_value(),
 //!          Err(e) => return e.to_compile_error(),
 //!      };
 //!
@@ -208,9 +208,7 @@ pub use self::{
 /// `String`.
 ///
 /// To create this type, you have to either call [`Literal::parse`] with an
-/// input string or use the `From<_>` impls of this type. The impls are only
-/// available of the corresponding crate features are enabled (they are enabled
-/// by default).
+/// input string or use the `From<_>` impls of this type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Literal<B: Buffer> {
@@ -250,7 +248,7 @@ impl<B: Buffer> Literal<B> {
     ///   the exponent grammar for floats. `0e1` is a float; `0eel` is also
     ///   parsed as a float and results in an error.
     /// - Hexadecimal integers eagerly parse digits, so `0x5abcdefgh` has a
-    ///   suffix von `gh`.
+    ///   suffix of `gh`.
     /// - Suffixes can contain and start with `_`, but for integer and number
     ///   literals, `_` is eagerly parsed as part of the number, so `1_x` has
     ///   the suffix `x`.

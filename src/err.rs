@@ -74,7 +74,7 @@ impl fmt::Display for InvalidToken {
                 TokenKind::Group => "a group",
                 TokenKind::Literal => "a literal",
                 TokenKind::BoolLit => "a bool literal (`true` or `false`)",
-                TokenKind::ByteLit => "a byte literal (e.g. `b'r')",
+                TokenKind::ByteLit => "a byte literal (e.g. `b'r'`)",
                 TokenKind::ByteStringLit => r#"a byte string literal (e.g. `b"fox"`)"#,
                 TokenKind::CharLit => "a character literal (e.g. `'P'`)",
                 TokenKind::FloatLit => "a float literal (e.g. `3.14`)",
