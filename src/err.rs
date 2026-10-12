@@ -11,9 +11,10 @@ pub struct InvalidToken {
 }
 
 impl InvalidToken {
-    /// Returns a token stream representing `compile_error!("msg");` where
-    /// `"msg"` is the output of `self.to_string()`. **Panics if called outside
-    /// of a proc-macro context!**
+    /// Returns a token stream representing `compile_error! { "msg" }` where
+    /// `"msg"` is the output of `self.to_string()`. Braces are used so that it
+    /// works in item, statement and expression position. **Panics if called
+    /// outside of a proc-macro context!**
     pub fn to_compile_error(&self) -> proc_macro::TokenStream {
         use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, TokenTree};
 
@@ -27,7 +28,7 @@ impl InvalidToken {
             TokenTree::from(Ident::new("compile_error", span)),
             TokenTree::from(Punct::new('!', Spacing::Alone)),
             TokenTree::from(Group::new(
-                Delimiter::Parenthesis,
+                Delimiter::Brace,
                 TokenTree::from(proc_macro::Literal::string(&msg)).into(),
             )),
         ];
@@ -52,7 +53,7 @@ impl InvalidToken {
             TokenTree::from(Ident::new("compile_error", span)),
             TokenTree::from(Punct::new('!', Spacing::Alone)),
             TokenTree::from(Group::new(
-                Delimiter::Parenthesis,
+                Delimiter::Brace,
                 TokenTree::from(proc_macro2::Literal::string(&msg)).into(),
             )),
         ];
