@@ -230,7 +230,7 @@ pub(crate) fn parse_impl(input: &str, first: u8) -> Result<IntegerLit<&str>, Par
         }
     })?;
     if suffix.starts_with('e') || suffix.starts_with('E') {
-        return Err(perr(end_main, IntegerSuffixStartingWithE));
+        return Err(perr(end_main + end_prefix, IntegerSuffixStartingWithE));
     }
 
     // Make sure main number part is not empty.
