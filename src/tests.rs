@@ -289,6 +289,29 @@ fn proc_macro() {
         expected: TokenKind::FloatLit,
         actual: TokenKind::Ident,
     );
+
+    // `true` and `false` idents are reported as bool literals.
+    let ident = |s: &str| TokenTree::from(Ident::new(s, Span::call_site()));
+    assert_invalid_token!(
+        IntegerLit::try_from(ident("true")),
+        expected: TokenKind::IntegerLit,
+        actual: TokenKind::BoolLit,
+    );
+    assert_invalid_token!(
+        StringLit::try_from(&ident("false")),
+        expected: TokenKind::StringLit,
+        actual: TokenKind::BoolLit,
+    );
+    assert_invalid_token!(
+        CharLit::try_from(ident("True")),
+        expected: TokenKind::CharLit,
+        actual: TokenKind::Ident,
+    );
+    assert_invalid_token!(
+        FloatLit::try_from(ident("falsex")),
+        expected: TokenKind::FloatLit,
+        actual: TokenKind::Ident,
+    );
 }
 
 #[cfg(feature = "proc-macro2")]

@@ -155,6 +155,11 @@ macro_rules! impl_for_specific_lit {
                 let res = match tt {
                     $($prefix)* TokenTree::Group(_) => Err(TokenKind::Group),
                     $($prefix)* TokenTree::Punct(_) => Err(TokenKind::Punct),
+                    // `true` and `false` are idents here, but for error
+                    // reporting we treat them as bool literals.
+                    $($prefix)* TokenTree::Ident(ref ident)
+                        if matches!(&*ident.to_string(), "true" | "false")
+                        => Err(TokenKind::BoolLit),
                     $($prefix)* TokenTree::Ident(_) => Err(TokenKind::Ident),
                     $($prefix)* TokenTree::Literal(ref lit) => Ok(lit),
                 };
