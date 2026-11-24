@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-24
+- Add `FloatLit::value` (and its helper `FromFloatLiteral`)
+  - This now allows you to actually get the float value from literals. The old advice (`f32::from_str(lit.number_part())`) didn't always work.
+- Fix `Display` impl of `IntegerLit` and `FloatLit` ignoring width/padding format options
+- Improve error message of `TryFrom<TokenTree> for *Lit` for `true`/`false` tokens ("found a bool literal" instead of "found an identifier")
+- Fix span of "integer suffix must not start with 'e'" error for binary and octal literals
+
 ## [1.0.1] - 2026-10-12
 - Fix parsing of (byte/C) strings starting with `\<newline>` (without other escapes). In those cases, the backslash, newline and whitespace were incorrectly kept.
 - Fix `to_compile_error` causing a second, unrelated error in item position. Output changed from `compile_error!("...")` to  `compile_error! { "..." }`.
@@ -130,7 +137,8 @@ If there are no problems with this release, it will be released as 1.0 after som
 - Everything
 
 
-[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/LukasKalbertodt/litrs/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/LukasKalbertodt/litrs/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/LukasKalbertodt/litrs/compare/v0.5.0...v0.5.1
