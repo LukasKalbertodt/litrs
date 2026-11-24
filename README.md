@@ -5,7 +5,7 @@
 [<img alt="docs.rs" src="https://img.shields.io/crates/v/litrs?color=blue&label=docs&style=for-the-badge" height="23">](https://docs.rs/litrs)
 
 `litrs` offers functionality to parse Rust literals, i.e. tokens in the Rust programming language that represent fixed values.
-For example: `27`, `"crab"`, `bool`.
+For example: `27`, `"crab"`, `true`.
 This is particularly useful for proc macros, but can also be used outside of a proc-macro context.
 
 **Why this library?**
