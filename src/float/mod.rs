@@ -167,7 +167,7 @@ impl FloatLit<&str> {
 
 impl<B: Buffer> fmt::Display for FloatLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &*self.raw)
+        f.pad(&self.raw)
     }
 }
 

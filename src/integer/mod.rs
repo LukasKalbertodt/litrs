@@ -132,7 +132,7 @@ impl IntegerLit<&str> {
 
 impl<B: Buffer> fmt::Display for IntegerLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &*self.raw)
+        f.pad(&self.raw)
     }
 }
 

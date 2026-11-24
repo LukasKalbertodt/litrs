@@ -88,6 +88,17 @@ fn never_panic_len_4() {
     }
 }
 
+#[test]
+fn display_padding() {
+    for input in ["true", "27", "3.14", "'a'", r#""a""#, "b'a'", r#"b"a""#, r#"c"a""#] {
+        let lit = Literal::parse(input).unwrap();
+        assert_eq!(format!("{}", lit), input);
+        assert_eq!(format!("{:>8}", lit), format!("{:>8}", input));
+        assert_eq!(format!("{:_<8}", lit), format!("{:_<8}", input));
+        assert_eq!(format!("{:^9}", lit), format!("{:^9}", input));
+    }
+}
+
 #[cfg(feature = "proc-macro2")]
 #[test]
 fn proc_macro() {
