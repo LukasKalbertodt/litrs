@@ -151,13 +151,10 @@ pub trait FromIntegerLiteral: self::sealed::Sealed + Copy {
 
     #[doc(hidden)]
     fn checked_mul(self, rhs: Self) -> Option<Self>;
-
-    #[doc(hidden)]
-    fn ty() -> IntegerType;
 }
 
 macro_rules! impl_from_int_literal {
-    ($( $ty:ty => $variant:ident ,)* ) => {
+    ($( $ty:ty ),* ) => {
         $(
             impl self::sealed::Sealed for $ty {}
             impl FromIntegerLiteral for $ty {
@@ -170,18 +167,12 @@ macro_rules! impl_from_int_literal {
                 fn checked_mul(self, rhs: Self) -> Option<Self> {
                     self.checked_mul(rhs)
                 }
-                fn ty() -> IntegerType {
-                    IntegerType::$variant
-                }
             }
         )*
     };
 }
 
-impl_from_int_literal!(
-    u8 => U8, u16 => U16, u32 => U32, u64 => U64, u128 => U128, usize => Usize,
-    i8 => I8, i16 => I16, i32 => I32, i64 => I64, i128 => I128, isize => Isize,
-);
+impl_from_int_literal!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
 
 mod sealed {
     pub trait Sealed {}
