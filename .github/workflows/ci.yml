@@ -34,16 +34,47 @@ jobs:
       working-directory: examples/procmacro
       run: cargo test
 
-    - name: Build without default features
-      run: cargo build --no-default-features
-    - name: Run tests without default features
-      run: |
-        cargo test --release --no-default-features --lib -- --include-ignored
-        cargo test --doc --no-default-features
-
     - name: Build with check_suffix
       run: cargo build --features=check_suffix
     - name: Run tests with check_suffix
       run: |
         cargo test --release --features=check_suffix --lib -- --include-ignored
         cargo test --doc --features=check_suffix
+
+    - name: Build with proc-macro2
+      run: cargo build --features=proc-macro2
+    - name: Run tests with proc-macro2
+      run: |
+        cargo test --release --features=proc-macro2 --lib -- --include-ignored
+        cargo test --doc --features=proc-macro2
+
+  msrv:
+    name: 'Check MSRV'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Read MSRV from Cargo.toml
+      run: |
+        msrv=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+        test -n "$msrv"
+        echo "MSRV=$msrv" >> "$GITHUB_ENV"
+    - name: Install MSRV toolchain
+      run: rustup toolchain install "$MSRV" --profile minimal
+
+    # The newest versions of our dependencies require a newer Rust version, so
+    # we let (the stable) Cargo pick the newest versions compatible with our
+    # MSRV.
+    - name: Generate lockfile with MSRV-compatible dependencies
+      run: cargo generate-lockfile
+      env:
+        CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+
+    # Only `check`, as the tests use syntax not available in the MSRV (e.g. C
+    # string literals).
+    - name: Check
+      run: cargo "+$MSRV" check --locked
+    - name: Check with check_suffix
+      run: cargo "+$MSRV" check --locked --features=check_suffix
+    - name: Check with proc-macro2
+      run: cargo "+$MSRV" check --locked --features=proc-macro2
