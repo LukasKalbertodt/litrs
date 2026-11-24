@@ -120,6 +120,59 @@ fn manual_with_suffix() -> Result<(), ParseError> {
 }
 
 #[test]
+fn value() {
+    #[track_caller]
+    fn check(input: &str, v32: Option<f32>, v64: Option<f64>) {
+        let lit = FloatLit::parse(input).expect("failed to parse");
+        assert_eq!(lit.value::<f32>(), v32, "f32 value of `{}`", input);
+        assert_eq!(lit.value::<f64>(), v64, "f64 value of `{}`", input);
+    }
+
+    check("0.0", Some(0.0), Some(0.0));
+    check("3.14", Some(3.14), Some(3.14));
+    check("9.", Some(9.0), Some(9.0));
+    check("8e1", Some(80.0), Some(80.0));
+    check("8E3", Some(8000.0), Some(8000.0));
+    check("1.5e+2", Some(150.0), Some(150.0));
+    check("1.5E-2", Some(0.015), Some(0.015));
+    check("0e0", Some(0.0), Some(0.0));
+
+    // Underscores
+    check("8_7_6.1_23e15", Some(876.123e15), Some(876.123e15));
+    check("1_000.000_1", Some(1000.0001), Some(1000.0001));
+    check("1__.0_", Some(1.0), Some(1.0));
+    check("1e_5", Some(1e5), Some(1e5));
+    check("1e+_5_", Some(1e5), Some(1e5));
+    check("1_e-__5", Some(1e-5), Some(1e-5));
+
+    // Suffix is ignored
+    check("3.5f32", Some(3.5), Some(3.5));
+    check("3.5f64", Some(3.5), Some(3.5));
+    check("1e2f32", Some(100.0), Some(100.0));
+    check("2.5px", Some(2.5), Some(2.5));
+
+    // Each type is rounded directly from the decimal string: `0.1f32 as f64`
+    // is not `0.1f64`.
+    check("0.1", Some(0.1f32), Some(0.1f64));
+    assert_ne!(FloatLit::parse("0.1").unwrap().value::<f32>().unwrap() as f64, 0.1f64);
+    check("16777217.0", Some(16777216.0), Some(16777217.0));
+
+    // Limits & overflow
+    check("3.40282347e38", Some(f32::MAX), Some(3.40282347e38));
+    check("3.5e38", None, Some(3.5e38));
+    check("1e39", None, Some(1e39));
+    check("1.7976931348623157e308", None, Some(f64::MAX));
+    check("1.8e308", None, None);
+    check("1e999", None, None);
+    check("1_0e3_0_9", None, None);
+
+    // Underflow is not an error
+    check("1e-50", Some(0.0), Some(1e-50));
+    check("1e-999", Some(0.0), Some(0.0));
+    check("1e-45", Some(f32::from_bits(1)), Some(1e-45));
+}
+
+#[test]
 fn simple() {
     check!("3" ".14" "" -);
     check!("3" ".14" "" f32);

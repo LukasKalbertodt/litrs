@@ -77,10 +77,39 @@ impl<B: Buffer> FloatLit<B> {
         }
     }
 
+    /// Performs the actual string to float conversion to obtain the float
+    /// value. The optional type suffix of the literal **is ignored by this
+    /// method**. This means `F` does not need to match the type suffix!
+    ///
+    /// The result is the value of type `F` closest to the number specified by
+    /// the literal (same as rustc). Returns `None` if the literal overflows
+    /// `F`, i.e. if it would be rounded to infinity.
+    ///
+    /// ```
+    /// use litrs::FloatLit;
+    ///
+    /// let lit = FloatLit::parse("1_234.5e-1f32").unwrap();
+    /// assert_eq!(lit.value::<f32>(), Some(123.45));
+    /// assert_eq!(lit.value::<f64>(), Some(123.45));
+    ///
+    /// let lit = FloatLit::parse("1e39").unwrap();
+    /// assert_eq!(lit.value::<f32>(), None);
+    /// assert_eq!(lit.value::<f64>(), Some(1e39));
+    /// ```
+    pub fn value<F: FromFloatLiteral>(&self) -> Option<F> {
+        let number_part = self.number_part();
+        if number_part.contains('_') {
+            F::from_number_str(&number_part.replace('_', ""))
+        } else {
+            F::from_number_str(number_part)
+        }
+    }
+
     /// Returns the number part (including integer part, fractional part and
     /// exponent), but without the suffix. If you want an actual floating
-    /// point value, you need to parse this string, e.g. with `f32::from_str`
-    /// or an external crate.
+    /// point value, use [`Self::value`]. Note that this string might contain
+    /// underscores and thus cannot be passed to `f32::from_str` and the like
+    /// directly.
     pub fn number_part(&self) -> &str {
         &(*self.raw)[..self.end_number_part]
     }
@@ -140,6 +169,45 @@ impl<B: Buffer> fmt::Display for FloatLit<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", &*self.raw)
     }
+}
+
+/// Float literal types. *Implementation detail*.
+///
+/// Implemented for all float literal types. This trait is sealed and cannot
+/// be implemented outside of this crate. The trait's methods are implementation
+/// detail of this library and are not subject to semver.
+pub trait FromFloatLiteral: self::sealed::Sealed + Copy {
+    /// Parses the number part of a float literal, with all underscores already
+    /// removed. Returns `None` if the value is not finite.
+    #[doc(hidden)]
+    fn from_number_str(s: &str) -> Option<Self>;
+}
+
+macro_rules! impl_from_float_literal {
+    ($( $ty:ty ),* ) => {
+        $(
+            impl self::sealed::Sealed for $ty {}
+            impl FromFloatLiteral for $ty {
+                fn from_number_str(s: &str) -> Option<Self> {
+                    // The number part of a valid float literal (without
+                    // underscores) is always accepted by `from_str`.
+                    let v = <$ty>::from_str(s)
+                        .unwrap_or_else(|_| unreachable!("bug: failed to parse float number part"));
+                    if v.is_finite() {
+                        Some(v)
+                    } else {
+                        None
+                    }
+                }
+            }
+        )*
+    };
+}
+
+impl_from_float_literal!(f32, f64);
+
+mod sealed {
+    pub trait Sealed {}
 }
 
 /// Precondition: first byte of string has to be in `b'0'..=b'9'`.

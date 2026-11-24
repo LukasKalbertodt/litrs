@@ -192,7 +192,7 @@ pub use self::{
     char::CharLit,
     cstr::CStringLit,
     err::{InvalidToken, ParseError},
-    float::{FloatLit, FloatType},
+    float::{FloatLit, FloatType, FromFloatLiteral},
     integer::{FromIntegerLiteral, IntegerBase, IntegerLit, IntegerType},
     string::StringLit,
 };
