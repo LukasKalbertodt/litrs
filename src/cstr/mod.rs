@@ -34,7 +34,7 @@ pub struct CStringLit<B: Buffer> {
 }
 
 impl<B: Buffer> CStringLit<B> {
-    /// Parses the input as a (raw) byte string literal. Returns an error if the
+    /// Parses the input as a (raw) C string literal. Returns an error if the
     /// input is invalid or represents a different kind of literal.
     pub fn parse(input: B) -> Result<Self, ParseError> {
         if input.is_empty() {
@@ -109,7 +109,7 @@ impl<B: Buffer> fmt::Display for CStringLit<B> {
 }
 
 
-/// Precondition: input has to start with either `b"` or `br`.
+/// Precondition: input has to start with either `c"` or `cr`.
 #[inline(never)]
 fn parse_impl(input: &str) -> Result<(CString, Option<u8>, usize), ParseError> {
     let (vec, num_hashes, start_suffix) = if input.starts_with("cr") {
